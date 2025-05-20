@@ -6,16 +6,33 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Sparkles, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import type { PredictedQuestion } from '@/types';
-import { useState } from 'react';
+import { useState, type MouseEvent } from 'react';
+import { cn } from '@/lib/utils';
 
 interface PredictedQuestionCardProps {
   question: PredictedQuestion;
-  onGetExplanation: (questionText: string) => void;
+  onGetExplanation: (questionText: string, options: string[], correctAnswerIndex: number) => void;
   isExplainingCurrent: boolean;
 }
 
 export default function PredictedQuestionCard({ question, onGetExplanation, isExplainingCurrent }: PredictedQuestionCardProps) {
-  const [showAnswer, setShowAnswer] = useState(false);
+  const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
+  const [answerRevealed, setAnswerRevealed] = useState(false);
+
+  const handleOptionSelect = (index: number, event: MouseEvent<HTMLDivElement>) => {
+    // Prevent accordion from toggling if the click is on an option
+    event.stopPropagation(); 
+    if (!answerRevealed) {
+      setSelectedOptionIndex(index);
+      setAnswerRevealed(true);
+    }
+  };
+  
+  const handleResetSelection = (event: MouseEvent<HTMLButtonElement>) => {
+     event.stopPropagation();
+    setSelectedOptionIndex(null);
+    setAnswerRevealed(false);
+  }
 
   return (
     <Card className="shadow-md hover:shadow-lg transition-shadow duration-200 flex flex-col">
@@ -25,27 +42,52 @@ export default function PredictedQuestionCard({ question, onGetExplanation, isEx
       <CardContent className="flex-grow">
         <p className="text-foreground leading-relaxed mb-4">{question.questionText}</p>
         <div className="space-y-2">
-          {question.options.map((option, index) => (
-            <div
-              key={index}
-              className={`p-3 rounded-md border text-sm flex items-center
-                ${showAnswer ? (index === question.correctAnswerIndex ? 'border-green-500 bg-green-500/10 text-green-700' : 'border-red-500 bg-red-500/10 text-red-700') : 'bg-muted/30 hover:bg-muted/60'}`}
-            >
-              {showAnswer && (
-                index === question.correctAnswerIndex 
-                  ? <CheckCircle className="h-5 w-5 mr-2 text-green-500 shrink-0" /> 
-                  : <XCircle className="h-5 w-5 mr-2 text-red-500 shrink-0" />
-              )}
-              <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span>
-              {option}
-            </div>
-          ))}
+          {question.options.map((option, index) => {
+            const isSelected = selectedOptionIndex === index;
+            const isCorrect = index === question.correctAnswerIndex;
+            
+            let optionClass = "bg-muted/30 hover:bg-muted/60 cursor-pointer";
+            if (answerRevealed) {
+              if (isCorrect) {
+                optionClass = "border-green-500 bg-green-500/10 text-green-700";
+              } else if (isSelected && !isCorrect) {
+                optionClass = "border-red-500 bg-red-500/10 text-red-700";
+              } else {
+                optionClass = "border-gray-300 bg-gray-500/5 text-gray-600 opacity-70";
+              }
+            }
+
+            return (
+              <div
+                key={index}
+                className={cn(
+                  "p-3 rounded-md border text-sm flex items-center transition-all duration-150 ease-in-out",
+                  optionClass,
+                  !answerRevealed && "hover:shadow-md hover:scale-[1.01]"
+                )}
+                onClick={(e) => handleOptionSelect(index, e)}
+                role="button"
+                tabIndex={answerRevealed ? -1 : 0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleOptionSelect(index, e as any);}}
+              >
+                {answerRevealed && (
+                  isCorrect 
+                    ? <CheckCircle className="h-5 w-5 mr-2 text-green-500 shrink-0" /> 
+                    : (isSelected && !isCorrect 
+                        ? <XCircle className="h-5 w-5 mr-2 text-red-500 shrink-0" />
+                        : <XCircle className="h-5 w-5 mr-2 text-gray-400 shrink-0 opacity-50" />)
+                )}
+                <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span>
+                {option}
+              </div>
+            );
+          })}
         </div>
         {question.explanation && (
           <Accordion type="single" collapsible className="w-full mt-4">
             <AccordionItem value="explanation">
               <AccordionTrigger className="text-sm text-muted-foreground hover:text-accent">
-                Ver explicación de la respuesta
+                Ver breve explicación de la respuesta
               </AccordionTrigger>
               <AccordionContent className="text-sm text-foreground/80 pt-2">
                 {question.explanation}
@@ -53,21 +95,28 @@ export default function PredictedQuestionCard({ question, onGetExplanation, isEx
             </AccordionItem>
           </Accordion>
         )}
-
       </CardContent>
-      <CardFooter className="flex-col sm:flex-row items-stretch sm:items-center gap-2">
+      <CardFooter className="flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-4">
+        {answerRevealed && (
+          <Button
+            onClick={handleResetSelection}
+            variant="outline"
+            className="flex-1"
+          >
+            Intentar de Nuevo
+          </Button>
+        )}
         <Button
-          onClick={() => setShowAnswer(!showAnswer)}
-          variant="outline"
-          className="flex-1"
-        >
-          {showAnswer ? 'Ocultar Respuesta' : 'Mostrar Respuesta'}
-        </Button>
-        <Button
-          onClick={() => onGetExplanation(question.questionText)}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent accordion toggle if card content is wrapped in one
+            onGetExplanation(question.questionText, question.options, question.correctAnswerIndex);
+          }}
           disabled={isExplainingCurrent}
           variant="outline"
-          className="bg-accent hover:bg-accent/90 text-accent-foreground border-accent hover:border-accent/90 flex-1"
+          className={cn(
+            "bg-accent hover:bg-accent/90 text-accent-foreground border-accent hover:border-accent/90 flex-1",
+            !answerRevealed && "sm:col-span-2 w-full" 
+          )}
         >
           {isExplainingCurrent ? (
             <>
@@ -77,7 +126,7 @@ export default function PredictedQuestionCard({ question, onGetExplanation, isEx
           ) : (
             <>
               <Sparkles className="mr-2 h-4 w-4" />
-              Más Detalles (IA)
+              Explicación Detallada (IA)
             </>
           )}
         </Button>
@@ -85,4 +134,3 @@ export default function PredictedQuestionCard({ question, onGetExplanation, isEx
     </Card>
   );
 }
-

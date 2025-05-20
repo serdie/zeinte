@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import PredictedQuestionCard from '@/components/dashboard/PredictedQuestionCard';
 import AIExplanationDialog from '@/components/dashboard/AIExplanationDialog';
-import { generateAIExplanation, type GenerateAIExplanationOutput } from '@/ai/flows/generate-ai-explanations';
+import { generateAIExplanation, type GenerateAIExplanationOutput, type GenerateAIExplanationInput } from '@/ai/flows/generate-ai-explanations';
 import { PREDICTED_DATA_KEY } from '@/lib/localStorageKeys';
 import type { PredictedData, AIExplanation, PredictedQuestion } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ export default function DashboardPage() {
   
   const [currentExplanation, setCurrentExplanation] = useState<AIExplanation | null>(null);
   const [isExplaining, setIsExplaining] = useState(false);
-  const [selectedQuestionTextForExplanation, setSelectedQuestionTextForExplanation] = useState<string | null>(null);
+  const [selectedQuestionForExplanation, setSelectedQuestionForExplanation] = useState<Omit<GenerateAIExplanationInput, 'topic'> | null>(null);
   const [isExplanationDialogOpen, setIsExplanationDialogOpen] = useState(false);
 
   const { toast } = useToast();
@@ -47,8 +47,9 @@ export default function DashboardPage() {
     setIsLoadingInitialData(false);
   }, []);
 
-  const handleGetExplanation = useCallback(async (questionText: string) => {
-    setSelectedQuestionTextForExplanation(questionText);
+  const handleGetExplanation = useCallback(async (questionText: string, options: string[], correctAnswerIndex: number) => {
+    const questionContext = { questionText, options, correctAnswerIndex };
+    setSelectedQuestionForExplanation(questionContext);
     setIsExplaining(true);
     setIsExplanationDialogOpen(true);
     setCurrentExplanation(null); // Clear previous explanation
@@ -56,7 +57,7 @@ export default function DashboardPage() {
     try {
       const topic = predictedData?.recurringThemes?.[0] || "Tema General";
       
-      const result: GenerateAIExplanationOutput = await generateAIExplanation({ question: questionText, topic });
+      const result: GenerateAIExplanationOutput = await generateAIExplanation({ ...questionContext, topic });
       setCurrentExplanation({ question: questionText, explanation: result.explanation, topic });
     } catch (error) {
       console.error("Error generating AI explanation:", error);
@@ -104,7 +105,7 @@ export default function DashboardPage() {
         <AlertTitle className="font-semibold text-primary">¡Preguntas Listas para Estudiar!</AlertTitle>
         <AlertDescription className="text-primary/80">
           Hemos analizado tus documentos y estas son las preguntas tipo test que creemos podrían aparecer en tu examen. 
-          ¡También puedes ver una breve explicación de la respuesta correcta! ¡Mucha suerte!
+          Selecciona una opción para ver si es correcta y pide a la IA una explicación detallada. ¡Mucha suerte!
           <br />
           Resumen del análisis: {predictedData.analysisSummary.substring(0,150)}...
           {predictedData.recurringThemes && predictedData.recurringThemes.length > 0 && (
@@ -119,7 +120,7 @@ export default function DashboardPage() {
             key={index}
             question={q}
             onGetExplanation={handleGetExplanation}
-            isExplainingCurrent={isExplaining && selectedQuestionTextForExplanation === q.questionText}
+            isExplainingCurrent={isExplaining && selectedQuestionForExplanation?.questionText === q.questionText}
           />
         ))}
       </div>
@@ -127,7 +128,7 @@ export default function DashboardPage() {
       <AIExplanationDialog
         open={isExplanationDialogOpen}
         onOpenChange={setIsExplanationDialogOpen}
-        question={currentExplanation?.question || selectedQuestionTextForExplanation}
+        question={currentExplanation?.question || selectedQuestionForExplanation?.questionText}
         explanation={currentExplanation?.explanation || null}
         isLoading={isExplaining && !currentExplanation}
       />
