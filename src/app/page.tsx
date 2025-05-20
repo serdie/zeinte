@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -6,7 +7,7 @@ import PredictedQuestionCard from '@/components/dashboard/PredictedQuestionCard'
 import AIExplanationDialog from '@/components/dashboard/AIExplanationDialog';
 import { generateAIExplanation, type GenerateAIExplanationOutput } from '@/ai/flows/generate-ai-explanations';
 import { PREDICTED_DATA_KEY } from '@/lib/localStorageKeys';
-import type { PredictedData, AIExplanation } from '@/types';
+import type { PredictedData, AIExplanation, PredictedQuestion } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { UploadCloud, Info, BookOpenText, Loader2 } from 'lucide-react';
@@ -18,7 +19,7 @@ export default function DashboardPage() {
   
   const [currentExplanation, setCurrentExplanation] = useState<AIExplanation | null>(null);
   const [isExplaining, setIsExplaining] = useState(false);
-  const [selectedQuestionForExplanation, setSelectedQuestionForExplanation] = useState<string | null>(null);
+  const [selectedQuestionTextForExplanation, setSelectedQuestionTextForExplanation] = useState<string | null>(null);
   const [isExplanationDialogOpen, setIsExplanationDialogOpen] = useState(false);
 
   const { toast } = useToast();
@@ -28,43 +29,42 @@ export default function DashboardPage() {
     if (storedData) {
       try {
         const parsedData: PredictedData = JSON.parse(storedData);
-        // Optional: Check timestamp and invalidate if too old
-        // const oneDay = 24 * 60 * 60 * 1000;
-        // if (Date.now() - parsedData.timestamp > oneDay) {
-        //   localStorage.removeItem(PREDICTED_DATA_KEY);
-        //   setPredictedData(null);
-        // } else {
-        setPredictedData(parsedData);
-        // }
+        // Basic validation for new question format
+        if (parsedData.questions && parsedData.questions.length > 0 && typeof parsedData.questions[0] === 'string') {
+          // Old format detected, clear it to avoid errors
+          console.warn("Old question format detected in localStorage. Clearing data.");
+          localStorage.removeItem(PREDICTED_DATA_KEY);
+          setPredictedData(null);
+        } else {
+          setPredictedData(parsedData);
+        }
       } catch (error) {
         console.error("Failed to parse predicted data from localStorage", error);
         localStorage.removeItem(PREDICTED_DATA_KEY);
+        setPredictedData(null); // Ensure state is reset on error
       }
     }
     setIsLoadingInitialData(false);
   }, []);
 
-  const handleGetExplanation = useCallback(async (question: string) => {
-    setSelectedQuestionForExplanation(question);
+  const handleGetExplanation = useCallback(async (questionText: string) => {
+    setSelectedQuestionTextForExplanation(questionText);
     setIsExplaining(true);
     setIsExplanationDialogOpen(true);
     setCurrentExplanation(null); // Clear previous explanation
 
     try {
-      // Determine a topic. For simplicity, use the first recurring theme or a default.
       const topic = predictedData?.recurringThemes?.[0] || "Tema General";
       
-      const result: GenerateAIExplanationOutput = await generateAIExplanation({ question, topic });
-      setCurrentExplanation({ question, explanation: result.explanation, topic });
+      const result: GenerateAIExplanationOutput = await generateAIExplanation({ question: questionText, topic });
+      setCurrentExplanation({ question: questionText, explanation: result.explanation, topic });
     } catch (error) {
       console.error("Error generating AI explanation:", error);
       toast({
         title: "Error al generar explicación",
-        description: "No se pudo obtener la explicación. Inténtalo de nuevo.",
+        description: "No se pudo obtener la explicación detallada. Inténtalo de nuevo.",
         variant: "destructive",
       });
-      // Optionally close dialog on error or show error message in dialog
-      // setIsExplanationDialogOpen(false); 
     } finally {
       setIsExplaining(false);
     }
@@ -79,7 +79,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (!predictedData || predictedData.questions.length === 0) {
+  if (!predictedData || !predictedData.questions || predictedData.questions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center p-6 bg-card rounded-lg shadow-xl">
         <BookOpenText className="h-20 w-20 text-primary mb-6" />
@@ -96,29 +96,30 @@ export default function DashboardPage() {
       </div>
     );
   }
-
+  
   return (
     <div className="space-y-8">
       <Alert className="border-primary bg-primary/10">
         <Info className="h-5 w-5 text-primary" />
         <AlertTitle className="font-semibold text-primary">¡Preguntas Listas para Estudiar!</AlertTitle>
         <AlertDescription className="text-primary/80">
-          Hemos analizado tus documentos y estas son las preguntas que creemos podrían aparecer en tu examen. ¡Mucha suerte!
+          Hemos analizado tus documentos y estas son las preguntas tipo test que creemos podrían aparecer en tu examen. 
+          ¡También puedes ver una breve explicación de la respuesta correcta! ¡Mucha suerte!
           <br />
           Resumen del análisis: {predictedData.analysisSummary.substring(0,150)}...
-          {predictedData.recurringThemes.length > 0 && (
+          {predictedData.recurringThemes && predictedData.recurringThemes.length > 0 && (
             <span className="block mt-1 text-sm">Temas principales: {predictedData.recurringThemes.join(', ')}.</span>
           )}
         </AlertDescription>
       </Alert>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {predictedData.questions.map((q, index) => (
+        {predictedData.questions.map((q: PredictedQuestion, index) => (
           <PredictedQuestionCard
             key={index}
             question={q}
             onGetExplanation={handleGetExplanation}
-            isExplainingCurrent={isExplaining && selectedQuestionForExplanation === q}
+            isExplainingCurrent={isExplaining && selectedQuestionTextForExplanation === q.questionText}
           />
         ))}
       </div>
@@ -126,7 +127,7 @@ export default function DashboardPage() {
       <AIExplanationDialog
         open={isExplanationDialogOpen}
         onOpenChange={setIsExplanationDialogOpen}
-        question={currentExplanation?.question || selectedQuestionForExplanation}
+        question={currentExplanation?.question || selectedQuestionTextForExplanation}
         explanation={currentExplanation?.explanation || null}
         isLoading={isExplaining && !currentExplanation}
       />
