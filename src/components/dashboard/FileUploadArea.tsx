@@ -4,7 +4,7 @@
 import type React from 'react';
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input'; // Changed from Textarea
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, FileText, UploadCloud, XCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +14,8 @@ interface FileUploadAreaProps {
   isLoading: boolean;
 }
 
+const MAX_FILES_UPLOAD = 30;
+
 export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const { toast } = useToast();
@@ -21,13 +23,14 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
       const newFiles = Array.from(event.target.files);
-      // Basic validation for demonstration (e.g., limit number of files or total size)
-      if (selectedFiles.length + newFiles.length > 10) {
+      if (selectedFiles.length + newFiles.length > MAX_FILES_UPLOAD) {
         toast({
           title: "Límite de archivos excedido",
-          description: "Puedes subir un máximo de 10 archivos a la vez.",
+          description: `Puedes subir un máximo de ${MAX_FILES_UPLOAD} archivos a la vez.`,
           variant: "destructive",
         });
+        // Clear the input value to allow re-selection of the same file if needed after correction
+        event.target.value = ""; 
         return;
       }
       setSelectedFiles(prevFiles => [...prevFiles, ...newFiles]);
@@ -61,9 +64,6 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
           console.error("Error reading file:", file.name, e);
           reject(`Error al leer el archivo ${file.name}`);
         };
-        // This will attempt to read all files as text.
-        // For DOCX/PDF, this will not produce human-readable content without specialized libraries.
-        // This is a simplified approach.
         reader.readAsText(file);
       });
     });
@@ -119,13 +119,13 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
               accept=".pdf,.doc,.docx,.txt"
             />
              <p className="mt-2 text-xs text-muted-foreground">
-              Archivos soportados: PDF, DOC, DOCX, TXT. Máximo 10 archivos.
+              Archivos soportados: PDF, DOC, DOCX, TXT. Máximo {MAX_FILES_UPLOAD} archivos.
             </p>
           </div>
 
           {selectedFiles.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-foreground">Archivos Seleccionados:</h4>
+              <h4 className="text-sm font-medium text-foreground">Archivos Seleccionados ({selectedFiles.length}/{MAX_FILES_UPLOAD}):</h4>
               <ul className="max-h-48 overflow-y-auto space-y-1 rounded-md border p-2 bg-muted/50">
                 {selectedFiles.map(file => (
                   <li key={file.name} className="text-xs text-foreground flex justify-between items-center p-1.5 bg-background rounded shadow-sm">
