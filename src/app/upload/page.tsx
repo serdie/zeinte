@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -11,11 +12,13 @@ import type { PredictedData } from '@/types';
 
 export default function UploadPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [currentFileContent, setCurrentFileContent] = useState<string | null>(null); // To hold file content for storing
   const router = useRouter();
   const { toast } = useToast();
 
   const handleAnalyze = async (content: string) => {
     setIsLoading(true);
+    setCurrentFileContent(content); // Store content temporarily
     try {
       toast({
         title: "Procesando Documento",
@@ -34,6 +37,7 @@ export default function UploadPage() {
         analysisSummary: analysisResult.summary,
         recurringThemes: analysisResult.recurringThemes,
         timestamp: Date.now(),
+        originalDocumentContent: content, // Save the actual document content
       };
 
       localStorage.setItem(PREDICTED_DATA_KEY, JSON.stringify(dataToStore));
@@ -41,7 +45,7 @@ export default function UploadPage() {
       toast({
         title: "¡Éxito!",
         description: "Preguntas predichas y listas para estudiar. Redirigiendo...",
-        variant: "default", // Explicitly set to default which is green based on earlier assumption. Or use a success variant if defined.
+        variant: "default",
       });
       
       router.push('/');
@@ -64,3 +68,4 @@ export default function UploadPage() {
     </div>
   );
 }
+

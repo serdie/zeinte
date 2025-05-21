@@ -10,6 +10,7 @@ export interface PredictedData {
   analysisSummary: string;
   recurringThemes: string[];
   timestamp: number; // To potentially expire old data
+  originalDocumentContent?: string; // To store the content of the uploaded files for re-analysis
 }
 
 export interface AIExplanation {

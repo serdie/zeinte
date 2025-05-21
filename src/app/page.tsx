@@ -6,16 +6,19 @@ import Link from 'next/link';
 import PredictedQuestionCard from '@/components/dashboard/PredictedQuestionCard';
 import AIExplanationDialog from '@/components/dashboard/AIExplanationDialog';
 import { generateAIExplanation, type GenerateAIExplanationOutput, type GenerateAIExplanationInput } from '@/ai/flows/generate-ai-explanations';
+import { analyzeDocuments, type AnalyzeDocumentsOutput } from '@/ai/flows/analyze-documents';
+import { predictExamQuestions, type PredictExamQuestionsOutput } from '@/ai/flows/predict-exam-questions';
 import { PREDICTED_DATA_KEY } from '@/lib/localStorageKeys';
 import type { PredictedData, AIExplanation, PredictedQuestion } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { UploadCloud, Info, BookOpenText, Loader2 } from 'lucide-react';
+import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 export default function DashboardPage() {
   const [predictedData, setPredictedData] = useState<PredictedData | null>(null);
   const [isLoadingInitialData, setIsLoadingInitialData] = useState(true);
+  const [isReAnalyzing, setIsReAnalyzing] = useState(false);
   
   const [currentExplanation, setCurrentExplanation] = useState<AIExplanation | null>(null);
   const [isExplaining, setIsExplaining] = useState(false);
@@ -29,9 +32,7 @@ export default function DashboardPage() {
     if (storedData) {
       try {
         const parsedData: PredictedData = JSON.parse(storedData);
-        // Basic validation for new question format
         if (parsedData.questions && parsedData.questions.length > 0 && typeof parsedData.questions[0] === 'string') {
-          // Old format detected, clear it to avoid errors
           console.warn("Old question format detected in localStorage. Clearing data.");
           localStorage.removeItem(PREDICTED_DATA_KEY);
           setPredictedData(null);
@@ -41,7 +42,7 @@ export default function DashboardPage() {
       } catch (error) {
         console.error("Failed to parse predicted data from localStorage", error);
         localStorage.removeItem(PREDICTED_DATA_KEY);
-        setPredictedData(null); // Ensure state is reset on error
+        setPredictedData(null);
       }
     }
     setIsLoadingInitialData(false);
@@ -52,24 +53,83 @@ export default function DashboardPage() {
     setSelectedQuestionForExplanation(questionContext);
     setIsExplaining(true);
     setIsExplanationDialogOpen(true);
-    setCurrentExplanation(null); // Clear previous explanation
+    setCurrentExplanation(null); 
 
     try {
       const topic = predictedData?.recurringThemes?.[0] || "Tema General";
       
       const result: GenerateAIExplanationOutput = await generateAIExplanation({ ...questionContext, topic });
-      setCurrentExplanation({ question: questionText, explanation: result.explanation, topic });
+      if (result && result.explanation) {
+        setCurrentExplanation({ question: questionText, explanation: result.explanation, topic });
+      } else {
+        throw new Error("La explicación recibida está vacía.");
+      }
     } catch (error) {
       console.error("Error generating AI explanation:", error);
+      setCurrentExplanation(null); // Ensure explanation is cleared on error
       toast({
         title: "Error al generar explicación",
-        description: "No se pudo obtener la explicación detallada. Inténtalo de nuevo.",
+        description: (error instanceof Error ? error.message : "No se pudo obtener la explicación detallada.") + " Inténtalo de nuevo.",
         variant: "destructive",
       });
     } finally {
       setIsExplaining(false);
     }
   }, [predictedData, toast]);
+
+  const handleReAnalyze = async () => {
+    if (!predictedData?.originalDocumentContent) {
+      toast({
+        title: "Falta contenido",
+        description: "No hay contenido de documento para re-analizar. Sube documentos primero o el contenido anterior no fue guardado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsReAnalyzing(true);
+    try {
+      toast({
+        title: "Re-procesando Documentos",
+        description: "Analizando de nuevo el contenido de tus documentos...",
+      });
+      const analysisResult: AnalyzeDocumentsOutput = await analyzeDocuments({ documentContent: predictedData.originalDocumentContent });
+      
+      toast({
+        title: "Análisis Completo",
+        description: "Generando nuevas predicciones de preguntas...",
+      });
+      const predictionResult: PredictExamQuestionsOutput = await predictExamQuestions({ documentsAnalysis: analysisResult.summary });
+
+      const newDataToStore: PredictedData = {
+        questions: predictionResult.questions,
+        analysisSummary: analysisResult.summary,
+        recurringThemes: analysisResult.recurringThemes,
+        timestamp: Date.now(),
+        originalDocumentContent: predictedData.originalDocumentContent, // Preserve content for future re-analyses
+      };
+
+      localStorage.setItem(PREDICTED_DATA_KEY, JSON.stringify(newDataToStore));
+      setPredictedData(newDataToStore); // Update state to re-render
+
+      toast({
+        title: "¡Nuevas Preguntas Listas!",
+        description: "Se ha generado un nuevo conjunto de preguntas.",
+        variant: "default",
+      });
+      
+    } catch (error) {
+      console.error("Error during AI re-processing:", error);
+      toast({
+        title: "Error en el Re-procesamiento",
+        description: "Hubo un problema al re-analizar los documentos o predecir preguntas. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsReAnalyzing(false);
+    }
+  };
+
 
   if (isLoadingInitialData) {
     return (
@@ -114,6 +174,22 @@ export default function DashboardPage() {
         </AlertDescription>
       </Alert>
 
+      <div className="flex justify-end mb-4">
+        <Button 
+          onClick={handleReAnalyze} 
+          disabled={isReAnalyzing || !predictedData?.originalDocumentContent}
+          variant="outline"
+          className="shadow-md"
+        >
+          {isReAnalyzing ? (
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+          ) : (
+            <RefreshCw className="mr-2 h-5 w-5" />
+          )}
+          Re-analizar y Generar Nuevo Examen
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {predictedData.questions.map((q: PredictedQuestion, index) => (
           <PredictedQuestionCard
@@ -135,3 +211,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
