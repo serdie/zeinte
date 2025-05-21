@@ -1,8 +1,9 @@
+
 "use client";
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, UploadCloud, BookOpenText } from 'lucide-react';
+import { BookOpenText, UploadCloud, Settings } from 'lucide-react'; // Added Settings
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -13,6 +14,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { href: '/', label: 'Panel de Estudio', icon: BookOpenText },
   { href: '/upload', label: 'Subir Documentos', icon: UploadCloud },
+  { href: '/configure', label: 'Configura tu examen', icon: Settings }, // New item
 ];
 
 export default function SidebarNav() {

@@ -1,3 +1,4 @@
+
 export interface PredictedQuestion {
   questionText: string;
   options: string[];
@@ -20,4 +21,9 @@ export interface AIExplanation {
   topic: string;
 }
 
+export type ExamType = "test" | "written" | "oral";
 
+export interface ExamConfig {
+  defaultNumberOfQuestions: number;
+  defaultExamType: ExamType;
+}

@@ -2,7 +2,7 @@
 "use client";
 
 import type React from 'react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, FileText, UploadCloud, XCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
+import type { ExamConfig } from '@/types';
 
 interface FileUploadAreaProps {
   onAnalyze: (content: string, numQuestions: number) => Promise<void>;
@@ -17,11 +19,27 @@ interface FileUploadAreaProps {
 }
 
 const MAX_FILES_UPLOAD = 30;
+const DEFAULT_NUM_QUESTIONS = 10;
 
 export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [numQuestions, setNumQuestions] = useState<string>("10");
+  const [numQuestions, setNumQuestions] = useState<string>(DEFAULT_NUM_QUESTIONS.toString());
   const { toast } = useToast();
+
+  useEffect(() => {
+    const storedConfig = localStorage.getItem(EXAM_CONFIG_KEY);
+    if (storedConfig) {
+      try {
+        const parsedConfig: ExamConfig = JSON.parse(storedConfig);
+        if (parsedConfig.defaultNumberOfQuestions) {
+          setNumQuestions(parsedConfig.defaultNumberOfQuestions.toString());
+        }
+      } catch (error) {
+        console.error("Error parsing exam config for FileUploadArea:", error);
+        // Keep default if error
+      }
+    }
+  }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -102,7 +120,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
         <CardDescription>
           Selecciona archivos (.pdf, .doc, .docx, .txt) desde tu dispositivo. El sistema intentará extraer el texto para analizarlo y predecir preguntas de examen.
           <br />
-          <span className="text-xs text-muted-foreground">Nota: La extracción de texto de PDF y Word puede ser limitada.</span>
+          <span className="text-xs text-muted-foreground">Nota: La extracción de texto de PDF y Word puede ser limitada. El contenido total combinado tiene un límite práctico debido al almacenamiento del navegador.</span>
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -163,6 +181,8 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                 <SelectItem value="10">10 preguntas</SelectItem>
                 <SelectItem value="15">15 preguntas</SelectItem>
                 <SelectItem value="20">20 preguntas</SelectItem>
+                <SelectItem value="25">25 preguntas</SelectItem>
+                <SelectItem value="30">30 preguntas</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -186,4 +206,3 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     </Card>
   );
 }
-

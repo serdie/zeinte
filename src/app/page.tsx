@@ -8,14 +8,16 @@ import AIExplanationDialog from '@/components/dashboard/AIExplanationDialog';
 import { generateAIExplanation, type GenerateAIExplanationOutput, type GenerateAIExplanationInput } from '@/ai/flows/generate-ai-explanations';
 import { analyzeDocuments, type AnalyzeDocumentsOutput } from '@/ai/flows/analyze-documents';
 import { predictExamQuestions, type PredictExamQuestionsOutput } from '@/ai/flows/predict-exam-questions';
-import { PREDICTED_DATA_KEY } from '@/lib/localStorageKeys';
-import type { PredictedData, AIExplanation, PredictedQuestion } from '@/types';
+import { PREDICTED_DATA_KEY, EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
+import type { PredictedData, AIExplanation, PredictedQuestion, ExamConfig } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+
+const DEFAULT_NUM_QUESTIONS_REANALYSIS = "10";
 
 export default function DashboardPage() {
   const [predictedData, setPredictedData] = useState<PredictedData | null>(null);
@@ -27,11 +29,22 @@ export default function DashboardPage() {
   const [selectedQuestionForExplanation, setSelectedQuestionForExplanation] = useState<Omit<GenerateAIExplanationInput, 'topic'> | null>(null);
   const [isExplanationDialogOpen, setIsExplanationDialogOpen] = useState(false);
 
-  const [numQuestionsForReanalysis, setNumQuestionsForReanalysis] = useState<string>("10");
+  const [numQuestionsForReanalysis, setNumQuestionsForReanalysis] = useState<string>(DEFAULT_NUM_QUESTIONS_REANALYSIS);
 
   const { toast } = useToast();
 
   useEffect(() => {
+    const storedConfig = localStorage.getItem(EXAM_CONFIG_KEY);
+    let defaultNumQuestions = DEFAULT_NUM_QUESTIONS_REANALYSIS;
+    if (storedConfig) {
+      try {
+        const parsedConfig: ExamConfig = JSON.parse(storedConfig);
+        if (parsedConfig.defaultNumberOfQuestions) {
+          defaultNumQuestions = parsedConfig.defaultNumberOfQuestions.toString();
+        }
+      } catch (e) { console.error("Failed to parse exam config for dashboard", e); }
+    }
+    
     const storedData = localStorage.getItem(PREDICTED_DATA_KEY);
     if (storedData) {
       try {
@@ -42,15 +55,19 @@ export default function DashboardPage() {
           setPredictedData(null);
         } else {
           setPredictedData(parsedData);
-          if (parsedData.requestedNumberOfQuestions) {
-            setNumQuestionsForReanalysis(parsedData.requestedNumberOfQuestions.toString());
-          }
+          // Use stored requested number if available, otherwise use config default
+          setNumQuestionsForReanalysis(
+            parsedData.requestedNumberOfQuestions?.toString() || defaultNumQuestions
+          );
         }
       } catch (error) {
         console.error("Failed to parse predicted data from localStorage", error);
         localStorage.removeItem(PREDICTED_DATA_KEY);
         setPredictedData(null);
+        setNumQuestionsForReanalysis(defaultNumQuestions);
       }
+    } else {
+        setNumQuestionsForReanalysis(defaultNumQuestions);
     }
     setIsLoadingInitialData(false);
   }, []);
@@ -88,8 +105,9 @@ export default function DashboardPage() {
     if (!predictedData?.originalDocumentContent) {
       toast({
         title: "Falta contenido",
-        description: "No hay contenido de documento para re-analizar. Sube documentos primero o el contenido anterior no fue guardado.",
+        description: "No hay contenido de documento para re-analizar. Sube documentos primero o el contenido anterior no fue guardado (posiblemente debido a su tamaño). Revisa la sección 'Configura tu examen' para más detalles.",
         variant: "destructive",
+        duration: 7000,
       });
       return;
     }
@@ -203,6 +221,8 @@ export default function DashboardPage() {
               <SelectItem value="10">10</SelectItem>
               <SelectItem value="15">15</SelectItem>
               <SelectItem value="20">20</SelectItem>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="30">30</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -242,4 +262,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
