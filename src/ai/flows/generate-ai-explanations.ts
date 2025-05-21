@@ -41,7 +41,7 @@ const prompt = ai.definePrompt({
 
   Options:
   {{#each options}}
-  - {{this}} {{#if (eq @index ../correctAnswerIndex)}}(Correcta){{/if}}
+  - {{this}}
   {{/each}}
 
   Correct Answer: {{lookup options correctAnswerIndex}}
