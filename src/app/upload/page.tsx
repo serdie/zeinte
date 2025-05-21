@@ -30,7 +30,10 @@ export default function UploadPage() {
         title: "Análisis Completo",
         description: "Generando predicciones de preguntas...",
       });
-      const predictionResult: PredictExamQuestionsOutput = await predictExamQuestions({ documentsAnalysis: analysisResult.summary });
+      const predictionResult: PredictExamQuestionsOutput = await predictExamQuestions({ 
+        analysisSummary: analysisResult.summary,
+        recurringThemes: analysisResult.recurringThemes 
+      });
 
       const dataToStore: PredictedData = {
         questions: predictionResult.questions,
@@ -68,4 +71,4 @@ export default function UploadPage() {
     </div>
   );
 }
-
+```

@@ -62,7 +62,7 @@ export default function DashboardPage() {
       if (result && result.explanation) {
         setCurrentExplanation({ question: questionText, explanation: result.explanation, topic });
       } else {
-        throw new Error("La explicación recibida está vacía.");
+        throw new Error("La explicación recibida está vacía o no es válida.");
       }
     } catch (error) {
       console.error("Error generating AI explanation:", error);
@@ -99,7 +99,10 @@ export default function DashboardPage() {
         title: "Análisis Completo",
         description: "Generando nuevas predicciones de preguntas...",
       });
-      const predictionResult: PredictExamQuestionsOutput = await predictExamQuestions({ documentsAnalysis: analysisResult.summary });
+      const predictionResult: PredictExamQuestionsOutput = await predictExamQuestions({ 
+        analysisSummary: analysisResult.summary,
+        recurringThemes: analysisResult.recurringThemes
+      });
 
       const newDataToStore: PredictedData = {
         questions: predictionResult.questions,
@@ -211,4 +214,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

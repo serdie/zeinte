@@ -1,3 +1,4 @@
+
 // src/ai/flows/predict-exam-questions.ts
 'use server';
 /**
@@ -13,11 +14,13 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const PredictExamQuestionsInputSchema = z.object({
-  documentsAnalysis: z
+  analysisSummary: z
     .string()
-    .describe(
-      'Analysis of the documents including topics, frequency, and importance.'
-    ),
+    .describe('A concise summary of the documents.'),
+  recurringThemes: z
+    .array(z.string())
+    .optional()
+    .describe('A list of recurring themes identified in the documents. This provides context on the main topics.'),
 });
 export type PredictExamQuestionsInput = z.infer<typeof PredictExamQuestionsInputSchema>;
 
@@ -44,22 +47,39 @@ const prompt = ai.definePrompt({
   name: 'predictExamQuestionsPrompt',
   input: {schema: PredictExamQuestionsInputSchema},
   output: {schema: PredictExamQuestionsOutputSchema},
-  prompt: `Based on the analysis of the uploaded documents:
+  prompt: `You are an expert exam question creator. Your task is to generate high-quality, multiple-choice exam questions.
+These questions must be **directly and accurately** based on the provided "Document Summary" and "Key Themes".
+The questions should reflect the style and complexity typically found in exams for the subject matter.
 
-  {{{documentsAnalysis}}}
+Document Summary:
+{{{analysisSummary}}}
 
-  Predict potential exam questions.
-  Each question must be multiple-choice style, similar to what might appear in an exam based on the provided documents.
-  Return them as a list of JSON objects. Each object must have the following structure:
-  {
-    "questionText": "The text of the question in Spanish.",
-    "options": ["Option A in Spanish", "Option B in Spanish", "Option C in Spanish", "Option D in Spanish"],
-    "correctAnswerIndex": 0, // (0-based index of the correct option)
-    "explanation": "A brief explanation in Spanish of why this is the correct answer."
-  }
-  Ensure there are 4 options for each question.
-  All text (questionText, options, explanation) must be in Spanish.
-  Generate at least 5-10 questions if the document analysis is rich enough.
+{{#if recurringThemes.length}}
+Key Themes:
+{{#each recurringThemes}}
+- {{{this}}}
+{{/each}}
+{{/if}}
+
+For each question:
+1.  The \`questionText\` must be clear, unambiguous, and in Spanish.
+2.  There must be exactly four \`options\`, all in Spanish.
+3.  One \`option\` must be clearly correct according to the provided "Document Summary" and "Key Themes".
+4.  The other three \`options\` must be plausible distractors: incorrect, but related enough to the topic to challenge a student. Avoid options that are obviously wrong or nonsensical.
+5.  The \`correctAnswerIndex\` must be the 0-based index of the correct option.
+6.  The \`explanation\` must be a concise, clear, and accurate justification in Spanish, explaining *why* the correct answer is correct and *briefly* why the other options are not, based on the provided information.
+
+Return the questions as a list of JSON objects, each conforming to this structure:
+{
+  "questionText": "...",
+  "options": ["...", "...", "...", "..."],
+  "correctAnswerIndex": 0,
+  "explanation": "..."
+}
+
+Ensure all generated text is in Spanish.
+Generate between 5 and 10 questions if the provided information is rich enough. If the summary is very brief or lacks detail, generate fewer questions but maintain high quality.
+The questions must test understanding of the key concepts, facts, and information presented.
   `,
 });
 
@@ -80,4 +100,3 @@ const predictExamQuestionsFlow = ai.defineFlow(
     return output;
   }
 );
-
