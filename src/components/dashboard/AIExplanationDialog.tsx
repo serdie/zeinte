@@ -29,7 +29,7 @@ export default function AIExplanationDialog({
 }: AIExplanationDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent className="sm:max-w-2xl"> {/* MODIFIED: Removed max-h-[80vh] flex flex-col */}
         <DialogHeader>
           <DialogTitle className="text-2xl text-primary flex items-center gap-2">
             <BrainCircuit className="h-6 w-6" />
@@ -41,9 +41,10 @@ export default function AIExplanationDialog({
             </DialogDescription>
           )}
         </DialogHeader>
-        <ScrollArea className="flex-grow h-0"> {/* Modificado: añadido h-0 y quitado pr-6 -mr-6 */}
+        {/* MODIFIED: Changed ScrollArea to use max-h and restored pr-6 -mr-6. Removed h-0 and flex-grow. */}
+        <ScrollArea className="max-h-[60vh] pr-6 -mr-6"> 
           {isLoading ? (
-            <div className="space-y-3 py-4 px-1"> {/* Añadido px-1 para compensar la falta de pr-6 si es necesario */}
+            <div className="space-y-3 py-4"> {/* MODIFIED: Removed px-1 */}
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />
@@ -52,11 +53,11 @@ export default function AIExplanationDialog({
             </div>
           ) : explanation ? (
             <div
-              className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none py-4 px-1 text-foreground" /* Añadido px-1 */
+              className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none py-4 text-foreground" /* MODIFIED: Removed px-1 */
               dangerouslySetInnerHTML={{ __html: explanation.replace(/\n/g, '<br />') }}
             />
           ) : (
-            <p className="py-4 px-1 text-muted-foreground">No hay explicación disponible o la pregunta no fue seleccionada.</p> /* Añadido px-1 */
+            <p className="py-4 text-muted-foreground">No hay explicación disponible o la pregunta no fue seleccionada.</p> /* MODIFIED: Removed px-1 */
           )}
         </ScrollArea>
       </DialogContent>
