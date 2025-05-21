@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -40,9 +41,9 @@ export default function AIExplanationDialog({
             </DialogDescription>
           )}
         </DialogHeader>
-        <ScrollArea className="flex-grow pr-6 -mr-6"> {/* Apply negative margin to offset scrollbar if needed for design */}
+        <ScrollArea className="flex-grow h-0"> {/* Modificado: añadido h-0 y quitado pr-6 -mr-6 */}
           {isLoading ? (
-            <div className="space-y-3 py-4">
+            <div className="space-y-3 py-4 px-1"> {/* Añadido px-1 para compensar la falta de pr-6 si es necesario */}
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />
@@ -51,11 +52,11 @@ export default function AIExplanationDialog({
             </div>
           ) : explanation ? (
             <div
-              className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none py-4 text-foreground"
-              dangerouslySetInnerHTML={{ __html: explanation.replace(/\n/g, '<br />') }} // Simple new line to <br>
+              className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none py-4 px-1 text-foreground" /* Añadido px-1 */
+              dangerouslySetInnerHTML={{ __html: explanation.replace(/\n/g, '<br />') }}
             />
           ) : (
-            <p className="py-4 text-muted-foreground">No hay explicación disponible o la pregunta no fue seleccionada.</p>
+            <p className="py-4 px-1 text-muted-foreground">No hay explicación disponible o la pregunta no fue seleccionada.</p> /* Añadido px-1 */
           )}
         </ScrollArea>
       </DialogContent>
