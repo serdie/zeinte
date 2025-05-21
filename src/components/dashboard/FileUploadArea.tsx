@@ -6,11 +6,13 @@ import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, FileText, UploadCloud, XCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 interface FileUploadAreaProps {
-  onAnalyze: (content: string) => Promise<void>;
+  onAnalyze: (content: string, numQuestions: number) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -18,6 +20,7 @@ const MAX_FILES_UPLOAD = 30;
 
 export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [numQuestions, setNumQuestions] = useState<string>("10");
   const { toast } = useToast();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,7 +32,6 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
           description: `Puedes subir un máximo de ${MAX_FILES_UPLOAD} archivos a la vez.`,
           variant: "destructive",
         });
-        // Clear the input value to allow re-selection of the same file if needed after correction
         event.target.value = ""; 
         return;
       }
@@ -79,7 +81,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
         });
         return;
       }
-      onAnalyze(allFilesContent);
+      onAnalyze(allFilesContent, parseInt(numQuestions, 10));
     } catch (error) {
       console.error("Error processing files:", error);
       toast({
@@ -106,9 +108,9 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="file-upload" className="sr-only">
+            <Label htmlFor="file-upload" className="sr-only">
               Seleccionar archivos
-            </label>
+            </Label>
             <Input
               id="file-upload"
               type="file"
@@ -150,6 +152,21 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
             </div>
           )}
 
+          <div className="space-y-2">
+            <Label htmlFor="num-questions-select">Número de preguntas a generar:</Label>
+            <Select value={numQuestions} onValueChange={setNumQuestions} disabled={isLoading}>
+              <SelectTrigger id="num-questions-select" className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Selecciona cantidad" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5 preguntas</SelectItem>
+                <SelectItem value="10">10 preguntas</SelectItem>
+                <SelectItem value="15">15 preguntas</SelectItem>
+                <SelectItem value="20">20 preguntas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <Button
             type="submit"
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-base font-semibold rounded-md shadow-md transition-transform duration-150 ease-in-out active:scale-95"
@@ -169,3 +186,4 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     </Card>
   );
 }
+

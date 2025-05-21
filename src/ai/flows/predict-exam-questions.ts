@@ -21,6 +21,7 @@ const PredictExamQuestionsInputSchema = z.object({
     .array(z.string())
     .optional()
     .describe('A list of recurring themes identified in the documents. This provides context on the main topics.'),
+  numberOfQuestions: z.number().int().positive().optional().describe('The desired number of questions to generate.'),
 });
 export type PredictExamQuestionsInput = z.infer<typeof PredictExamQuestionsInputSchema>;
 
@@ -61,6 +62,13 @@ Key Themes:
 {{/each}}
 {{/if}}
 
+{{#if numberOfQuestions}}
+Please generate {{{numberOfQuestions}}} questions.
+{{else}}
+Please generate 10 questions.
+{{/if}}
+If the provided information is not rich enough to generate the target number of high-quality questions, generate as many high-quality questions as possible, up to the target number. Prioritize quality over quantity.
+
 For each question:
 1.  The \`questionText\` must be clear, unambiguous, and in Spanish.
 2.  There must be exactly four \`options\`, all in Spanish.
@@ -78,7 +86,6 @@ Return the questions as a list of JSON objects, each conforming to this structur
 }
 
 Ensure all generated text is in Spanish.
-Generate between 5 and 10 questions if the provided information is rich enough. If the summary is very brief or lacks detail, generate fewer questions but maintain high quality.
 The questions must test understanding of the key concepts, facts, and information presented.
   `,
 });
@@ -100,3 +107,4 @@ const predictExamQuestionsFlow = ai.defineFlow(
     return output;
   }
 );
+

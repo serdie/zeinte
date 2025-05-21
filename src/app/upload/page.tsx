@@ -12,13 +12,11 @@ import type { PredictedData } from '@/types';
 
 export default function UploadPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [currentFileContent, setCurrentFileContent] = useState<string | null>(null); // To hold file content for storing
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleAnalyze = async (content: string) => {
+  const handleAnalyze = async (content: string, numQuestions: number) => {
     setIsLoading(true);
-    setCurrentFileContent(content); // Store content temporarily
     try {
       toast({
         title: "Procesando Documento",
@@ -32,7 +30,8 @@ export default function UploadPage() {
       });
       const predictionResult: PredictExamQuestionsOutput = await predictExamQuestions({ 
         analysisSummary: analysisResult.summary,
-        recurringThemes: analysisResult.recurringThemes 
+        recurringThemes: analysisResult.recurringThemes,
+        numberOfQuestions: numQuestions,
       });
 
       const dataToStore: PredictedData = {
@@ -40,7 +39,8 @@ export default function UploadPage() {
         analysisSummary: analysisResult.summary,
         recurringThemes: analysisResult.recurringThemes,
         timestamp: Date.now(),
-        originalDocumentContent: content, // Save the actual document content
+        originalDocumentContent: content,
+        requestedNumberOfQuestions: numQuestions,
       };
 
       localStorage.setItem(PREDICTED_DATA_KEY, JSON.stringify(dataToStore));
@@ -71,3 +71,4 @@ export default function UploadPage() {
     </div>
   );
 }
+

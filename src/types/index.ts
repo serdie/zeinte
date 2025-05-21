@@ -11,6 +11,7 @@ export interface PredictedData {
   recurringThemes: string[];
   timestamp: number; // To potentially expire old data
   originalDocumentContent?: string; // To store the content of the uploaded files for re-analysis
+  requestedNumberOfQuestions?: number; // To store the last requested number of questions
 }
 
 export interface AIExplanation {
@@ -18,4 +19,5 @@ export interface AIExplanation {
   explanation: string;
   topic: string;
 }
+
 

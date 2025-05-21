@@ -12,6 +12,8 @@ import { PREDICTED_DATA_KEY } from '@/lib/localStorageKeys';
 import type { PredictedData, AIExplanation, PredictedQuestion } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,6 +26,8 @@ export default function DashboardPage() {
   const [isExplaining, setIsExplaining] = useState(false);
   const [selectedQuestionForExplanation, setSelectedQuestionForExplanation] = useState<Omit<GenerateAIExplanationInput, 'topic'> | null>(null);
   const [isExplanationDialogOpen, setIsExplanationDialogOpen] = useState(false);
+
+  const [numQuestionsForReanalysis, setNumQuestionsForReanalysis] = useState<string>("10");
 
   const { toast } = useToast();
 
@@ -38,6 +42,9 @@ export default function DashboardPage() {
           setPredictedData(null);
         } else {
           setPredictedData(parsedData);
+          if (parsedData.requestedNumberOfQuestions) {
+            setNumQuestionsForReanalysis(parsedData.requestedNumberOfQuestions.toString());
+          }
         }
       } catch (error) {
         console.error("Failed to parse predicted data from localStorage", error);
@@ -66,7 +73,7 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("Error generating AI explanation:", error);
-      setCurrentExplanation(null); // Ensure explanation is cleared on error
+      setCurrentExplanation(null); 
       toast({
         title: "Error al generar explicación",
         description: (error instanceof Error ? error.message : "No se pudo obtener la explicación detallada.") + " Inténtalo de nuevo.",
@@ -88,6 +95,7 @@ export default function DashboardPage() {
     }
 
     setIsReAnalyzing(true);
+    const requestedNum = parseInt(numQuestionsForReanalysis, 10);
     try {
       toast({
         title: "Re-procesando Documentos",
@@ -101,7 +109,8 @@ export default function DashboardPage() {
       });
       const predictionResult: PredictExamQuestionsOutput = await predictExamQuestions({ 
         analysisSummary: analysisResult.summary,
-        recurringThemes: analysisResult.recurringThemes
+        recurringThemes: analysisResult.recurringThemes,
+        numberOfQuestions: requestedNum,
       });
 
       const newDataToStore: PredictedData = {
@@ -109,15 +118,16 @@ export default function DashboardPage() {
         analysisSummary: analysisResult.summary,
         recurringThemes: analysisResult.recurringThemes,
         timestamp: Date.now(),
-        originalDocumentContent: predictedData.originalDocumentContent, // Preserve content for future re-analyses
+        originalDocumentContent: predictedData.originalDocumentContent,
+        requestedNumberOfQuestions: requestedNum,
       };
 
       localStorage.setItem(PREDICTED_DATA_KEY, JSON.stringify(newDataToStore));
-      setPredictedData(newDataToStore); // Update state to re-render
+      setPredictedData(newDataToStore);
 
       toast({
         title: "¡Nuevas Preguntas Listas!",
-        description: "Se ha generado un nuevo conjunto de preguntas.",
+        description: `Se ha generado un nuevo conjunto de ${predictionResult.questions.length} preguntas.`,
         variant: "default",
       });
       
@@ -177,12 +187,30 @@ export default function DashboardPage() {
         </AlertDescription>
       </Alert>
 
-      <div className="flex justify-end mb-4">
+      <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mb-4">
+        <div className="flex items-center gap-2">
+          <Label htmlFor="num-questions-reanalysis-select" className="text-sm font-medium">Número de preguntas:</Label>
+          <Select 
+            value={numQuestionsForReanalysis} 
+            onValueChange={setNumQuestionsForReanalysis}
+            disabled={isReAnalyzing || !predictedData?.originalDocumentContent}
+          >
+            <SelectTrigger id="num-questions-reanalysis-select" className="w-[150px] sm:w-auto">
+              <SelectValue placeholder="Cantidad" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="5">5</SelectItem>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="15">15</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <Button 
           onClick={handleReAnalyze} 
           disabled={isReAnalyzing || !predictedData?.originalDocumentContent}
           variant="outline"
-          className="shadow-md"
+          className="shadow-md w-full sm:w-auto"
         >
           {isReAnalyzing ? (
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -214,3 +242,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
