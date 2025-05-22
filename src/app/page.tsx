@@ -9,12 +9,12 @@ import { generateAIExplanation, type GenerateAIExplanationOutput, type GenerateA
 import { analyzeDocuments, type AnalyzeDocumentsOutput } from '@/ai/flows/analyze-documents';
 import { predictExamQuestions, type PredictExamQuestionsOutput } from '@/ai/flows/predict-exam-questions';
 import { PREDICTED_DATA_KEY, EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
-import type { PredictedData, AIExplanation, PredictedQuestion, ExamConfig } from '@/types';
+import type { PredictedData, AIExplanation, PredictedQuestion, ExamConfig, AnalysisDetails } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw } from 'lucide-react';
+import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw, Microscope } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 const DEFAULT_NUM_QUESTIONS_REANALYSIS = "10";
@@ -55,7 +55,6 @@ export default function DashboardPage() {
           setPredictedData(null);
         } else {
           setPredictedData(parsedData);
-          // Use stored requested number if available, otherwise use config default
           setNumQuestionsForReanalysis(
             parsedData.requestedNumberOfQuestions?.toString() || defaultNumQuestions
           );
@@ -80,7 +79,7 @@ export default function DashboardPage() {
     setCurrentExplanation(null); 
 
     try {
-      const topic = predictedData?.recurringThemes?.[0] || "Tema General";
+      const topic = predictedData?.recurringThemes?.[0] || predictedData?.potentialFocusAreas?.[0] || "Tema General";
       
       const result: GenerateAIExplanationOutput = await generateAIExplanation({ ...questionContext, topic });
       if (result && result.explanation) {
@@ -117,18 +116,20 @@ export default function DashboardPage() {
     try {
       toast({
         title: "Re-procesando Documentos",
-        description: "Analizando de nuevo el contenido de tus documentos...",
+        description: "Realizando un análisis profundo del contenido de tus documentos...",
       });
       const analysisResult: AnalyzeDocumentsOutput = await analyzeDocuments({ documentContent: predictedData.originalDocumentContent });
       
       toast({
-        title: "Análisis Completo",
-        description: "Generando nuevas predicciones de preguntas...",
+        title: "Análisis Detallado Completo",
+        description: "Generando nuevas predicciones de preguntas basadas en el análisis avanzado...",
       });
       const predictionResult: PredictExamQuestionsOutput = await predictExamQuestions({ 
         analysisSummary: analysisResult.summary,
         recurringThemes: analysisResult.recurringThemes,
         numberOfQuestions: requestedNum,
+        identifiedExamPatterns: analysisResult.identifiedExamPatterns,
+        potentialFocusAreas: analysisResult.potentialFocusAreas,
       });
 
       const newDataToStore: PredictedData = {
@@ -138,6 +139,8 @@ export default function DashboardPage() {
         timestamp: Date.now(),
         originalDocumentContent: predictedData.originalDocumentContent,
         requestedNumberOfQuestions: requestedNum,
+        identifiedExamPatterns: analysisResult.identifiedExamPatterns,
+        potentialFocusAreas: analysisResult.potentialFocusAreas,
       };
 
       localStorage.setItem(PREDICTED_DATA_KEY, JSON.stringify(newDataToStore));
@@ -145,22 +148,21 @@ export default function DashboardPage() {
 
       toast({
         title: "¡Nuevas Preguntas Listas!",
-        description: `Se ha generado un nuevo conjunto de ${predictionResult.questions.length} preguntas.`,
+        description: `Se ha generado un nuevo conjunto de ${predictionResult.questions.length} preguntas con análisis mejorado.`,
         variant: "default",
       });
       
     } catch (error) {
       console.error("Error during AI re-processing:", error);
       toast({
-        title: "Error en el Re-procesamiento",
-        description: "Hubo un problema al re-analizar los documentos o predecir preguntas. Inténtalo de nuevo.",
+        title: "Error en el Re-procesamiento Avanzado",
+        description: (error instanceof Error ? error.message : "Hubo un problema al re-analizar los documentos o predecir preguntas.") + " Inténtalo de nuevo.",
         variant: "destructive",
       });
     } finally {
       setIsReAnalyzing(false);
     }
   };
-
 
   if (isLoadingInitialData) {
     return (
@@ -198,9 +200,21 @@ export default function DashboardPage() {
           Hemos analizado tus documentos y estas son las preguntas tipo test que creemos podrían aparecer en tu examen. 
           Selecciona una opción para ver si es correcta y pide a la IA una explicación detallada. ¡Mucha suerte!
           <br />
-          Resumen del análisis: {predictedData.analysisSummary.substring(0,150)}...
+          <span className="font-medium">Resumen del análisis:</span> {predictedData.analysisSummary.substring(0,150)}...
           {predictedData.recurringThemes && predictedData.recurringThemes.length > 0 && (
-            <span className="block mt-1 text-sm">Temas principales: {predictedData.recurringThemes.join(', ')}.</span>
+            <span className="block mt-1 text-sm"><span className="font-medium">Temas principales:</span> {predictedData.recurringThemes.join(', ')}.</span>
+          )}
+           {predictedData.potentialFocusAreas && predictedData.potentialFocusAreas.length > 0 && (
+            <span className="block mt-1 text-sm"><span className="font-medium">Áreas de enfoque detectadas:</span> {predictedData.potentialFocusAreas.join(', ')}.</span>
+          )}
+          {predictedData.identifiedExamPatterns && (
+            <Alert variant="default" className="mt-2 bg-primary/10 border-primary/30">
+                <Microscope className="h-4 w-4 text-primary" />
+                <AlertTitle className="text-primary text-sm">Patrones de Examen Identificados</AlertTitle>
+                <AlertDescription className="text-primary/70 text-xs">
+                    {predictedData.identifiedExamPatterns}
+                </AlertDescription>
+            </Alert>
           )}
         </AlertDescription>
       </Alert>

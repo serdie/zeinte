@@ -20,18 +20,20 @@ export default function UploadPage() {
     try {
       toast({
         title: "Procesando Documento",
-        description: "Analizando el contenido de tu documento...",
+        description: "Analizando el contenido de tu documento en profundidad...",
       });
       const analysisResult: AnalyzeDocumentsOutput = await analyzeDocuments({ documentContent: content });
       
       toast({
         title: "Análisis Completo",
-        description: "Generando predicciones de preguntas...",
+        description: "Generando predicciones de preguntas basadas en el análisis detallado...",
       });
       const predictionResult: PredictExamQuestionsOutput = await predictExamQuestions({ 
         analysisSummary: analysisResult.summary,
         recurringThemes: analysisResult.recurringThemes,
         numberOfQuestions: numQuestions,
+        identifiedExamPatterns: analysisResult.identifiedExamPatterns,
+        potentialFocusAreas: analysisResult.potentialFocusAreas,
       });
 
       const dataToStore: PredictedData = {
@@ -41,6 +43,8 @@ export default function UploadPage() {
         timestamp: Date.now(),
         originalDocumentContent: content,
         requestedNumberOfQuestions: numQuestions,
+        identifiedExamPatterns: analysisResult.identifiedExamPatterns,
+        potentialFocusAreas: analysisResult.potentialFocusAreas,
       };
 
       localStorage.setItem(PREDICTED_DATA_KEY, JSON.stringify(dataToStore));
@@ -57,7 +61,7 @@ export default function UploadPage() {
       console.error("Error during AI processing:", error);
       toast({
         title: "Error en el Procesamiento",
-        description: "Hubo un problema al analizar el documento o predecir preguntas. Inténtalo de nuevo.",
+        description: (error instanceof Error ? error.message : "Hubo un problema al analizar el documento o predecir preguntas.") + " Inténtalo de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -71,4 +75,3 @@ export default function UploadPage() {
     </div>
   );
 }
-

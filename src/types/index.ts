@@ -6,17 +6,22 @@ export interface PredictedQuestion {
   explanation?: string;
 }
 
-export interface PredictedData {
+export interface AnalysisDetails {
+  identifiedExamPatterns?: string; // Descripción de patrones de exámenes pasados, si se encuentran
+  potentialFocusAreas?: string[]; // Áreas de enfoque deducidas, con énfasis en exámenes pasados
+}
+
+export interface PredictedData extends AnalysisDetails {
   questions: PredictedQuestion[];
   analysisSummary: string;
   recurringThemes: string[];
-  timestamp: number; // To potentially expire old data
-  originalDocumentContent?: string; // To store the content of the uploaded files for re-analysis
-  requestedNumberOfQuestions?: number; // To store the last requested number of questions
+  timestamp: number;
+  originalDocumentContent?: string;
+  requestedNumberOfQuestions?: number;
 }
 
 export interface AIExplanation {
-  question: string; // This is the main question text
+  question: string;
   explanation: string;
   topic: string;
 }
