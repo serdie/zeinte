@@ -2,13 +2,14 @@
 "use client";
 
 import type React from 'react';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, FileText, UploadCloud, XCircle } from 'lucide-react';
+import { Progress } from "@/components/ui/progress";
+import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
 import type { ExamConfig } from '@/types';
@@ -20,11 +21,26 @@ interface FileUploadAreaProps {
 
 const MAX_FILES_UPLOAD = 30;
 const DEFAULT_NUM_QUESTIONS = 10;
+const MAX_TOTAL_SIZE_MB = 5; // Límite de referencia en MB para la barra de progreso de tamaño
+const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
+
+function formatBytes(bytes: number, decimals = 2) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
 
 export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [numQuestions, setNumQuestions] = useState<string>(DEFAULT_NUM_QUESTIONS.toString());
   const { toast } = useToast();
+
+  const totalSizeInBytes = useMemo(() => {
+    return selectedFiles.reduce((acc, file) => acc + file.size, 0);
+  }, [selectedFiles]);
 
   useEffect(() => {
     const storedConfig = localStorage.getItem(EXAM_CONFIG_KEY);
@@ -36,7 +52,6 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
         }
       } catch (error) {
         console.error("Error parsing exam config for FileUploadArea:", error);
-        // Keep default if error
       }
     }
   }, []);
@@ -53,7 +68,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
         event.target.value = ""; 
         return;
       }
-      setSelectedFiles(prevFiles => [...prevFiles, ...newFiles]);
+      setSelectedFiles(prevFiles => [...prevFiles, ...newFiles].slice(0, MAX_FILES_UPLOAD));
     }
   };
 
@@ -70,6 +85,15 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
         variant: "destructive",
       });
       return;
+    }
+
+    if (totalSizeInBytes > MAX_TOTAL_SIZE_BYTES) {
+        toast({
+            title: "Tamaño total excede el límite sugerido",
+            description: `El tamaño total de los archivos (${formatBytes(totalSizeInBytes)}) excede el límite sugerido de ${MAX_TOTAL_SIZE_MB}MB. Esto podría afectar la función de "Re-analizar". Puedes continuar, pero tenlo en cuenta.`,
+            variant: "destructive",
+            duration: 7000,
+        });
     }
 
     let allFilesContent = "";
@@ -110,6 +134,9 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     }
   };
 
+  const filesProgress = (selectedFiles.length / MAX_FILES_UPLOAD) * 100;
+  const sizeProgress = Math.min((totalSizeInBytes / MAX_TOTAL_SIZE_BYTES) * 100, 100);
+
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-lg">
       <CardHeader>
@@ -119,8 +146,6 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
         </CardTitle>
         <CardDescription>
           Selecciona archivos (.pdf, .doc, .docx, .txt) desde tu dispositivo. El sistema intentará extraer el texto para analizarlo y predecir preguntas de examen.
-          <br />
-          <span className="text-xs text-muted-foreground">Nota: La extracción de texto de PDF y Word puede ser limitada. El contenido total combinado tiene un límite práctico debido al almacenamiento del navegador.</span>
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -144,29 +169,57 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
           </div>
 
           {selectedFiles.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-foreground">Archivos Seleccionados ({selectedFiles.length}/{MAX_FILES_UPLOAD}):</h4>
-              <ul className="max-h-48 overflow-y-auto space-y-1 rounded-md border p-2 bg-muted/50">
-                {selectedFiles.map(file => (
-                  <li key={file.name} className="text-xs text-foreground flex justify-between items-center p-1.5 bg-background rounded shadow-sm">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-primary" />
-                      <span className="truncate max-w-xs" title={file.name}>{file.name}</span>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <Label htmlFor="files-progress" className="text-sm font-medium">Archivos seleccionados:</Label>
+                  <span className="text-xs text-muted-foreground">{selectedFiles.length} / {MAX_FILES_UPLOAD}</span>
+                </div>
+                <Progress value={filesProgress} id="files-progress" className="w-full h-2" />
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <Label htmlFor="size-progress" className="text-sm font-medium">Tamaño total estimado:</Label>
+                  <span className="text-xs text-muted-foreground">{formatBytes(totalSizeInBytes)} / {MAX_TOTAL_SIZE_MB} MB</span>
+                </div>
+                <Progress value={sizeProgress} id="size-progress" className="w-full h-2" 
+                          aria-label={`Progreso de tamaño: ${sizeProgress.toFixed(0)}%`} />
+                {totalSizeInBytes > MAX_TOTAL_SIZE_BYTES * 0.8 && (
+                     <div className="mt-2 text-xs text-amber-600 flex items-start gap-1">
+                        <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                        <span>
+                        El almacenamiento en el navegador es limitado (generalmente 5-10MB). Si el tamaño total es muy grande, la función "Re-analizar" podría no funcionar correctamente ya que depende de estos datos guardados.
+                        </span>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5 text-muted-foreground hover:text-destructive"
-                      onClick={() => removeFile(file.name)}
-                      disabled={isLoading}
-                      aria-label={`Quitar ${file.name}`}
-                    >
-                      <XCircle className="h-4 w-4" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-foreground">Lista de Archivos ({selectedFiles.length}):</h4>
+                <ul className="max-h-48 overflow-y-auto space-y-1 rounded-md border p-2 bg-muted/50">
+                  {selectedFiles.map(file => (
+                    <li key={file.name} className="text-xs text-foreground flex justify-between items-center p-1.5 bg-background rounded shadow-sm">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText className="h-4 w-4 text-primary shrink-0" />
+                        <span className="truncate" title={file.name}>{file.name}</span>
+                        <span className="text-muted-foreground text-nowrap shrink-0">({formatBytes(file.size)})</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 text-muted-foreground hover:text-destructive shrink-0"
+                        onClick={() => removeFile(file.name)}
+                        disabled={isLoading}
+                        aria-label={`Quitar ${file.name}`}
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           )}
 
