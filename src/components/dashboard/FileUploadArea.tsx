@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, CheckSquare, Square } from 'lucide-react';
+import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, CheckSquare, Square, Brain } from 'lucide-react'; // Added Brain
 import { useToast } from "@/hooks/use-toast";
 import { EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
 import type { ExamConfig } from '@/types';
@@ -93,11 +93,30 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     setDeepSearchResults(null);
     setSelectedDeepSearchDocIds([]);
     try {
+      toast({
+        title: "Buscando Sugerencias IA...",
+        description: "La IA está generando ideas de documentos relevantes para tu tema. Esto puede tardar unos momentos.",
+      });
       const results = await findExternalDocuments({ topic: deepSearchTopic });
       setDeepSearchResults(results);
+      if (results.results.length === 0 && results.message.includes("no pudo generar sugerencias")) {
+         toast({
+            title: "Sugerencias IA",
+            description: results.message,
+            variant: "default",
+            duration: 7000,
+        });
+      } else if (results.results.length > 0) {
+         toast({
+            title: "Sugerencias IA Listas",
+            description: `Se encontraron ${results.results.length} sugerencias. Recuerda que el contenido detallado es simulado.`,
+            variant: "default",
+        });
+      }
+
     } catch (error) {
       console.error("Error during deep search:", error);
-      toast({ title: "Error en la Búsqueda", description: "No se pudieron obtener resultados simulados.", variant: "destructive" });
+      toast({ title: "Error en la Búsqueda IA", description: (error instanceof Error ? error.message : "No se pudieron obtener sugerencias de documentos."), variant: "destructive" });
     } finally {
       setIsDeepSearching(false);
     }
@@ -153,7 +172,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
 
       const deepSearchDocsContent = deepSearchResults?.results
         .filter(doc => selectedDeepSearchDocIds.includes(doc.id))
-        .map(doc => `Contenido del archivo (búsqueda IA): ${doc.title}\n\n${doc.simulatedTextContent}\n\n---\n\n`)
+        .map(doc => `Contenido del documento (sugerido por IA): ${doc.title}\n\n${doc.simulatedTextContent}\n\n---\n\n`)
         .join('') || "";
       
       allFilesContent += deepSearchDocsContent;
@@ -271,11 +290,11 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
       <Card className="w-full shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">
-            <Search className="h-7 w-7 text-accent" />
-            Búsqueda IA de Documentos (Demo)
+            <Brain className="h-7 w-7 text-accent" /> {/* Changed icon to Brain */}
+            Sugerencias IA de Documentos
           </CardTitle>
           <CardDescription>
-            Introduce un tema y la IA simulará una búsqueda de documentos relevantes. Podrás añadir su contenido simulado al análisis.
+            Introduce un tema y la IA sugerirá títulos y resúmenes de documentos relevantes. Podrás añadir su contenido simulado al análisis.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -293,7 +312,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
               />
               <Button onClick={handleDeepSearch} disabled={isLoading || isDeepSearching || !deepSearchTopic.trim()} className="bg-accent hover:bg-accent/90 text-accent-foreground">
                 {isDeepSearching ? <Loader2 className="animate-spin" /> : <Search className="h-5 w-5" />}
-                <span className="ml-2">Buscar</span>
+                <span className="ml-2">Sugerir</span>
               </Button>
             </div>
           </div>
@@ -301,16 +320,16 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
           {isDeepSearching && (
             <div className="flex items-center justify-center py-4">
               <Loader2 className="h-8 w-8 animate-spin text-accent" />
-              <p className="ml-2 text-muted-foreground">Buscando documentos simulados...</p>
+              <p className="ml-2 text-muted-foreground">IA generando sugerencias...</p>
             </div>
           )}
 
           {deepSearchResults && (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">{deepSearchResults.message}</p>
+              <p className="text-sm text-muted-foreground italic">{deepSearchResults.message}</p>
               {deepSearchResults.results.length > 0 && (
                  <div className="space-y-2 max-h-60 overflow-y-auto border p-3 rounded-md bg-muted/30">
-                  <h4 className="text-sm font-medium text-foreground">Resultados Simulados ({deepSearchResults.results.length}):</h4>
+                  <h4 className="text-sm font-medium text-foreground">Sugerencias de la IA ({deepSearchResults.results.length}):</h4>
                   {deepSearchResults.results.map((doc) => (
                     <div key={doc.id} className="flex items-center space-x-2 p-2 bg-background rounded-md shadow-sm hover:bg-muted/50">
                       <Checkbox
@@ -318,10 +337,12 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                         checked={selectedDeepSearchDocIds.includes(doc.id)}
                         onCheckedChange={() => toggleDeepSearchDocSelection(doc.id)}
                         disabled={isLoading || isDeepSearching}
+                        aria-label={`Seleccionar ${doc.title}`}
                       />
                       <Label htmlFor={`ds-${doc.id}`} className="text-xs font-normal flex-1 cursor-pointer">
                         <span className="font-medium text-foreground block">{doc.title}</span>
                         <span className="text-muted-foreground text-xs block">{doc.source}</span>
+                         <p className="text-xs text-muted-foreground/80 mt-1">{doc.simulatedTextContent.split('\n\n')[0]}</p> {/* Show abstract */}
                       </Label>
                     </div>
                   ))}
@@ -335,7 +356,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
       <div className="lg:col-span-2 space-y-6 p-6 border rounded-lg shadow-lg bg-card">
           <div className="space-y-2">
             <Label htmlFor="num-questions-select" className="text-lg font-semibold text-primary">Configuración Final del Análisis:</Label>
-            <p className="text-sm text-muted-foreground">Define cuántas preguntas quieres generar a partir de todos los documentos (subidos manualmente y/o seleccionados de la búsqueda IA).</p>
+            <p className="text-sm text-muted-foreground">Define cuántas preguntas quieres generar a partir de todos los documentos (subidos manualmente y/o seleccionados de las sugerencias IA).</p>
             <Select value={numQuestions} onValueChange={setNumQuestions} disabled={isLoading || isDeepSearching}>
               <SelectTrigger id="num-questions-select" className="w-full sm:w-[250px] text-base py-3">
                 <SelectValue placeholder="Selecciona cantidad" />
@@ -370,3 +391,4 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     </div>
   );
 }
+
