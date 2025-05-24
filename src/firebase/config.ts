@@ -59,6 +59,7 @@ if (allVarsPresent) {
     } catch (error) {
       console.error("🔥 Firebase initialization error (initializeApp failed):", error);
       // firebaseAppInstance remains undefined
+      allVarsPresent = false; // Mark as not fully configured if initializeApp fails
     }
   } else {
     firebaseAppInstance = getApps()[0];
@@ -68,6 +69,7 @@ if (allVarsPresent) {
         // This case should ideally not happen if getApps().length > 0
         console.error("🔥 Could not properly re-use existing Firebase App instance despite getApps() reporting an instance.");
         firebaseAppInstance = undefined; 
+        allVarsPresent = false;
     }
   }
 
@@ -82,18 +84,29 @@ if (allVarsPresent) {
         // these will remain undefined.
         firebaseAuthInstance = undefined;
         firebaseGoogleProviderInstance = undefined;
+        allVarsPresent = false; // Mark as not fully configured if auth setup fails
     }
+  } else {
+      // If firebaseAppInstance itself is undefined after attempt
+      allVarsPresent = false;
   }
 
-} else {
+}
+
+if (!allVarsPresent) {
+  // This final check ensures the message is displayed if any step failed or if initial vars were missing
   console.error(
-    "\n\n--- 🚨 Firebase Environment Variable Check FAILED. One or more required Firebase variables are missing. Firebase will NOT be initialized. Please check your .env.local file and RESTART your server. ---"
+    "\n\n--- 🚨 Firebase Environment Variable Check OR Initialization FAILED. One or more required Firebase variables might be missing or initialization failed. Firebase will NOT be fully functional. Please check your .env.local file and RESTART your server. Review console logs for specific missing variables or errors. ---"
   );
-  // firebaseAppInstance, firebaseAuthInstance, firebaseGoogleProviderInstance remain undefined as initialized
+  // Ensure instances are undefined if config is incomplete
+  firebaseAppInstance = undefined;
+  firebaseAuthInstance = undefined;
+  firebaseGoogleProviderInstance = undefined;
 }
 
 export { 
   firebaseAppInstance as app, 
   firebaseAuthInstance as auth, 
-  firebaseGoogleProviderInstance as googleProvider 
+  firebaseGoogleProviderInstance as googleProvider,
+  allVarsPresent as isFirebaseFullyConfigured // Export a flag indicating full configuration status
 };

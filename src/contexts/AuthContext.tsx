@@ -13,49 +13,51 @@ import {
   signOut as firebaseSignOut,
   AuthError
 } from 'firebase/auth';
-import { auth, googleProvider } from '@/firebase/config'; // auth and googleProvider can be undefined
+// Import the flag as well
+import { auth, googleProvider, isFirebaseFullyConfigured } from '@/firebase/config'; 
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
-  isFirebaseConfigured: boolean;
+  isFirebaseConfigured: boolean; // Renamed for clarity from isFirebaseFullyConfigured
   signUpWithEmail: (email: string, password: string) => Promise<User | string>;
   loginWithEmail: (email: string, password: string) => Promise<User | string>;
   signInWithGoogle: () => Promise<User | string>;
   logout: () => Promise<void | string>;
 }
 
-const FIREBASE_CONFIG_ERROR_MESSAGE = "Error de Configuración de Firebase: Una o más variables de entorno de Firebase (NEXT_PUBLIC_FIREBASE_...) faltan en tu archivo .env.local o son incorrectas, o la inicialización de Firebase falló. Por favor, revisa la configuración de tu proyecto (y los logs del servidor) y reinicia el servidor. La autenticación no funcionará.";
+const FIREBASE_CONFIG_ERROR_MESSAGE = "Error de Configuración de Firebase: Faltan una o más variables de entorno de Firebase (NEXT_PUBLIC_FIREBASE_...) en tu archivo .env.local, son incorrectas, o la inicialización de Firebase falló. Por favor, revisa la configuración de tu proyecto (y los logs del servidor/consola) y REINICIA el servidor de desarrollo. La autenticación no funcionará hasta que esto se resuelva.";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  // Check if auth object is available from config, indicating basic Firebase setup was attempted AND successful
-  const isFirebaseConfigured = !!auth && !!googleProvider; 
+  // Use the imported flag from firebase/config.ts
+  const isConfigured = isFirebaseFullyConfigured; 
   const router = useRouter();
 
   useEffect(() => {
-    if (!isFirebaseConfigured) { 
-      console.warn("AuthContext: Firebase auth is not configured or not initialized correctly. Skipping onAuthStateChanged listener.");
+    if (!isConfigured || !auth) { 
+      console.warn("AuthContext: Firebase auth is not configured, not initialized correctly, or required environment variables are missing. Skipping onAuthStateChanged listener.");
       setLoading(false);
       return;
     }
-    // This assertion is safe because of the isFirebaseConfigured check above
-    const unsubscribe = onAuthStateChanged(auth!, (user) => {
+    // `auth` object is checked above
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       setLoading(false);
     });
     return () => unsubscribe();
-  }, [isFirebaseConfigured]);
+  }, [isConfigured]);
 
   const handleAuthError = (error: AuthError): string => {
     console.error("Firebase Auth Error:", error.code, error.message);
     if (error.code === 'auth/invalid-api-key' || (error.code === 'auth/internal-error' && error.message.includes("apiKey")) || error.code === 'auth/configuration-not-found') {
         return FIREBASE_CONFIG_ERROR_MESSAGE;
     }
+    // ... (other error codes remain the same)
     switch (error.code) {
       case 'auth/email-already-in-use':
         return 'Este correo electrónico ya está en uso.';
@@ -81,11 +83,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUpWithEmail = async (email: string, password: string): Promise<User | string> => {
-    if (!isFirebaseConfigured) return FIREBASE_CONFIG_ERROR_MESSAGE;
+    if (!isConfigured || !auth) return FIREBASE_CONFIG_ERROR_MESSAGE;
     setLoading(true);
     try {
-      // These assertions are safe because of the isFirebaseConfigured check
-      const userCredential = await createUserWithEmailAndPassword(auth!, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       setCurrentUser(userCredential.user);
       return userCredential.user;
     } catch (error) {
@@ -96,11 +97,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginWithEmail = async (email: string, password: string): Promise<User | string> => {
-    if (!isFirebaseConfigured) return FIREBASE_CONFIG_ERROR_MESSAGE;
+    if (!isConfigured || !auth) return FIREBASE_CONFIG_ERROR_MESSAGE;
     setLoading(true);
     try {
-      // These assertions are safe because of the isFirebaseConfigured check
-      const userCredential = await signInWithEmailAndPassword(auth!, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       setCurrentUser(userCredential.user);
       return userCredential.user;
     } catch (error) {
@@ -111,11 +111,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signInWithGoogle = async (): Promise<User | string> => {
-    if (!isFirebaseConfigured) return FIREBASE_CONFIG_ERROR_MESSAGE;
+    if (!isConfigured || !auth || !googleProvider) return FIREBASE_CONFIG_ERROR_MESSAGE;
     setLoading(true);
     try {
-      // These assertions are safe because of the isFirebaseConfigured check
-      const result = await signInWithPopup(auth!, googleProvider!);
+      const result = await signInWithPopup(auth, googleProvider);
       setCurrentUser(result.user);
       return result.user;
     } catch (error) {
@@ -126,16 +125,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async (): Promise<void | string> => {
-    if (!isFirebaseConfigured) {
-      // Even if not configured, ensure client state is cleared and redirected
+    // Clear client state and redirect even if Firebase isn't fully configured,
+    // but prioritize the config error message if applicable.
+    if (!isConfigured || !auth) {
       setCurrentUser(null);
-      if (router) router.push('/login'); // Check if router is available
+      if (router) router.push('/login'); 
       return FIREBASE_CONFIG_ERROR_MESSAGE;
     }
+    
     setLoading(true);
     try {
-      // This assertion is safe because of the isFirebaseConfigured check
-      await firebaseSignOut(auth!);
+      await firebaseSignOut(auth);
       setCurrentUser(null);
       router.push('/login'); 
     } catch (error) {
@@ -149,7 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     currentUser,
     loading,
-    isFirebaseConfigured,
+    isFirebaseConfigured: isConfigured, // Use the renamed variable
     signUpWithEmail,
     loginWithEmail,
     signInWithGoogle,
