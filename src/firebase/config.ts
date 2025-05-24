@@ -1,7 +1,7 @@
 
 // src/firebase/config.ts
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth'; // Added type Auth
+import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth';
 
 const requiredEnvVars: Record<string, string | undefined> = {
   NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -15,7 +15,8 @@ const requiredEnvVars: Record<string, string | undefined> = {
 let allVarsPresent = true;
 console.log("--- Checking Firebase Environment Variables ---");
 for (const varName in requiredEnvVars) {
-  if (!requiredEnvVars[varName]) {
+  const varValue = requiredEnvVars[varName];
+  if (!varValue) {
     console.error(
       `\n\n🛑 CRITICAL Firebase Configuration Error:\n` +
       `   Environment variable ${varName} is MISSING or EMPTY.\n` +
@@ -23,18 +24,24 @@ for (const varName in requiredEnvVars) {
       `   After adding/correcting it, YOU MUST RESTART your Next.js development server.\n` +
       `   Firebase will NOT initialize correctly without it, leading to 'auth/invalid-api-key' or other errors.\n\n`
     );
+    if (varName === 'NEXT_PUBLIC_FIREBASE_API_KEY') {
+        console.error("    Specific Issue: The API KEY is the most critical piece for Firebase to connect.");
+    }
     allVarsPresent = false;
   } else {
-    // Mask sensitive parts of the key for logging, but confirm it's present
     if (varName === 'NEXT_PUBLIC_FIREBASE_API_KEY') {
-      console.log(`✅ ${varName} is present (e.g., ${requiredEnvVars[varName]?.substring(0,5)}...${requiredEnvVars[varName]?.slice(-5)})`);
+      console.log(`✅ ${varName} is present (e.g., ${varValue.substring(0,5)}...${varValue.slice(-5)})`);
     } else {
-      console.log(`✅ ${varName} is present: ${requiredEnvVars[varName]}`);
+      console.log(`✅ ${varName} is present: ${varValue}`);
     }
   }
 }
-console.log("--- Finished Checking Firebase Environment Variables ---");
 
+if (!allVarsPresent) {
+    console.error("\n--- Firebase Environment Variable Check FAILED. Some variables are missing. ---");
+} else {
+    console.log("--- Firebase Environment Variable Check PASSED. All required variables are present. ---");
+}
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -48,8 +55,8 @@ const firebaseConfig = {
 
 // Initialize Firebase
 let app: FirebaseApp;
-let auth: Auth | undefined = undefined; // Initialize as undefined
-let googleProvider: GoogleAuthProvider | undefined = undefined; // Initialize as undefined
+let auth: Auth | undefined = undefined; 
+let googleProvider: GoogleAuthProvider | undefined = undefined;
 
 if (allVarsPresent) {
   if (!getApps().length) {
@@ -59,18 +66,15 @@ if (allVarsPresent) {
       googleProvider = new GoogleAuthProvider();
       console.log("✅ Firebase App initialized successfully.");
     } catch (error) {
-      console.error("🔥 Firebase initialization error:", error);
-      // If initializeApp itself fails (e.g. due to malformed but present keys), app might not be set
-      // Set app to a dummy object to potentially prevent some downstream errors, though Firebase will be unusable.
-      app = {} as FirebaseApp; 
+      console.error("🔥 Firebase initialization error (initializeApp or getAuth failed):", error);
+      app = {} as FirebaseApp; // Assign a dummy app object
       auth = undefined;
       googleProvider = undefined;
       console.error("🔥 Firebase App could not be initialized. Firebase features will be disabled.");
     }
   } else {
     app = getApps()[0];
-    // Ensure auth and googleProvider are also initialized if app already exists
-    if (app && app.name) { // Check if it's a valid app
+    if (app && app.name) { 
         try {
             auth = getAuth(app);
             googleProvider = new GoogleAuthProvider();
@@ -80,6 +84,12 @@ if (allVarsPresent) {
             auth = undefined;
             googleProvider = undefined;
         }
+    } else {
+        // This case should ideally not be reached if getApps().length > 0
+        app = {} as FirebaseApp;
+        auth = undefined;
+        googleProvider = undefined;
+        console.error("🔥 Could not re-use existing Firebase App instance properly.");
     }
   }
 } else {
@@ -88,9 +98,7 @@ if (allVarsPresent) {
     "Firebase features (like Authentication) will NOT work. " +
     "Please check your .env.local file and RESTART your server.\n\n"
   );
-  // Assign a dummy app object to prevent 'app is not defined' errors further down,
-  // although Firebase services will not be functional.
-  app = {} as FirebaseApp;
+  app = {} as FirebaseApp; // Assign a dummy app object
   auth = undefined;
   googleProvider = undefined;
 }
