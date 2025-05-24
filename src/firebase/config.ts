@@ -29,6 +29,7 @@ for (const varName in requiredEnvVars) {
     }
     allVarsPresent = false;
   } else {
+    // Obfuscate sensitive values in logs for general variables, show part of API_KEY for confirmation
     if (varName === 'NEXT_PUBLIC_FIREBASE_API_KEY') {
       console.log(`✅ ${varName} is present (e.g., ${varValue.substring(0,5)}...${varValue.slice(-5)})`);
     } else {
@@ -37,67 +38,61 @@ for (const varName in requiredEnvVars) {
   }
 }
 
-if (!allVarsPresent) {
-    console.error("\n--- 🚨 Firebase Environment Variable Check FAILED. One or more required Firebase variables are missing. Firebase will NOT be initialized. Please check your .env.local file and RESTART your server. ---");
-} else {
-    console.log("--- ✅ Firebase Environment Variable Check PASSED. All required variables appear to be present. ---");
-}
+let firebaseAppInstance: FirebaseApp | undefined = undefined;
+let firebaseAuthInstance: Auth | undefined = undefined;
+let firebaseGoogleProviderInstance: GoogleAuthProvider | undefined = undefined;
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
+if (allVarsPresent) {
+  const firebaseConfig = {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  };
 
-// Initialize Firebase
-let app: FirebaseApp | undefined = undefined; // Ensure app can be undefined
-let auth: Auth | undefined = undefined;
-let googleProvider: GoogleAuthProvider | undefined = undefined;
-
-if (allVarsPresent) { // Only attempt to initialize if all environment variables are present
   if (!getApps().length) {
     try {
-      app = initializeApp(firebaseConfig); // This will throw if config is invalid (e.g., missing API key at this point)
-      auth = getAuth(app);
-      googleProvider = new GoogleAuthProvider();
+      firebaseAppInstance = initializeApp(firebaseConfig);
+      firebaseAuthInstance = getAuth(firebaseAppInstance);
+      firebaseGoogleProviderInstance = new GoogleAuthProvider();
       console.log("✅ Firebase App initialized successfully.");
     } catch (error) {
       console.error("🔥 Firebase initialization error (initializeApp or getAuth failed):", error);
-      app = undefined; // Ensure app is undefined on failure
-      auth = undefined;
-      googleProvider = undefined;
+      firebaseAppInstance = undefined;
+      firebaseAuthInstance = undefined;
+      firebaseGoogleProviderInstance = undefined;
       console.error("🔥 Firebase App could not be initialized. Firebase features will be disabled.");
     }
   } else {
-    app = getApps()[0]; // This should be safe if getApps().length > 0
-    if (app && app.name) {
+    firebaseAppInstance = getApps()[0];
+    if (firebaseAppInstance && firebaseAppInstance.name) {
         try {
-            auth = getAuth(app); // This can also throw if config is bad internally
-            googleProvider = new GoogleAuthProvider();
+            firebaseAuthInstance = getAuth(firebaseAppInstance);
+            firebaseGoogleProviderInstance = new GoogleAuthProvider();
             console.log("✅ Firebase App re-used existing instance successfully.");
         } catch (error) {
             console.error("🔥 Error getting Auth on re-used Firebase App instance:", error);
-            auth = undefined;
-            googleProvider = undefined;
+            firebaseAuthInstance = undefined;
+            firebaseGoogleProviderInstance = undefined;
         }
     } else {
-        app = undefined; // If re-use fails somehow
-        auth = undefined;
-        googleProvider = undefined;
+        firebaseAppInstance = undefined;
+        firebaseAuthInstance = undefined;
+        firebaseGoogleProviderInstance = undefined;
         console.error("🔥 Could not re-use existing Firebase App instance properly.");
     }
   }
 } else {
   console.error(
-    "\n\n🛑 Firebase App initialization SKIPPED due to missing environment variables. " +
-    "Firebase features (like Authentication) will NOT work. " +
-    "Please check your .env.local file for all NEXT_PUBLIC_FIREBASE_... variables and RESTART your server.\n\n"
+    "\n\n--- 🚨 Firebase Environment Variable Check FAILED. One or more required Firebase variables are missing. Firebase will NOT be initialized. Please check your .env.local file and RESTART your server. ---"
   );
-  // app, auth, and googleProvider remain undefined as per their initial declaration
+  // firebaseAppInstance, firebaseAuthInstance, firebaseGoogleProviderInstance remain undefined as initialized
 }
 
-export { app, auth, googleProvider };
+export { 
+  firebaseAppInstance as app, 
+  firebaseAuthInstance as auth, 
+  firebaseGoogleProviderInstance as googleProvider 
+};
