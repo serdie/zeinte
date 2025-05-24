@@ -13,11 +13,11 @@ const requiredEnvVars: Record<string, string | undefined> = {
 };
 
 let allVarsPresent = true;
-console.log("--- Checking Firebase Environment Variables ---");
+console.log("--- Checking Firebase Environment Variables (see server console for full details) ---");
 for (const varName in requiredEnvVars) {
   const varValue = requiredEnvVars[varName];
   if (!varValue) {
-    console.error(
+    console.error( // This message will appear in your SERVER console for EACH missing variable
       `\n\n🛑 CRITICAL Firebase Configuration Error:\n` +
       `   Environment variable ${varName} is MISSING or EMPTY.\n` +
       `   Please ensure it is correctly set in your .env.local file (in the project root).\n` +
@@ -44,7 +44,7 @@ let firebaseGoogleProviderInstance: GoogleAuthProvider | undefined = undefined;
 
 if (allVarsPresent) {
   const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!, // Non-null assertion is okay here due to allVarsPresent check
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!, // Non-null assertion is okay here because allVarsPresent would be false if it was missing
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
     storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
@@ -57,9 +57,9 @@ if (allVarsPresent) {
       firebaseAppInstance = initializeApp(firebaseConfig);
       console.log("✅ Firebase App initialized successfully.");
     } catch (error) {
-      console.error("🔥 Firebase initialization error (initializeApp failed):", error);
-      // This catch might not always trigger for invalid keys, as Firebase might try to initialize and fail later (e.g., at getAuth)
-      // Setting allVarsPresent to false here ensures we definitely don't proceed if initializeApp itself throws.
+      console.error("🔥 Firebase initialization error during initializeApp:", error);
+      // This catch might not always trigger for invalid keys if the structure of config is valid but keys are wrong
+      // Firebase often throws 'auth/invalid-api-key' later, e.g., at getAuth
       allVarsPresent = false; 
     }
   } else {
@@ -67,13 +67,14 @@ if (allVarsPresent) {
     if (firebaseAppInstance && firebaseAppInstance.name) { 
         console.log("✅ Firebase App re-used existing instance successfully.");
     } else {
-        console.error("🔥 Could not properly re-use existing Firebase App instance despite getApps() reporting an instance. This can happen if previous initialization failed badly.");
+        // This can happen if a previous initialization attempt failed badly.
+        console.error("🔥 Could not properly re-use existing Firebase App instance. This might indicate a prior initialization failure.");
         firebaseAppInstance = undefined; // Ensure it's undefined
         allVarsPresent = false;
     }
   }
 
-  // Only attempt to getAuth if app initialization was successful AND allVarsPresent is still true
+  // Only attempt to getAuth if app initialization seemed successful AND allVarsPresent is still true
   if (firebaseAppInstance && allVarsPresent) {
     try {
         firebaseAuthInstance = getAuth(firebaseAppInstance);
@@ -86,28 +87,25 @@ if (allVarsPresent) {
         firebaseGoogleProviderInstance = undefined;
         allVarsPresent = false; // Mark as not fully configured if auth setup fails
     }
-  } else if (allVarsPresent) { // If app instance is still undefined but vars were supposedly present
-      console.error("🔥 Firebase App instance is undefined even after attempting initialization, despite initial env var check passing. This indicates a severe issue with Firebase setup or a problem during initializeApp not caught by its try-catch, or an invalid config object.");
+  } else if (allVarsPresent && !firebaseAppInstance) { 
+      // This case means env vars were present, but initializeApp failed silently or app is still undefined.
+      console.error("🔥 Firebase App instance is undefined even after attempting initialization, despite initial env var check passing. This indicates a severe issue with Firebase setup or a problem during initializeApp, or an invalid config object passed to initializeApp.");
       allVarsPresent = false;
   }
-
 } 
 
-// Final check: if at any point allVarsPresent became false, log a general failure message
+// Final check: if at any point allVarsPresent became false, log a general failure message.
 // This ensures that if any specific var was missing OR if subsequent initialization steps failed, this is flagged.
 if (!allVarsPresent) {
-  // Check if a specific variable missing message was already logged by the loop
-  const specificVarMissingLogged = Object.values(requiredEnvVars).some(val => !val);
-  if (!specificVarMissingLogged) { 
-    // If the loop passed but allVarsPresent is false, it means a later step (initializeApp, getAuth) failed.
-    console.error(
-        "\n\n--- 🚨 Firebase Initialization FAILED for other reasons after initial environment variable check (e.g., invalid key, project config issue). Firebase will NOT be fully functional. Please review console logs for specific errors during initializeApp or getAuth. ---"
+  const specificVarMissingDirectly = Object.values(requiredEnvVars).some(val => !val);
+  if (specificVarMissingDirectly) {
+    console.error( // This message will appear in your SERVER console
+        "\n\n--- 🚨 Firebase Initialization FAILED: One or more required Firebase environment variables (e.g., NEXT_PUBLIC_FIREBASE_API_KEY) were MISSING or EMPTY. Firebase will NOT be functional. Please check your .env.local file and RESTART your server. Review previous logs in this terminal for specific missing variables. ---"
     );
-  } else if (process.env.NODE_ENV === 'development' && !firebaseAppInstance) {
-    // If specific vars were missing, AND we are in dev, AND app instance is still not defined, show the general failure too.
-    // This covers the case where the initial loop already reported missing vars, but reinforces that init failed.
-     console.error(
-        "\n\n--- 🚨 Firebase Environment Variable Check FAILED. One or more required Firebase variables are missing. Firebase will NOT be initialized. Please check your .env.local file and RESTART your server. ---"
+  } else {
+     // If specific vars were not directly missing, but allVarsPresent is false, it means a later step (initializeApp, getAuth) failed.
+    console.error( // This message will appear in your SERVER console
+        "\n\n--- 🚨 Firebase Initialization FAILED: While initial environment variable presence check might have passed, subsequent initialization steps (e.g., using the API key, configuring Auth) failed. This could be due to INCORRECT values for your Firebase environment variables (even if present), or a problem with your Firebase project configuration itself. Firebase will NOT be functional. Please review all Firebase related logs in this terminal. ---"
     );
   }
   // Explicitly set instances to undefined if configuration is incomplete or initialization failed

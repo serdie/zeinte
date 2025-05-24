@@ -14,7 +14,7 @@ import {
   AuthError
 } from 'firebase/auth';
 // Import the flag and instances from firebase/config
-import { auth, googleProvider, isFirebaseFullyConfigured } from '@/firebase/config';
+import { auth, googleProvider, isFirebaseFullyConfigured } from '@/firebase/config'; // This is key
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -27,22 +27,21 @@ interface AuthContextType {
   logout: () => Promise<void | string>;
 }
 
-const FIREBASE_CONFIG_ERROR_MESSAGE = "Error de Configuración de Firebase: Faltan una o más variables de entorno de Firebase (NEXT_PUBLIC_FIREBASE_...) en tu archivo .env.local, son incorrectas, o la inicialización de Firebase falló. Por favor, revisa la configuración de tu proyecto (y los logs del servidor/consola) y REINICIA el servidor de desarrollo. La autenticación no funcionará hasta que esto se resuelva.";
+const FIREBASE_CONFIG_ERROR_MESSAGE = "Error de Configuración de Firebase: La configuración de Firebase es incorrecta o está incompleta (faltan variables como NEXT_PUBLIC_FIREBASE_API_KEY en .env.local, o los valores son incorrectos). Por favor, revisa la configuración de tu proyecto y los logs de la consola del servidor, luego REINICIA el servidor de desarrollo. La autenticación no funcionará hasta que esto se resuelva.";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  // isFirebaseConfigured now directly comes from the imported flag in firebase/config.ts
-  const isConfigured = isFirebaseFullyConfigured; 
+  const isConfigured = isFirebaseFullyConfigured; // Directly use the flag from firebase/config.ts
   const router = useRouter();
 
   useEffect(() => {
     // Crucially, check if 'auth' itself is defined (it won't be if config.ts failed to initialize it)
     // and if Firebase is reported as fully configured by our flag.
-    if (!isConfigured || !auth) {
-      console.warn("AuthContext: Firebase auth is not configured, auth object is undefined, or required environment variables are missing. Skipping onAuthStateChanged listener. isFirebaseFullyConfigured:", isConfigured, "auth object exists:", !!auth);
+    if (!isConfigured || !auth) { 
+      console.warn("AuthContext: Firebase auth is not configured, auth object is undefined, or required environment variables are missing/incorrect. Skipping onAuthStateChanged listener. isFirebaseFullyConfigured:", isConfigured, "auth object exists:", !!auth);
       setLoading(false);
       return;
     }
@@ -56,8 +55,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleAuthError = (error: AuthError): string => {
     console.error("Firebase Auth Error:", error.code, error.message);
-    // If Firebase isn't configured or the error is related to invalid API key, return the specific config message.
-    if (!isConfigured || error.code === 'auth/invalid-api-key' || (error.code === 'auth/internal-error' && error.message.includes("apiKey")) || error.code === 'auth/configuration-not-found') {
+    // If Firebase isn't configured or the error is related to invalid API key or general config, return the specific config message.
+    if (!isConfigured || error.code === 'auth/invalid-api-key' || error.code === 'auth/internal-error' || error.code === 'auth/configuration-not-found' || error.code === 'auth/missing-config') {
         return FIREBASE_CONFIG_ERROR_MESSAGE;
     }
     // Standard error messages
@@ -142,8 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (router) router.push('/login'); // Always redirect
       setLoading(false);
       // If Firebase wasn't configured, return the config error message after attempting local logout actions.
-      // This makes sure the user is informed even on logout if the config was bad.
-      if (!isConfigured) {
+      if (!isConfigured) { // Check isConfigured directly
         return FIREBASE_CONFIG_ERROR_MESSAGE;
       }
     }
