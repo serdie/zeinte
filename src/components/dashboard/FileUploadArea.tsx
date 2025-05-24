@@ -5,14 +5,17 @@ import type React from 'react';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle } from 'lucide-react';
+import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, CheckSquare, Square } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
 import type { ExamConfig } from '@/types';
+import { findExternalDocuments, type FindExternalDocumentsOutput, type DocumentSearchResult } from '@/ai/flows/find-external-documents';
+import { Separator } from '../ui/separator';
+import { Checkbox } from '../ui/checkbox';
 
 interface FileUploadAreaProps {
   onAnalyze: (content: string, numQuestions: number) => Promise<void>;
@@ -21,7 +24,7 @@ interface FileUploadAreaProps {
 
 const MAX_FILES_UPLOAD = 30;
 const DEFAULT_NUM_QUESTIONS = 10;
-const MAX_TOTAL_SIZE_MB = 5; // Límite de referencia en MB para la barra de progreso de tamaño
+const MAX_TOTAL_SIZE_MB = 5; 
 const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -37,6 +40,11 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [numQuestions, setNumQuestions] = useState<string>(DEFAULT_NUM_QUESTIONS.toString());
   const { toast } = useToast();
+
+  const [deepSearchTopic, setDeepSearchTopic] = useState("");
+  const [deepSearchResults, setDeepSearchResults] = useState<FindExternalDocumentsOutput | null>(null);
+  const [selectedDeepSearchDocIds, setSelectedDeepSearchDocIds] = useState<string[]>([]);
+  const [isDeepSearching, setIsDeepSearching] = useState(false);
 
   const totalSizeInBytes = useMemo(() => {
     return selectedFiles.reduce((acc, file) => acc + file.size, 0);
@@ -76,12 +84,39 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     setSelectedFiles(prevFiles => prevFiles.filter(file => file.name !== fileName));
   };
 
+  const handleDeepSearch = async () => {
+    if (!deepSearchTopic.trim()) {
+      toast({ title: "Tema vacío", description: "Por favor, introduce un tema para la búsqueda.", variant: "destructive" });
+      return;
+    }
+    setIsDeepSearching(true);
+    setDeepSearchResults(null);
+    setSelectedDeepSearchDocIds([]);
+    try {
+      const results = await findExternalDocuments({ topic: deepSearchTopic });
+      setDeepSearchResults(results);
+    } catch (error) {
+      console.error("Error during deep search:", error);
+      toast({ title: "Error en la Búsqueda", description: "No se pudieron obtener resultados simulados.", variant: "destructive" });
+    } finally {
+      setIsDeepSearching(false);
+    }
+  };
+
+  const toggleDeepSearchDocSelection = (docId: string) => {
+    setSelectedDeepSearchDocIds(prevSelected =>
+      prevSelected.includes(docId)
+        ? prevSelected.filter(id => id !== docId)
+        : [...prevSelected, docId]
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedFiles.length === 0) {
+    if (selectedFiles.length === 0 && selectedDeepSearchDocIds.length === 0) {
       toast({
-        title: "No hay archivos seleccionados",
-        description: "Por favor, selecciona al menos un archivo para analizar.",
+        title: "No hay contenido seleccionado",
+        description: "Por favor, selecciona al menos un archivo para subir o un documento de la búsqueda IA.",
         variant: "destructive",
       });
       return;
@@ -100,12 +135,12 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     const filePromises = selectedFiles.map(file => {
       return new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = (e) => {
-          const text = e.target?.result as string;
+        reader.onload = (eventReader) => {
+          const text = eventReader.target?.result as string;
           resolve(`Contenido del archivo: ${file.name}\n\n${text}\n\n---\n\n`);
         };
-        reader.onerror = (e) => {
-          console.error("Error reading file:", file.name, e);
+        reader.onerror = (errorReader) => {
+          console.error("Error reading file:", file.name, errorReader);
           reject(`Error al leer el archivo ${file.name}`);
         };
         reader.readAsText(file);
@@ -115,10 +150,18 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     try {
       const fileContents = await Promise.all(filePromises);
       allFilesContent = fileContents.join('');
+
+      const deepSearchDocsContent = deepSearchResults?.results
+        .filter(doc => selectedDeepSearchDocIds.includes(doc.id))
+        .map(doc => `Contenido del archivo (búsqueda IA): ${doc.title}\n\n${doc.simulatedTextContent}\n\n---\n\n`)
+        .join('') || "";
+      
+      allFilesContent += deepSearchDocsContent;
+
       if (!allFilesContent.trim()) {
         toast({
           title: "Contenido vacío",
-          description: "No se pudo extraer texto de los archivos seleccionados o están vacíos.",
+          description: "No se pudo extraer texto de los archivos seleccionados o los documentos de IA no tienen contenido simulado.",
           variant: "destructive",
         });
         return;
@@ -138,18 +181,18 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   const sizeProgress = Math.min((totalSizeInBytes / MAX_TOTAL_SIZE_BYTES) * 100, 100);
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-lg">
-      <CardHeader>
-        <CardTitle className="text-2xl flex items-center gap-2">
-          <UploadCloud className="h-7 w-7 text-primary" />
-          Subir Documentos
-        </CardTitle>
-        <CardDescription>
-          Selecciona archivos (.pdf, .doc, .docx, .txt) desde tu dispositivo. El sistema intentará extraer el texto para analizarlo y predecir preguntas de examen.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <Card className="w-full shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-2xl flex items-center gap-2">
+            <UploadCloud className="h-7 w-7 text-primary" />
+            Subir Documentos Manualmente
+          </CardTitle>
+          <CardDescription>
+            Selecciona archivos (.pdf, .doc, .docx, .txt) desde tu dispositivo.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
           <div>
             <Label htmlFor="file-upload" className="sr-only">
               Seleccionar archivos
@@ -160,7 +203,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
               multiple
               onChange={handleFileChange}
               className="text-sm p-2 rounded-md shadow-sm focus:ring-primary focus:border-primary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-              disabled={isLoading}
+              disabled={isLoading || isDeepSearching}
               accept=".pdf,.doc,.docx,.txt"
             />
              <p className="mt-2 text-xs text-muted-foreground">
@@ -189,7 +232,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                      <div className="mt-2 text-xs text-amber-600 flex items-start gap-1">
                         <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
                         <span>
-                        El almacenamiento en el navegador es limitado (generalmente 5-10MB). Si el tamaño total es muy grande, la función "Re-analizar" podría no funcionar correctamente ya que depende de estos datos guardados.
+                        El almacenamiento en el navegador es limitado. Si el tamaño es muy grande, la función "Re-analizar" podría no funcionar.
                         </span>
                     </div>
                 )}
@@ -211,7 +254,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                         size="icon"
                         className="h-5 w-5 text-muted-foreground hover:text-destructive shrink-0"
                         onClick={() => removeFile(file.name)}
-                        disabled={isLoading}
+                        disabled={isLoading || isDeepSearching}
                         aria-label={`Quitar ${file.name}`}
                       >
                         <XCircle className="h-4 w-4" />
@@ -222,11 +265,79 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
               </div>
             </div>
           )}
-
+        </CardContent>
+      </Card>
+      
+      <Card className="w-full shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-2xl flex items-center gap-2">
+            <Search className="h-7 w-7 text-accent" />
+            Búsqueda IA de Documentos (Demo)
+          </CardTitle>
+          <CardDescription>
+            Introduce un tema y la IA simulará una búsqueda de documentos relevantes. Podrás añadir su contenido simulado al análisis.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="num-questions-select">Número de preguntas a generar:</Label>
-            <Select value={numQuestions} onValueChange={setNumQuestions} disabled={isLoading}>
-              <SelectTrigger id="num-questions-select" className="w-full sm:w-[200px]">
+            <Label htmlFor="deep-search-topic">Tema de Búsqueda:</Label>
+            <div className="flex gap-2">
+              <Input
+                id="deep-search-topic"
+                type="text"
+                value={deepSearchTopic}
+                onChange={(e) => setDeepSearchTopic(e.target.value)}
+                placeholder="Ej: Oposición agente forestal, Historia de España S.XX"
+                className="text-sm"
+                disabled={isLoading || isDeepSearching}
+              />
+              <Button onClick={handleDeepSearch} disabled={isLoading || isDeepSearching || !deepSearchTopic.trim()} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                {isDeepSearching ? <Loader2 className="animate-spin" /> : <Search className="h-5 w-5" />}
+                <span className="ml-2">Buscar</span>
+              </Button>
+            </div>
+          </div>
+
+          {isDeepSearching && (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-8 w-8 animate-spin text-accent" />
+              <p className="ml-2 text-muted-foreground">Buscando documentos simulados...</p>
+            </div>
+          )}
+
+          {deepSearchResults && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">{deepSearchResults.message}</p>
+              {deepSearchResults.results.length > 0 && (
+                 <div className="space-y-2 max-h-60 overflow-y-auto border p-3 rounded-md bg-muted/30">
+                  <h4 className="text-sm font-medium text-foreground">Resultados Simulados ({deepSearchResults.results.length}):</h4>
+                  {deepSearchResults.results.map((doc) => (
+                    <div key={doc.id} className="flex items-center space-x-2 p-2 bg-background rounded-md shadow-sm hover:bg-muted/50">
+                      <Checkbox
+                        id={`ds-${doc.id}`}
+                        checked={selectedDeepSearchDocIds.includes(doc.id)}
+                        onCheckedChange={() => toggleDeepSearchDocSelection(doc.id)}
+                        disabled={isLoading || isDeepSearching}
+                      />
+                      <Label htmlFor={`ds-${doc.id}`} className="text-xs font-normal flex-1 cursor-pointer">
+                        <span className="font-medium text-foreground block">{doc.title}</span>
+                        <span className="text-muted-foreground text-xs block">{doc.source}</span>
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="lg:col-span-2 space-y-6 p-6 border rounded-lg shadow-lg bg-card">
+          <div className="space-y-2">
+            <Label htmlFor="num-questions-select" className="text-lg font-semibold text-primary">Configuración Final del Análisis:</Label>
+            <p className="text-sm text-muted-foreground">Define cuántas preguntas quieres generar a partir de todos los documentos (subidos manualmente y/o seleccionados de la búsqueda IA).</p>
+            <Select value={numQuestions} onValueChange={setNumQuestions} disabled={isLoading || isDeepSearching}>
+              <SelectTrigger id="num-questions-select" className="w-full sm:w-[250px] text-base py-3">
                 <SelectValue placeholder="Selecciona cantidad" />
               </SelectTrigger>
               <SelectContent>
@@ -242,20 +353,20 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
 
           <Button
             type="submit"
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-base font-semibold rounded-md shadow-md transition-transform duration-150 ease-in-out active:scale-95"
-            disabled={isLoading || selectedFiles.length === 0}
+            onClick={handleSubmit}
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 text-lg font-semibold rounded-lg shadow-md transition-transform duration-150 ease-in-out active:scale-95"
+            disabled={isLoading || isDeepSearching || (selectedFiles.length === 0 && selectedDeepSearchDocIds.length === 0)}
           >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Analizando Archivos...
+                <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                Analizando Contenido...
               </>
             ) : (
               'Analizar y Predecir Preguntas'
             )}
           </Button>
-        </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
