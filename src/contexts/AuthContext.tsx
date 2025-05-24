@@ -13,14 +13,14 @@ import {
   signOut as firebaseSignOut,
   AuthError
 } from 'firebase/auth';
-// Import the flag as well
+// Import the flag and instances from firebase/config
 import { auth, googleProvider, isFirebaseFullyConfigured } from '@/firebase/config';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
-  isFirebaseConfigured: boolean;
+  isFirebaseConfigured: boolean; // Expose this for components to check
   signUpWithEmail: (email: string, password: string) => Promise<User | string>;
   loginWithEmail: (email: string, password: string) => Promise<User | string>;
   signInWithGoogle: () => Promise<User | string>;
@@ -34,11 +34,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const isConfigured = isFirebaseFullyConfigured;
+  // isFirebaseConfigured now directly comes from the imported flag in firebase/config.ts
+  const isConfigured = isFirebaseFullyConfigured; 
   const router = useRouter();
 
   useEffect(() => {
     // Crucially, check if 'auth' itself is defined (it won't be if config.ts failed to initialize it)
+    // and if Firebase is reported as fully configured by our flag.
     if (!isConfigured || !auth) {
       console.warn("AuthContext: Firebase auth is not configured, auth object is undefined, or required environment variables are missing. Skipping onAuthStateChanged listener. isFirebaseFullyConfigured:", isConfigured, "auth object exists:", !!auth);
       setLoading(false);
@@ -128,7 +130,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async (): Promise<void | string> => {
     setLoading(true);
     try {
-      if (isConfigured && auth) { // Only attempt Firebase sign out if it was configured and auth object exists
+      // Only attempt Firebase sign out if it was configured and auth object exists
+      if (isConfigured && auth) { 
         await firebaseSignOut(auth);
       }
     } catch (error) {
@@ -139,6 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (router) router.push('/login'); // Always redirect
       setLoading(false);
       // If Firebase wasn't configured, return the config error message after attempting local logout actions.
+      // This makes sure the user is informed even on logout if the config was bad.
       if (!isConfigured) {
         return FIREBASE_CONFIG_ERROR_MESSAGE;
       }
@@ -148,7 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     currentUser,
     loading,
-    isFirebaseConfigured: isConfigured,
+    isFirebaseConfigured: isConfigured, // Use the flag from firebase/config
     signUpWithEmail,
     loginWithEmail,
     signInWithGoogle,

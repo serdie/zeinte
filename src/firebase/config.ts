@@ -58,54 +58,59 @@ if (allVarsPresent) {
       console.log("✅ Firebase App initialized successfully.");
     } catch (error) {
       console.error("🔥 Firebase initialization error (initializeApp failed):", error);
-      allVarsPresent = false; // Mark as not fully configured if initializeApp fails
+      // This catch might not always trigger for invalid keys, as Firebase might try to initialize and fail later (e.g., at getAuth)
+      // Setting allVarsPresent to false here ensures we definitely don't proceed if initializeApp itself throws.
+      allVarsPresent = false; 
     }
   } else {
     firebaseAppInstance = getApps()[0];
-     if (firebaseAppInstance && firebaseAppInstance.name) { // Check if instance is valid
+    if (firebaseAppInstance && firebaseAppInstance.name) { 
         console.log("✅ Firebase App re-used existing instance successfully.");
     } else {
         console.error("🔥 Could not properly re-use existing Firebase App instance despite getApps() reporting an instance. This can happen if previous initialization failed badly.");
-        firebaseAppInstance = undefined;
+        firebaseAppInstance = undefined; // Ensure it's undefined
         allVarsPresent = false;
     }
   }
 
-  if (firebaseAppInstance) {
+  // Only attempt to getAuth if app initialization was successful AND allVarsPresent is still true
+  if (firebaseAppInstance && allVarsPresent) {
     try {
         firebaseAuthInstance = getAuth(firebaseAppInstance);
         firebaseGoogleProviderInstance = new GoogleAuthProvider();
         console.log("✅ Firebase Auth and Google Provider initialized successfully.");
     } catch (error) {
-        console.error("🔥 Error initializing Firebase Auth or Google Provider (getAuth failed):", error);
-        // This might happen if API key is present but invalid (e.g., for a different project)
+        console.error("🔥 Error initializing Firebase Auth or Google Provider (getAuth/new GoogleAuthProvider failed):", error);
+        // This is a critical point where 'auth/invalid-api-key' often manifests if the API key was present but incorrect.
         firebaseAuthInstance = undefined;
         firebaseGoogleProviderInstance = undefined;
         allVarsPresent = false; // Mark as not fully configured if auth setup fails
     }
   } else if (allVarsPresent) { // If app instance is still undefined but vars were supposedly present
-      console.error("🔥 Firebase App instance is undefined even after attempting initialization. This indicates a severe issue with Firebase setup or a problem during initializeApp not caught by try-catch.");
+      console.error("🔥 Firebase App instance is undefined even after attempting initialization, despite initial env var check passing. This indicates a severe issue with Firebase setup or a problem during initializeApp not caught by its try-catch, or an invalid config object.");
       allVarsPresent = false;
   }
 
-}
+} 
 
-// This final check ensures the message is displayed if any step failed or if initial vars were missing.
-// It also ensures that if allVarsPresent was already false, the instances are definitely undefined.
+// Final check: if at any point allVarsPresent became false, log a general failure message
+// This ensures that if any specific var was missing OR if subsequent initialization steps failed, this is flagged.
 if (!allVarsPresent) {
-  if (process.env.NODE_ENV === 'development') { // Only log this generic failure if it hasn't been logged more specifically
-    const specificErrorAlreadyLogged = Object.values(requiredEnvVars).some(val => !val);
-    if (!specificErrorAlreadyLogged) { // Avoid redundant general message if specific ones were logged
-        console.error(
-            "\n\n--- 🚨 Firebase Initialization FAILED for other reasons after variable check. Firebase will NOT be fully functional. Please review console logs for specific errors during initializeApp or getAuth. ---"
-        );
-    } else if (!Object.values(requiredEnvVars).some(val => !val)) { // If vars were present but init still failed
-         console.error(
-            "\n\n--- 🚨 Firebase Initialization FAILED despite all environment variables appearing to be present. Firebase will NOT be fully functional. Please review console logs for errors from initializeApp or getAuth. This could indicate an invalid key or project configuration issue. ---"
-        );
-    }
+  // Check if a specific variable missing message was already logged by the loop
+  const specificVarMissingLogged = Object.values(requiredEnvVars).some(val => !val);
+  if (!specificVarMissingLogged) { 
+    // If the loop passed but allVarsPresent is false, it means a later step (initializeApp, getAuth) failed.
+    console.error(
+        "\n\n--- 🚨 Firebase Initialization FAILED for other reasons after initial environment variable check (e.g., invalid key, project config issue). Firebase will NOT be fully functional. Please review console logs for specific errors during initializeApp or getAuth. ---"
+    );
+  } else if (process.env.NODE_ENV === 'development' && !firebaseAppInstance) {
+    // If specific vars were missing, AND we are in dev, AND app instance is still not defined, show the general failure too.
+    // This covers the case where the initial loop already reported missing vars, but reinforces that init failed.
+     console.error(
+        "\n\n--- 🚨 Firebase Environment Variable Check FAILED. One or more required Firebase variables are missing. Firebase will NOT be initialized. Please check your .env.local file and RESTART your server. ---"
+    );
   }
-  // Ensure instances are undefined if config is incomplete or initialization failed
+  // Explicitly set instances to undefined if configuration is incomplete or initialization failed
   firebaseAppInstance = undefined;
   firebaseAuthInstance = undefined;
   firebaseGoogleProviderInstance = undefined;
@@ -116,5 +121,5 @@ export {
   firebaseAppInstance as app,
   firebaseAuthInstance as auth,
   firebaseGoogleProviderInstance as googleProvider,
-  allVarsPresent as isFirebaseFullyConfigured
+  allVarsPresent as isFirebaseFullyConfigured // Export this flag
 };
