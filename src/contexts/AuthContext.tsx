@@ -13,7 +13,7 @@ import {
   signOut as firebaseSignOut,
   AuthError
 } from 'firebase/auth';
-import { auth, googleProvider } from '@/firebase/config';
+import { auth, googleProvider } from '@/firebase/config'; // auth and googleProvider can be undefined if env vars are missing
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -22,8 +22,10 @@ interface AuthContextType {
   signUpWithEmail: (email: string, password: string) => Promise<User | string>;
   loginWithEmail: (email: string, password: string) => Promise<User | string>;
   signInWithGoogle: () => Promise<User | string>;
-  logout: () => Promise<void>;
+  logout: () => Promise<void | string>; // Updated return type for logout
 }
+
+const FIREBASE_CONFIG_ERROR_MESSAGE = "Firebase no está configurado correctamente. Revisa las variables de entorno.";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -33,6 +35,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const router = useRouter();
 
   useEffect(() => {
+    if (!auth) {
+      console.error("AuthContext: Firebase auth is not initialized. Skipping onAuthStateChanged listener.");
+      setLoading(false);
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       setLoading(false);
@@ -61,12 +68,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return 'Proceso de inicio de sesión con Google cancelado.';
       case 'auth/cancelled-popup-request':
         return 'Se canceló la solicitud emergente. Inténtalo de nuevo.';
+      case 'auth/invalid-api-key':
+        return FIREBASE_CONFIG_ERROR_MESSAGE;
       default:
         return 'Ocurrió un error inesperado. Por favor, inténtalo de nuevo.';
     }
   };
 
   const signUpWithEmail = async (email: string, password: string): Promise<User | string> => {
+    if (!auth) return FIREBASE_CONFIG_ERROR_MESSAGE;
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -80,6 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginWithEmail = async (email: string, password: string): Promise<User | string> => {
+    if (!auth) return FIREBASE_CONFIG_ERROR_MESSAGE;
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -93,6 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signInWithGoogle = async (): Promise<User | string> => {
+    if (!auth || !googleProvider) return FIREBASE_CONFIG_ERROR_MESSAGE;
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
@@ -105,12 +117,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void | string> => { // Updated return type
+    if (!auth) {
+      // If auth is not available, we can't sign out from Firebase,
+      // but we can clear local state and redirect.
+      setCurrentUser(null);
+      router.push('/login');
+      return FIREBASE_CONFIG_ERROR_MESSAGE;
+    }
     setLoading(true);
     try {
       await firebaseSignOut(auth);
       setCurrentUser(null);
-      router.push('/login'); // Redirect to login after logout
+      router.push('/login'); 
     } catch (error) {
       console.error("Error signing out: ", error);
        return handleAuthError(error as AuthError);
@@ -128,7 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
   };
 
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = (): AuthContextType => {
