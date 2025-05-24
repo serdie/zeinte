@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, UploadCloud, Settings } from 'lucide-react'; // Added Settings
+import { BookOpenText, UploadCloud, Settings, User, Users } from 'lucide-react'; // Added User, Users
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -14,7 +14,9 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { href: '/', label: 'Panel de Estudio', icon: BookOpenText },
   { href: '/upload', label: 'Subir Documentos', icon: UploadCloud },
-  { href: '/configure', label: 'Configura tu examen', icon: Settings }, // New item
+  { href: '/configure', label: 'Configura tu examen', icon: Settings },
+  { href: '/profile', label: 'Mi Perfil', icon: User }, // New item
+  { href: '/community', label: 'Comunidad', icon: Users }, // New item
 ];
 
 export default function SidebarNav() {
