@@ -3,18 +3,19 @@
 
 import type React from 'react';
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, CheckSquare, Square, Brain } from 'lucide-react'; // Added Brain
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, Building, School, Briefcase } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
 import type { ExamConfig } from '@/types';
 import { findExternalDocuments, type FindExternalDocumentsOutput, type DocumentSearchResult } from '@/ai/flows/find-external-documents';
-import { Separator } from '../ui/separator';
 import { Checkbox } from '../ui/checkbox';
 
 interface FileUploadAreaProps {
@@ -26,6 +27,25 @@ const MAX_FILES_UPLOAD = 30;
 const DEFAULT_NUM_QUESTIONS = 10;
 const MAX_TOTAL_SIZE_MB = 5; 
 const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
+
+interface CommonExam {
+  id: string;
+  name: string;
+  category: 'Universidad' | 'Oposición';
+  logoPlaceholder: string;
+  logoHint: string;
+  keywords: string;
+  icon: React.ElementType;
+}
+
+const commonExams: CommonExam[] = [
+  { id: 'ucm', name: 'Universidad Complutense', category: 'Universidad', logoPlaceholder: 'https://placehold.co/80x40.png', logoHint: 'university campus', keywords: 'exámenes Universidad Complutense Madrid', icon: School },
+  { id: 'uab', name: 'Universitat Autònoma BCN', category: 'Universidad', logoPlaceholder: 'https://placehold.co/80x40.png', logoHint: 'modern university', keywords: 'exámenes Universitat Autònoma Barcelona', icon: School },
+  { id: 'us', name: 'Universidad de Sevilla', category: 'Universidad', logoPlaceholder: 'https://placehold.co/80x40.png', logoHint: 'historic university', keywords: 'exámenes Universidad de Sevilla', icon: School },
+  { id: 'admin_estado', name: 'Administrativo del Estado', category: 'Oposición', logoPlaceholder: 'https://placehold.co/60x60.png', logoHint: 'government building', keywords: 'oposición Administrativo del Estado', icon: Briefcase },
+  { id: 'hacienda', name: 'Agente de Hacienda', category: 'Oposición', logoPlaceholder: 'https://placehold.co/60x60.png', logoHint: 'tax office', keywords: 'oposición Agente Hacienda Pública', icon: Briefcase },
+  { id: 'agente_forestal', name: 'Agente Forestal', category: 'Oposición', logoPlaceholder: 'https://placehold.co/60x60.png', logoHint: 'forest ranger', keywords: 'oposición Agente Forestal', icon: Briefcase },
+];
 
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
@@ -45,6 +65,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   const [deepSearchResults, setDeepSearchResults] = useState<FindExternalDocumentsOutput | null>(null);
   const [selectedDeepSearchDocIds, setSelectedDeepSearchDocIds] = useState<string[]>([]);
   const [isDeepSearching, setIsDeepSearching] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("comunes");
 
   const totalSizeInBytes = useMemo(() => {
     return selectedFiles.reduce((acc, file) => acc + file.size, 0);
@@ -84,29 +105,32 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     setSelectedFiles(prevFiles => prevFiles.filter(file => file.name !== fileName));
   };
 
-  const handleDeepSearch = async () => {
-    if (!deepSearchTopic.trim()) {
+  const handleDeepSearch = useCallback(async (searchTopic?: string) => {
+    const topicToSearch = searchTopic || deepSearchTopic;
+    if (!topicToSearch.trim()) {
       toast({ title: "Tema vacío", description: "Por favor, introduce un tema para la búsqueda.", variant: "destructive" });
       return;
     }
     setIsDeepSearching(true);
     setDeepSearchResults(null);
     setSelectedDeepSearchDocIds([]);
+    if(!searchTopic) { // Only show toast if it's a manual search
+        toast({
+            title: "Buscando Sugerencias IA...",
+            description: "La IA está generando ideas de documentos relevantes para tu tema. Esto puede tardar unos momentos.",
+        });
+    }
     try {
-      toast({
-        title: "Buscando Sugerencias IA...",
-        description: "La IA está generando ideas de documentos relevantes para tu tema. Esto puede tardar unos momentos.",
-      });
-      const results = await findExternalDocuments({ topic: deepSearchTopic });
+      const results = await findExternalDocuments({ topic: topicToSearch });
       setDeepSearchResults(results);
-      if (results.results.length === 0 && results.message.includes("no pudo generar sugerencias")) {
+      if (results.results.length === 0 && results.message.includes("no pudo generar sugerencias") && !searchTopic) {
          toast({
             title: "Sugerencias IA",
             description: results.message,
             variant: "default",
             duration: 7000,
         });
-      } else if (results.results.length > 0) {
+      } else if (results.results.length > 0 && !searchTopic) {
          toast({
             title: "Sugerencias IA Listas",
             description: `Se encontraron ${results.results.length} sugerencias. Recuerda que el contenido detallado es simulado.`,
@@ -116,10 +140,24 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
 
     } catch (error) {
       console.error("Error during deep search:", error);
-      toast({ title: "Error en la Búsqueda IA", description: (error instanceof Error ? error.message : "No se pudieron obtener sugerencias de documentos."), variant: "destructive" });
+      if (!searchTopic) {
+        toast({ title: "Error en la Búsqueda IA", description: (error instanceof Error ? error.message : "No se pudieron obtener sugerencias de documentos."), variant: "destructive" });
+      }
     } finally {
       setIsDeepSearching(false);
     }
+  }, [deepSearchTopic, toast]);
+
+  const handleCommonExamClick = (exam: CommonExam) => {
+    setDeepSearchTopic(exam.keywords);
+    // Automatically trigger search for IA suggestions with the new topic
+    // This makes the "Sugerencias IA" card update
+    handleDeepSearch(exam.keywords); 
+    toast({
+        title: `Buscando sobre "${exam.name}"`,
+        description: "La IA está generando sugerencias de documentos. Revisa la sección 'Sugerencias IA' en unos momentos.",
+        variant: "default"
+    })
   };
 
   const toggleDeepSearchDocSelection = (docId: string) => {
@@ -199,161 +237,253 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   const filesProgress = (selectedFiles.length / MAX_FILES_UPLOAD) * 100;
   const sizeProgress = Math.min((totalSizeInBytes / MAX_TOTAL_SIZE_BYTES) * 100, 100);
 
+  const renderCommonExams = (category: 'Universidad' | 'Oposición') => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+      {commonExams.filter(exam => exam.category === category).map(exam => (
+        <Button
+          key={exam.id}
+          variant="outline"
+          className="h-auto p-4 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md"
+          onClick={() => handleCommonExamClick(exam)}
+          disabled={isLoading || isDeepSearching}
+        >
+          <Image 
+            src={exam.logoPlaceholder} 
+            alt={`Logo ${exam.name}`} 
+            width={category === 'Universidad' ? 60 : 40} 
+            height={category === 'Universidad' ? 30 : 40} 
+            className="mb-2 rounded"
+            data-ai-hint={exam.logoHint}
+          />
+          <span className="text-xs font-medium">{exam.name}</span>
+        </Button>
+      ))}
+    </div>
+  );
+  
+  const renderComingSoon = (title: string, description: string) => (
+    <div className="text-center py-10 px-4">
+        <div className="flex justify-center items-center mb-4">
+            {title === "Exámenes de la Comunidad" && <Users className="h-12 w-12 text-muted-foreground" />}
+            {title === "Mis Exámenes Personales" && <User className="h-12 w-12 text-muted-foreground" />}
+            {title === "Exámenes Recomendados IA" && <Sparkles className="h-12 w-12 text-muted-foreground" />}
+        </div>
+      <h3 className="text-xl font-semibold text-foreground mb-2">{title}</h3>
+      <p className="text-muted-foreground">{description} ¡Vuelve pronto para descubrir nuevas funcionalidades!</p>
+      <div data-ai-hint="empty state illustration" className="mt-6">
+          <Image src="https://placehold.co/300x200.png" alt="Próximamente" width={300} height={200} className="mx-auto rounded-lg opacity-70" />
+      </div>
+    </div>
+  );
+
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <Card className="w-full shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl flex items-center gap-2">
-            <UploadCloud className="h-7 w-7 text-primary" />
-            Subir Documentos Manualmente
-          </CardTitle>
-          <CardDescription>
-            Selecciona archivos (.pdf, .doc, .docx, .txt) desde tu dispositivo.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <Label htmlFor="file-upload" className="sr-only">
-              Seleccionar archivos
-            </Label>
-            <Input
-              id="file-upload"
-              type="file"
-              multiple
-              onChange={handleFileChange}
-              className="text-sm p-2 rounded-md shadow-sm focus:ring-primary focus:border-primary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-              disabled={isLoading || isDeepSearching}
-              accept=".pdf,.doc,.docx,.txt"
-            />
-             <p className="mt-2 text-xs text-muted-foreground">
-              Archivos soportados: PDF, DOC, DOCX, TXT. Máximo {MAX_FILES_UPLOAD} archivos.
-            </p>
-          </div>
-
-          {selectedFiles.length > 0 && (
-            <div className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Columna 1: Subida manual y Biblioteca */}
+        <div className="space-y-8">
+          <Card className="w-full shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <UploadCloud className="h-7 w-7 text-primary" />
+                Subir Documentos Manualmente
+              </CardTitle>
+              <CardDescription>
+                Selecciona archivos (.pdf, .doc, .docx, .txt) desde tu dispositivo.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
               <div>
-                <div className="flex justify-between items-center mb-1">
-                  <Label htmlFor="files-progress" className="text-sm font-medium">Archivos seleccionados:</Label>
-                  <span className="text-xs text-muted-foreground">{selectedFiles.length} / {MAX_FILES_UPLOAD}</span>
-                </div>
-                <Progress value={filesProgress} id="files-progress" className="w-full h-2" />
+                <Label htmlFor="file-upload" className="sr-only">
+                  Seleccionar archivos
+                </Label>
+                <Input
+                  id="file-upload"
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="text-sm p-2 rounded-md shadow-sm focus:ring-primary focus:border-primary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                  disabled={isLoading || isDeepSearching}
+                  accept=".pdf,.doc,.docx,.txt"
+                />
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Archivos soportados: PDF, DOC, DOCX, TXT. Máximo {MAX_FILES_UPLOAD} archivos.
+                </p>
               </div>
-              
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <Label htmlFor="size-progress" className="text-sm font-medium">Tamaño total estimado:</Label>
-                  <span className="text-xs text-muted-foreground">{formatBytes(totalSizeInBytes)} / {MAX_TOTAL_SIZE_MB} MB</span>
-                </div>
-                <Progress value={sizeProgress} id="size-progress" className="w-full h-2" 
-                          aria-label={`Progreso de tamaño: ${sizeProgress.toFixed(0)}%`} />
-                {totalSizeInBytes > MAX_TOTAL_SIZE_BYTES * 0.8 && (
-                     <div className="mt-2 text-xs text-amber-600 flex items-start gap-1">
-                        <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
-                        <span>
-                        El almacenamiento en el navegador es limitado. Si el tamaño es muy grande, la función "Re-analizar" podría no funcionar.
-                        </span>
+
+              {selectedFiles.length > 0 && (
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <Label htmlFor="files-progress" className="text-sm font-medium">Archivos seleccionados:</Label>
+                      <span className="text-xs text-muted-foreground">{selectedFiles.length} / {MAX_FILES_UPLOAD}</span>
                     </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium text-foreground">Lista de Archivos ({selectedFiles.length}):</h4>
-                <ul className="max-h-48 overflow-y-auto space-y-1 rounded-md border p-2 bg-muted/50">
-                  {selectedFiles.map(file => (
-                    <li key={file.name} className="text-xs text-foreground flex justify-between items-center p-1.5 bg-background rounded shadow-sm">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <FileText className="h-4 w-4 text-primary shrink-0" />
-                        <span className="truncate" title={file.name}>{file.name}</span>
-                        <span className="text-muted-foreground text-nowrap shrink-0">({formatBytes(file.size)})</span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-5 w-5 text-muted-foreground hover:text-destructive shrink-0"
-                        onClick={() => removeFile(file.name)}
-                        disabled={isLoading || isDeepSearching}
-                        aria-label={`Quitar ${file.name}`}
-                      >
-                        <XCircle className="h-4 w-4" />
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      
-      <Card className="w-full shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl flex items-center gap-2">
-            <Brain className="h-7 w-7 text-accent" /> {/* Changed icon to Brain */}
-            Sugerencias IA de Documentos
-          </CardTitle>
-          <CardDescription>
-            Introduce un tema y la IA sugerirá títulos y resúmenes de documentos relevantes. Podrás añadir su contenido simulado al análisis.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="deep-search-topic">Tema de Búsqueda:</Label>
-            <div className="flex gap-2">
-              <Input
-                id="deep-search-topic"
-                type="text"
-                value={deepSearchTopic}
-                onChange={(e) => setDeepSearchTopic(e.target.value)}
-                placeholder="Ej: Oposición agente forestal, Historia de España S.XX"
-                className="text-sm"
-                disabled={isLoading || isDeepSearching}
-              />
-              <Button onClick={handleDeepSearch} disabled={isLoading || isDeepSearching || !deepSearchTopic.trim()} className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                {isDeepSearching ? <Loader2 className="animate-spin" /> : <Search className="h-5 w-5" />}
-                <span className="ml-2">Sugerir</span>
-              </Button>
-            </div>
-          </div>
-
-          {isDeepSearching && (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-8 w-8 animate-spin text-accent" />
-              <p className="ml-2 text-muted-foreground">IA generando sugerencias...</p>
-            </div>
-          )}
-
-          {deepSearchResults && (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground italic">{deepSearchResults.message}</p>
-              {deepSearchResults.results.length > 0 && (
-                 <div className="space-y-2 max-h-60 overflow-y-auto border p-3 rounded-md bg-muted/30">
-                  <h4 className="text-sm font-medium text-foreground">Sugerencias de la IA ({deepSearchResults.results.length}):</h4>
-                  {deepSearchResults.results.map((doc) => (
-                    <div key={doc.id} className="flex items-center space-x-2 p-2 bg-background rounded-md shadow-sm hover:bg-muted/50">
-                      <Checkbox
-                        id={`ds-${doc.id}`}
-                        checked={selectedDeepSearchDocIds.includes(doc.id)}
-                        onCheckedChange={() => toggleDeepSearchDocSelection(doc.id)}
-                        disabled={isLoading || isDeepSearching}
-                        aria-label={`Seleccionar ${doc.title}`}
-                      />
-                      <Label htmlFor={`ds-${doc.id}`} className="text-xs font-normal flex-1 cursor-pointer">
-                        <span className="font-medium text-foreground block">{doc.title}</span>
-                        <span className="text-muted-foreground text-xs block">{doc.source}</span>
-                         <p className="text-xs text-muted-foreground/80 mt-1">{doc.simulatedTextContent.split('\n\n')[0]}</p> {/* Show abstract */}
-                      </Label>
+                    <Progress value={filesProgress} id="files-progress" className="w-full h-2" />
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <Label htmlFor="size-progress" className="text-sm font-medium">Tamaño total estimado:</Label>
+                      <span className="text-xs text-muted-foreground">{formatBytes(totalSizeInBytes)} / {MAX_TOTAL_SIZE_MB} MB</span>
                     </div>
-                  ))}
+                    <Progress value={sizeProgress} id="size-progress" className="w-full h-2" 
+                              aria-label={`Progreso de tamaño: ${sizeProgress.toFixed(0)}%`} />
+                    {totalSizeInBytes > MAX_TOTAL_SIZE_BYTES * 0.8 && (
+                        <div className="mt-2 text-xs text-amber-600 flex items-start gap-1">
+                            <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                            <span>
+                            El almacenamiento en el navegador es limitado. Si el tamaño es muy grande, la función "Re-analizar" podría no funcionar.
+                            </span>
+                        </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-foreground">Lista de Archivos ({selectedFiles.length}):</h4>
+                    <ul className="max-h-48 overflow-y-auto space-y-1 rounded-md border p-2 bg-muted/50">
+                      {selectedFiles.map(file => (
+                        <li key={file.name} className="text-xs text-foreground flex justify-between items-center p-1.5 bg-background rounded shadow-sm">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <FileText className="h-4 w-4 text-primary shrink-0" />
+                            <span className="truncate" title={file.name}>{file.name}</span>
+                            <span className="text-muted-foreground text-nowrap shrink-0">({formatBytes(file.size)})</span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5 text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => removeFile(file.name)}
+                            disabled={isLoading || isDeepSearching}
+                            aria-label={`Quitar ${file.name}`}
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
-      <div className="lg:col-span-2 space-y-6 p-6 border rounded-lg shadow-lg bg-card">
+          <Card className="w-full shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <LibraryBig className="h-7 w-7 text-primary" />
+                Explorar Biblioteca de Exámenes
+              </CardTitle>
+              <CardDescription>
+                Accede a plantillas de exámenes comunes o gestiona los tuyos (próximamente).
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
+                  <TabsTrigger value="comunes" className="py-2 flex items-center gap-1.5"><LibraryBig className="h-4 w-4" /> Comunes</TabsTrigger>
+                  <TabsTrigger value="comunidad" className="py-2 flex items-center gap-1.5"><Users className="h-4 w-4" /> Comunidad</TabsTrigger>
+                  <TabsTrigger value="personales" className="py-2 flex items-center gap-1.5"><User className="h-4 w-4" /> Personales</TabsTrigger>
+                  <TabsTrigger value="recomendados" className="py-2 flex items-center gap-1.5"><Sparkles className="h-4 w-4" /> Recomendados</TabsTrigger>
+                </TabsList>
+                <TabsContent value="comunes" className="mt-4">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Selecciona un tipo de examen común. Esto rellenará el tema en la sección "Sugerencias IA" y buscará documentos relacionados (simulado).
+                  </p>
+                  <div>
+                    <h4 className="text-md font-semibold mt-4 mb-2 text-foreground">Universidades</h4>
+                    {renderCommonExams('Universidad')}
+                    <h4 className="text-md font-semibold mt-6 mb-2 text-foreground">Oposiciones</h4>
+                    {renderCommonExams('Oposición')}
+                  </div>
+                </TabsContent>
+                <TabsContent value="comunidad">
+                  {renderComingSoon("Exámenes de la Comunidad", "Aquí podrás encontrar y utilizar exámenes y material de estudio compartido por otros usuarios de la plataforma.")}
+                </TabsContent>
+                <TabsContent value="personales">
+                  {renderComingSoon("Mis Exámenes Personales", "Guarda y organiza tus propios exámenes y documentos analizados para acceder a ellos fácilmente.")}
+                </TabsContent>
+                <TabsContent value="recomendados">
+                  {renderComingSoon("Exámenes Recomendados IA", "Basado en tu actividad y temas de estudio, la IA te sugerirá exámenes y documentos que podrían serte útiles.")}
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Columna 2: Sugerencias IA */}
+        <div className="space-y-8">
+          <Card className="w-full shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <Brain className="h-7 w-7 text-accent" />
+                Sugerencias IA de Documentos
+              </CardTitle>
+              <CardDescription>
+                Introduce un tema y la IA sugerirá títulos y resúmenes de documentos relevantes. Podrás añadir su contenido simulado al análisis.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="deep-search-topic">Tema de Búsqueda:</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="deep-search-topic"
+                    type="text"
+                    value={deepSearchTopic}
+                    onChange={(e) => setDeepSearchTopic(e.target.value)}
+                    placeholder="Ej: Oposición agente forestal, Historia de España S.XX"
+                    className="text-sm"
+                    disabled={isLoading || isDeepSearching}
+                  />
+                  <Button onClick={() => handleDeepSearch()} disabled={isLoading || isDeepSearching || !deepSearchTopic.trim()} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                    {isDeepSearching ? <Loader2 className="animate-spin" /> : <Search className="h-5 w-5" />}
+                    <span className="ml-2 hidden sm:inline">Sugerir</span>
+                  </Button>
+                </div>
+              </div>
+
+              {isDeepSearching && (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-8 w-8 animate-spin text-accent" />
+                  <p className="ml-2 text-muted-foreground">IA generando sugerencias...</p>
+                </div>
+              )}
+
+              {deepSearchResults && (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground italic">{deepSearchResults.message}</p>
+                  {deepSearchResults.results.length > 0 && (
+                    <div className="space-y-2 max-h-96 overflow-y-auto border p-3 rounded-md bg-muted/30">
+                      <h4 className="text-sm font-medium text-foreground">Sugerencias de la IA ({deepSearchResults.results.length}):</h4>
+                      {deepSearchResults.results.map((doc) => (
+                        <div key={doc.id} className="flex items-start space-x-2 p-2 bg-background rounded-md shadow-sm hover:bg-muted/50">
+                          <Checkbox
+                            id={`ds-${doc.id}`}
+                            checked={selectedDeepSearchDocIds.includes(doc.id)}
+                            onCheckedChange={() => toggleDeepSearchDocSelection(doc.id)}
+                            disabled={isLoading || isDeepSearching}
+                            aria-label={`Seleccionar ${doc.title}`}
+                            className="mt-1"
+                          />
+                          <Label htmlFor={`ds-${doc.id}`} className="text-xs font-normal flex-1 cursor-pointer">
+                            <span className="font-medium text-foreground block">{doc.title}</span>
+                            <span className="text-muted-foreground text-xs block">{doc.source}</span>
+                            <p className="text-xs text-muted-foreground/80 mt-1">{doc.simulatedTextContent.split('\n\n')[0]}</p> {/* Show abstract */}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Configuración final y botón de submit */}
+      <div className="lg:col-span-2 space-y-6 p-6 border rounded-lg shadow-xl bg-card">
           <div className="space-y-2">
             <Label htmlFor="num-questions-select" className="text-lg font-semibold text-primary">Configuración Final del Análisis:</Label>
             <p className="text-sm text-muted-foreground">Define cuántas preguntas quieres generar a partir de todos los documentos (subidos manualmente y/o seleccionados de las sugerencias IA).</p>
@@ -374,7 +504,6 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
 
           <Button
             type="submit"
-            onClick={handleSubmit}
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 text-lg font-semibold rounded-lg shadow-md transition-transform duration-150 ease-in-out active:scale-95"
             disabled={isLoading || isDeepSearching || (selectedFiles.length === 0 && selectedDeepSearchDocIds.length === 0)}
           >
@@ -388,7 +517,6 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
             )}
           </Button>
       </div>
-    </div>
+    </form>
   );
 }
-
