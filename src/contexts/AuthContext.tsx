@@ -4,23 +4,23 @@
 
 import type React from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  onAuthStateChanged, 
-  User, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signInWithPopup, 
+import {
+  onAuthStateChanged,
+  User,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signInWithPopup,
   signOut as firebaseSignOut,
   AuthError
 } from 'firebase/auth';
 // Import the flag as well
-import { auth, googleProvider, isFirebaseFullyConfigured } from '@/firebase/config'; 
+import { auth, googleProvider, isFirebaseFullyConfigured } from '@/firebase/config';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
-  isFirebaseConfigured: boolean; // Renamed for clarity from isFirebaseFullyConfigured
+  isFirebaseConfigured: boolean;
   signUpWithEmail: (email: string, password: string) => Promise<User | string>;
   loginWithEmail: (email: string, password: string) => Promise<User | string>;
   signInWithGoogle: () => Promise<User | string>;
@@ -34,30 +34,31 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  // Use the imported flag from firebase/config.ts
-  const isConfigured = isFirebaseFullyConfigured; 
+  const isConfigured = isFirebaseFullyConfigured;
   const router = useRouter();
 
   useEffect(() => {
-    if (!isConfigured || !auth) { 
-      console.warn("AuthContext: Firebase auth is not configured, not initialized correctly, or required environment variables are missing. Skipping onAuthStateChanged listener.");
+    // Crucially, check if 'auth' itself is defined (it won't be if config.ts failed to initialize it)
+    if (!isConfigured || !auth) {
+      console.warn("AuthContext: Firebase auth is not configured, auth object is undefined, or required environment variables are missing. Skipping onAuthStateChanged listener. isFirebaseFullyConfigured:", isConfigured, "auth object exists:", !!auth);
       setLoading(false);
       return;
     }
-    // `auth` object is checked above
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       setLoading(false);
     });
     return () => unsubscribe();
-  }, [isConfigured]);
+  }, [isConfigured]); // isConfigured comes from firebase/config and reflects the env var check status
 
   const handleAuthError = (error: AuthError): string => {
     console.error("Firebase Auth Error:", error.code, error.message);
-    if (error.code === 'auth/invalid-api-key' || (error.code === 'auth/internal-error' && error.message.includes("apiKey")) || error.code === 'auth/configuration-not-found') {
+    // If Firebase isn't configured or the error is related to invalid API key, return the specific config message.
+    if (!isConfigured || error.code === 'auth/invalid-api-key' || (error.code === 'auth/internal-error' && error.message.includes("apiKey")) || error.code === 'auth/configuration-not-found') {
         return FIREBASE_CONFIG_ERROR_MESSAGE;
     }
-    // ... (other error codes remain the same)
+    // Standard error messages
     switch (error.code) {
       case 'auth/email-already-in-use':
         return 'Este correo electrónico ya está en uso.';
@@ -125,31 +126,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async (): Promise<void | string> => {
-    // Clear client state and redirect even if Firebase isn't fully configured,
-    // but prioritize the config error message if applicable.
-    if (!isConfigured || !auth) {
-      setCurrentUser(null);
-      if (router) router.push('/login'); 
-      return FIREBASE_CONFIG_ERROR_MESSAGE;
-    }
-    
     setLoading(true);
     try {
-      await firebaseSignOut(auth);
-      setCurrentUser(null);
-      router.push('/login'); 
+      if (isConfigured && auth) { // Only attempt Firebase sign out if it was configured and auth object exists
+        await firebaseSignOut(auth);
+      }
     } catch (error) {
-      console.error("Error signing out: ", error);
-       return handleAuthError(error as AuthError);
+      // Log the error but don't block client-side state clearing
+      console.error("Error signing out from Firebase: ", error);
     } finally {
+      setCurrentUser(null); // Always clear client-side user state
+      if (router) router.push('/login'); // Always redirect
       setLoading(false);
+      // If Firebase wasn't configured, return the config error message after attempting local logout actions.
+      if (!isConfigured) {
+        return FIREBASE_CONFIG_ERROR_MESSAGE;
+      }
     }
   };
 
   const value = {
     currentUser,
     loading,
-    isFirebaseConfigured: isConfigured, // Use the renamed variable
+    isFirebaseConfigured: isConfigured,
     signUpWithEmail,
     loginWithEmail,
     signInWithGoogle,
