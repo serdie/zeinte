@@ -33,7 +33,7 @@ for (const varName in requiredEnvVars) {
     if (varName === 'NEXT_PUBLIC_FIREBASE_API_KEY') {
       console.log(`✅ ${varName} is present (e.g., ${varValue.substring(0,5)}...${varValue.slice(-5)})`);
     } else {
-      console.log(`✅ ${varName} is present: ${varValue}`);
+      console.log(`✅ ${varName} is present.`);
     }
   }
 }
@@ -44,46 +44,47 @@ let firebaseGoogleProviderInstance: GoogleAuthProvider | undefined = undefined;
 
 if (allVarsPresent) {
   const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!, // Non-null assertion due to allVarsPresent check
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
   };
 
   if (!getApps().length) {
     try {
       firebaseAppInstance = initializeApp(firebaseConfig);
-      firebaseAuthInstance = getAuth(firebaseAppInstance);
-      firebaseGoogleProviderInstance = new GoogleAuthProvider();
       console.log("✅ Firebase App initialized successfully.");
     } catch (error) {
-      console.error("🔥 Firebase initialization error (initializeApp or getAuth failed):", error);
-      firebaseAppInstance = undefined;
-      firebaseAuthInstance = undefined;
-      firebaseGoogleProviderInstance = undefined;
-      console.error("🔥 Firebase App could not be initialized. Firebase features will be disabled.");
+      console.error("🔥 Firebase initialization error (initializeApp failed):", error);
+      // firebaseAppInstance remains undefined
     }
   } else {
     firebaseAppInstance = getApps()[0];
     if (firebaseAppInstance && firebaseAppInstance.name) {
-        try {
-            firebaseAuthInstance = getAuth(firebaseAppInstance);
-            firebaseGoogleProviderInstance = new GoogleAuthProvider();
-            console.log("✅ Firebase App re-used existing instance successfully.");
-        } catch (error) {
-            console.error("🔥 Error getting Auth on re-used Firebase App instance:", error);
-            firebaseAuthInstance = undefined;
-            firebaseGoogleProviderInstance = undefined;
-        }
+        console.log("✅ Firebase App re-used existing instance successfully.");
     } else {
-        firebaseAppInstance = undefined;
-        firebaseAuthInstance = undefined;
-        firebaseGoogleProviderInstance = undefined;
-        console.error("🔥 Could not re-use existing Firebase App instance properly.");
+        // This case should ideally not happen if getApps().length > 0
+        console.error("🔥 Could not properly re-use existing Firebase App instance despite getApps() reporting an instance.");
+        firebaseAppInstance = undefined; 
     }
   }
+
+  if (firebaseAppInstance) {
+    try {
+        firebaseAuthInstance = getAuth(firebaseAppInstance);
+        firebaseGoogleProviderInstance = new GoogleAuthProvider();
+        console.log("✅ Firebase Auth and Google Provider initialized successfully.");
+    } catch (error) {
+        console.error("🔥 Error initializing Firebase Auth or Google Provider:", error);
+        // If getAuth fails (e.g., due to a truly invalid API key despite presence checks),
+        // these will remain undefined.
+        firebaseAuthInstance = undefined;
+        firebaseGoogleProviderInstance = undefined;
+    }
+  }
+
 } else {
   console.error(
     "\n\n--- 🚨 Firebase Environment Variable Check FAILED. One or more required Firebase variables are missing. Firebase will NOT be initialized. Please check your .env.local file and RESTART your server. ---"
