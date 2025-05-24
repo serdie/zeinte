@@ -63,6 +63,8 @@ if (allVarsPresent) {
       // If initializeApp itself fails (e.g. due to malformed but present keys), app might not be set
       // Set app to a dummy object to potentially prevent some downstream errors, though Firebase will be unusable.
       app = {} as FirebaseApp; 
+      auth = undefined;
+      googleProvider = undefined;
       console.error("🔥 Firebase App could not be initialized. Firebase features will be disabled.");
     }
   } else {
@@ -75,6 +77,8 @@ if (allVarsPresent) {
             console.log("✅ Firebase App re-used existing instance successfully.");
         } catch (error) {
             console.error("🔥 Error getting Auth on re-used Firebase App instance:", error);
+            auth = undefined;
+            googleProvider = undefined;
         }
     }
   }
@@ -87,6 +91,8 @@ if (allVarsPresent) {
   // Assign a dummy app object to prevent 'app is not defined' errors further down,
   // although Firebase services will not be functional.
   app = {} as FirebaseApp;
+  auth = undefined;
+  googleProvider = undefined;
 }
 
 export { app, auth, googleProvider };
