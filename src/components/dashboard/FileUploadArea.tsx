@@ -21,17 +21,19 @@ import { findExternalDocuments, type FindExternalDocumentsOutput } from '@/ai/fl
 import { Checkbox } from '../ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
 import { UpgradeProAlert } from '@/components/ui/upgrade-pro-alert';
+import { db } from '@/firebase/config'; // Import db
+import { doc, getDoc } from 'firebase/firestore'; // Import Firestore functions
 
 interface FileUploadAreaProps {
   onAnalyze: (content: string, numQuestions: number) => Promise<void>;
   isLoading: boolean;
 }
 
-const MAX_FILES_UPLOAD = 30;
-const DEFAULT_NUM_QUESTIONS = 10;
+// Default values, will be overridden by Firestore settings if available
+const DEFAULT_MAX_FILES_UPLOAD = 30;
+const DEFAULT_MAX_TOTAL_SIZE_MB = 5; 
+
 const FREE_USER_MAX_QUESTIONS_TO_GENERATE = "5";
-const MAX_TOTAL_SIZE_MB = 5; 
-const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
 const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 interface CommonExam {
@@ -64,10 +66,16 @@ function formatBytes(bytes: number, decimals = 2) {
 
 export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [numQuestions, setNumQuestions] = useState<string>(DEFAULT_NUM_QUESTIONS.toString());
+  const [numQuestions, setNumQuestions] = useState<string>(FREE_USER_MAX_QUESTIONS_TO_GENERATE); // Default to free user limit initially
   const { toast } = useToast();
-  const { userTier } = useAuth(); // Removed currentUser as it's not directly used for free user check
+  const { userTier, isFirebaseConfigured } = useAuth();
   const isFreeUser = userTier === 'free';
+
+  const [appUploadLimits, setAppUploadLimits] = useState({
+    maxFiles: DEFAULT_MAX_FILES_UPLOAD,
+    maxSizeMB: DEFAULT_MAX_TOTAL_SIZE_MB,
+  });
+  const [isLoadingAppSettings, setIsLoadingAppSettings] = useState(true);
 
   const [deepSearchTopic, setDeepSearchTopic] = useState("");
   const [deepSearchResults, setDeepSearchResults] = useState<FindExternalDocumentsOutput | null>(null);
@@ -76,13 +84,42 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   const [activeTab, setActiveTab] = useState<string>("comunes");
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
+  useEffect(() => {
+    const fetchAppSettings = async () => {
+      if (!isFirebaseConfigured || !db) {
+        setIsLoadingAppSettings(false);
+        return;
+      }
+      setIsLoadingAppSettings(true);
+      try {
+        const settingsRef = doc(db, "appSettings", "globalConfig");
+        const docSnap = await getDoc(settingsRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setAppUploadLimits({
+            maxFiles: data.maxFilesUpload || DEFAULT_MAX_FILES_UPLOAD,
+            maxSizeMB: data.maxTotalSizeMB || DEFAULT_MAX_TOTAL_SIZE_MB,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching app upload limits:", error);
+        // Keep default limits if fetching fails
+      } finally {
+        setIsLoadingAppSettings(false);
+      }
+    };
+    fetchAppSettings();
+  }, [isFirebaseConfigured]);
+  
+  const MAX_TOTAL_SIZE_BYTES = useMemo(() => appUploadLimits.maxSizeMB * 1024 * 1024, [appUploadLimits.maxSizeMB]);
+
   const totalSizeInBytes = useMemo(() => {
     return selectedFiles.reduce((acc, file) => acc + file.size, 0);
   }, [selectedFiles]);
 
   useEffect(() => {
     const storedConfig = localStorage.getItem(EXAM_CONFIG_KEY);
-    let initialNumQuestions = isFreeUser ? FREE_USER_MAX_QUESTIONS_TO_GENERATE : DEFAULT_NUM_QUESTIONS.toString();
+    let initialNumQuestions = isFreeUser ? FREE_USER_MAX_QUESTIONS_TO_GENERATE : "10"; // Default for Pro
     if (storedConfig) {
       try {
         const parsedConfig: ExamConfig = JSON.parse(storedConfig);
@@ -104,16 +141,16 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
       const newFiles = Array.from(event.target.files);
-      if (selectedFiles.length + newFiles.length > MAX_FILES_UPLOAD) {
+      if (selectedFiles.length + newFiles.length > appUploadLimits.maxFiles) {
         toast({
           title: "Límite de archivos excedido",
-          description: `Puedes subir un máximo de ${MAX_FILES_UPLOAD} archivos a la vez.`,
+          description: `Puedes subir un máximo de ${appUploadLimits.maxFiles} archivos a la vez. Este límite puede ser ajustado por el administrador.`,
           variant: "destructive",
         });
         event.target.value = ""; 
         return;
       }
-      setSelectedFiles(prevFiles => [...prevFiles, ...newFiles].slice(0, MAX_FILES_UPLOAD));
+      setSelectedFiles(prevFiles => [...prevFiles, ...newFiles].slice(0, appUploadLimits.maxFiles));
     }
   };
 
@@ -239,9 +276,9 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     if (totalSizeInBytes > MAX_TOTAL_SIZE_BYTES) {
         toast({
             title: "Tamaño total excede el límite sugerido",
-            description: `El tamaño total de los archivos (${formatBytes(totalSizeInBytes)}) excede el límite sugerido de ${MAX_TOTAL_SIZE_MB}MB. Esto podría afectar la función de "Re-analizar". Puedes continuar, pero tenlo en cuenta.`,
+            description: `El tamaño total de los archivos (${formatBytes(totalSizeInBytes)}) excede el límite sugerido de ${appUploadLimits.maxSizeMB}MB. Esto podría afectar la función de "Re-analizar". Puedes continuar, pero tenlo en cuenta. Este límite puede ser ajustado por el administrador.`,
             variant: "destructive",
-            duration: 7000,
+            duration: 10000,
         });
     }
 
@@ -291,7 +328,6 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
       }
       
       await onAnalyze(allFilesContent, finalNumQuestions); 
-      // Timestamp update for free users is now handled within onAnalyze in upload/page.tsx after successful processing and before navigation.
 
     } catch (error) {
       console.error("Error processing files:", error);
@@ -303,8 +339,9 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     }
   };
 
-  const filesProgress = (selectedFiles.length / MAX_FILES_UPLOAD) * 100;
-  const sizeProgress = Math.min((totalSizeInBytes / MAX_TOTAL_SIZE_BYTES) * 100, 100);
+  const filesProgress = isLoadingAppSettings ? 0 : (selectedFiles.length / appUploadLimits.maxFiles) * 100;
+  const sizeProgress = isLoadingAppSettings ? 0 : Math.min((totalSizeInBytes / MAX_TOTAL_SIZE_BYTES) * 100, 100);
+
 
   const renderCommonExams = (category: 'Universidad' | 'Oposición') => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
@@ -346,6 +383,16 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     </div>
   );
 
+  if (isLoadingAppSettings && !isFirebaseConfigured) { // Show basic loading if Firebase not configured yet
+    return (
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center p-6">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <p className="text-xl text-muted-foreground">Cargando configuración de subida...</p>
+        </div>
+    );
+  }
+
+
   return (
     <>
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -373,11 +420,11 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                   multiple
                   onChange={handleFileChange}
                   className="text-sm p-2 rounded-md shadow-sm focus:ring-primary focus:border-primary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                  disabled={isLoading || isDeepSearching}
+                  disabled={isLoading || isDeepSearching || isLoadingAppSettings}
                   accept=".pdf,.doc,.docx,.txt"
                 />
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Archivos soportados: PDF, DOC, DOCX, TXT. Máximo {MAX_FILES_UPLOAD} archivos.
+                  Archivos soportados: PDF, DOC, DOCX, TXT. Máximo {isLoadingAppSettings ? <Loader2 className="inline h-3 w-3 animate-spin" /> : appUploadLimits.maxFiles} archivos.
                 </p>
               </div>
 
@@ -386,7 +433,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                   <div>
                     <div className="flex justify-between items-center mb-1">
                       <Label htmlFor="files-progress" className="text-sm font-medium">Archivos seleccionados:</Label>
-                      <span className="text-xs text-muted-foreground">{selectedFiles.length} / {MAX_FILES_UPLOAD}</span>
+                      <span className="text-xs text-muted-foreground">{selectedFiles.length} / {isLoadingAppSettings ? <Loader2 className="inline h-3 w-3 animate-spin" /> : appUploadLimits.maxFiles}</span>
                     </div>
                     <Progress value={filesProgress} id="files-progress" className="w-full h-2" />
                   </div>
@@ -394,7 +441,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                   <div>
                     <div className="flex justify-between items-center mb-1">
                       <Label htmlFor="size-progress" className="text-sm font-medium">Tamaño total estimado:</Label>
-                      <span className="text-xs text-muted-foreground">{formatBytes(totalSizeInBytes)} / {MAX_TOTAL_SIZE_MB} MB</span>
+                      <span className="text-xs text-muted-foreground">{formatBytes(totalSizeInBytes)} / {isLoadingAppSettings ? <Loader2 className="inline h-3 w-3 animate-spin" /> : `${appUploadLimits.maxSizeMB} MB`}</span>
                     </div>
                     <Progress value={sizeProgress} id="size-progress" className="w-full h-2" 
                               aria-label={`Progreso de tamaño: ${sizeProgress.toFixed(0)}%`} />
@@ -424,7 +471,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                             size="icon"
                             className="h-5 w-5 text-muted-foreground hover:text-destructive shrink-0"
                             onClick={() => removeFile(file.name)}
-                            disabled={isLoading || isDeepSearching}
+                            disabled={isLoading || isDeepSearching || isLoadingAppSettings}
                             aria-label={`Quitar ${file.name}`}
                           >
                             <XCircle className="h-4 w-4" />
@@ -508,9 +555,9 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                     onChange={(e) => setDeepSearchTopic(e.target.value)}
                     placeholder="Ej: Oposición agente forestal, Historia de España S.XX"
                     className="text-sm"
-                    disabled={isLoading || isDeepSearching || isFreeUser}
+                    disabled={isLoading || isDeepSearching || isFreeUser || isLoadingAppSettings}
                   />
-                  <Button onClick={() => handleDeepSearch()} disabled={isLoading || isDeepSearching || !deepSearchTopic.trim() || isFreeUser} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                  <Button onClick={() => handleDeepSearch()} disabled={isLoading || isDeepSearching || !deepSearchTopic.trim() || isFreeUser || isLoadingAppSettings} className="bg-accent hover:bg-accent/90 text-accent-foreground">
                     {isDeepSearching ? <Loader2 className="animate-spin" /> : <Search className="h-5 w-5" />}
                     <span className="ml-2 hidden sm:inline">Sugerir</span>
                   </Button>
@@ -540,7 +587,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                             id={`ds-${doc.id}`}
                             checked={selectedDeepSearchDocIds.includes(doc.id)}
                             onCheckedChange={() => toggleDeepSearchDocSelection(doc.id)}
-                            disabled={isLoading || isDeepSearching || isFreeUser}
+                            disabled={isLoading || isDeepSearching || isFreeUser || isLoadingAppSettings}
                             aria-label={`Seleccionar ${doc.title}`}
                             className="mt-1"
                           />
@@ -567,7 +614,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
             <p className="text-sm text-muted-foreground">Define cuántas preguntas quieres generar a partir de todos los documentos (subidos manualmente y/o seleccionados de las sugerencias IA).
             {isFreeUser && ` (Máximo ${FREE_USER_MAX_QUESTIONS_TO_GENERATE} para usuarios gratuitos).`}
             </p>
-            <Select value={numQuestions} onValueChange={setNumQuestions} disabled={isLoading || isDeepSearching}>
+            <Select value={numQuestions} onValueChange={setNumQuestions} disabled={isLoading || isDeepSearching || isLoadingAppSettings}>
               <SelectTrigger id="num-questions-select" className="w-full sm:w-[250px] text-base py-3">
                 <SelectValue placeholder="Selecciona cantidad" />
               </SelectTrigger>
@@ -594,12 +641,12 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
           <Button
             type="submit"
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 text-lg font-semibold rounded-lg shadow-md transition-transform duration-150 ease-in-out active:scale-95"
-            disabled={isLoading || isDeepSearching || (selectedFiles.length === 0 && selectedDeepSearchDocIds.length === 0 && !isFreeUser) || (isFreeUser && selectedFiles.length === 0) }
+            disabled={isLoading || isDeepSearching || isLoadingAppSettings || (selectedFiles.length === 0 && selectedDeepSearchDocIds.length === 0 && !isFreeUser) || (isFreeUser && selectedFiles.length === 0) }
           >
-            {isLoading ? (
+            {isLoading || isLoadingAppSettings ? (
               <>
                 <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                Analizando Contenido...
+                {isLoadingAppSettings ? "Cargando Config..." : "Analizando Contenido..."}
               </>
             ) : (
               'Analizar y Predecir Preguntas'
