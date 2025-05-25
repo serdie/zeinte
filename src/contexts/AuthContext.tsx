@@ -13,35 +13,36 @@ import {
   signOut as firebaseSignOut,
   AuthError
 } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 // Import the flag and instances from firebase/config
-import { auth, googleProvider, isFirebaseFullyConfigured } from '@/firebase/config'; // This is key
+import { auth, googleProvider, db, isFirebaseFullyConfigured } from '@/firebase/config'; 
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
-  isFirebaseConfigured: boolean; // Expose this for components to check
+  isFirebaseConfigured: boolean; 
   signUpWithEmail: (email: string, password: string) => Promise<User | string>;
   loginWithEmail: (email: string, password: string) => Promise<User | string>;
   signInWithGoogle: () => Promise<User | string>;
   logout: () => Promise<void | string>;
 }
 
-const FIREBASE_CONFIG_ERROR_MESSAGE = "Error de Configuración de Firebase: La configuración de Firebase es incorrecta o está incompleta (faltan variables como NEXT_PUBLIC_FIREBASE_API_KEY en .env.local, o los valores son incorrectos). Por favor, revisa la configuración de tu proyecto y los logs de la consola del servidor, luego REINICIA el servidor de desarrollo. La autenticación no funcionará hasta que esto se resuelva.";
+const FIREBASE_CONFIG_ERROR_MESSAGE = "Error de Configuración de Firebase: La configuración de Firebase es incorrecta o está incompleta (faltan variables como NEXT_PUBLIC_FIREBASE_API_KEY en .env.local, o los valores son incorrectos). Por favor, revisa la configuración de tu proyecto y los logs de la consola del servidor, luego REINICIA el servidor de desarrollo. La autenticación y las funciones de base de datos no funcionarán hasta que esto se resuelva.";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const isConfigured = isFirebaseFullyConfigured; // Directly use the flag from firebase/config.ts
+  const isConfigured = isFirebaseFullyConfigured; 
   const router = useRouter();
 
   useEffect(() => {
-    // Crucially, check if 'auth' itself is defined (it won't be if config.ts failed to initialize it)
-    // and if Firebase is reported as fully configured by our flag.
     if (!isConfigured || !auth) { 
-      console.warn("AuthContext: Firebase auth is not configured, auth object is undefined, or required environment variables are missing/incorrect. Skipping onAuthStateChanged listener. isFirebaseFullyConfigured:", isConfigured, "auth object exists:", !!auth);
+      if (typeof window !== 'undefined') { // Only log in browser
+        console.warn("AuthContext: Firebase auth is not configured, auth object is undefined, or required environment variables are missing/incorrect. Skipping onAuthStateChanged listener. isFirebaseFullyConfigured:", isConfigured, "auth object exists:", !!auth);
+      }
       setLoading(false);
       return;
     }
@@ -51,15 +52,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     });
     return () => unsubscribe();
-  }, [isConfigured]); // isConfigured comes from firebase/config and reflects the env var check status
+  }, [isConfigured]); 
 
   const handleAuthError = (error: AuthError): string => {
     console.error("Firebase Auth Error:", error.code, error.message);
-    // If Firebase isn't configured or the error is related to invalid API key or general config, return the specific config message.
-    if (!isConfigured || error.code === 'auth/invalid-api-key' || error.code === 'auth/internal-error' || error.code === 'auth/configuration-not-found' || error.code === 'auth/missing-config') {
+    if (!isConfigured || error.code === 'auth/invalid-api-key' || error.code === 'auth/internal-error' || error.code === 'auth/configuration-not-found' || error.code === 'auth/missing-config' || error.code === 'auth/network-request-failed') {
         return FIREBASE_CONFIG_ERROR_MESSAGE;
     }
-    // Standard error messages
     switch (error.code) {
       case 'auth/email-already-in-use':
         return 'Este correo electrónico ya está en uso.';
@@ -80,16 +79,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       case 'auth/cancelled-popup-request':
         return 'Se canceló la solicitud emergente. Inténtalo de nuevo.';
       default:
-        return 'Ocurrió un error inesperado. Por favor, inténtalo de nuevo.';
+        return `Ocurrió un error inesperado (${error.code}). Por favor, inténtalo de nuevo.`;
     }
   };
 
   const signUpWithEmail = async (email: string, password: string): Promise<User | string> => {
-    if (!isConfigured || !auth) return FIREBASE_CONFIG_ERROR_MESSAGE;
+    if (!isConfigured || !auth || !db) return FIREBASE_CONFIG_ERROR_MESSAGE;
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       setCurrentUser(userCredential.user);
+      // Ejemplo: Guardar información del usuario en Firestore
+      const userRef = doc(db, "users", userCredential.user.uid);
+      await setDoc(userRef, {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        createdAt: serverTimestamp(),
+        displayName: userCredential.user.displayName || email.split('@')[0], // usa el nombre de usuario del email si no hay displayName
+        provider: 'email/password',
+      });
       return userCredential.user;
     } catch (error) {
       return handleAuthError(error as AuthError);
@@ -113,11 +121,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signInWithGoogle = async (): Promise<User | string> => {
-    if (!isConfigured || !auth || !googleProvider) return FIREBASE_CONFIG_ERROR_MESSAGE;
+    if (!isConfigured || !auth || !googleProvider || !db) return FIREBASE_CONFIG_ERROR_MESSAGE;
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
       setCurrentUser(result.user);
+      // Ejemplo: Guardar/Actualizar información del usuario en Firestore
+      const userRef = doc(db, "users", result.user.uid);
+      await setDoc(userRef, {
+        uid: result.user.uid,
+        email: result.user.email,
+        displayName: result.user.displayName,
+        photoURL: result.user.photoURL,
+        lastLogin: serverTimestamp(),
+        provider: 'google.com',
+      }, { merge: true }); // merge:true para actualizar si ya existe
       return result.user;
     } catch (error) {
       return handleAuthError(error as AuthError);
@@ -129,19 +147,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async (): Promise<void | string> => {
     setLoading(true);
     try {
-      // Only attempt Firebase sign out if it was configured and auth object exists
       if (isConfigured && auth) { 
         await firebaseSignOut(auth);
       }
     } catch (error) {
-      // Log the error but don't block client-side state clearing
       console.error("Error signing out from Firebase: ", error);
     } finally {
-      setCurrentUser(null); // Always clear client-side user state
-      if (router) router.push('/login'); // Always redirect
+      setCurrentUser(null); 
+      if (router) router.push('/login'); 
       setLoading(false);
-      // If Firebase wasn't configured, return the config error message after attempting local logout actions.
-      if (!isConfigured) { // Check isConfigured directly
+      if (!isConfigured) { 
         return FIREBASE_CONFIG_ERROR_MESSAGE;
       }
     }
@@ -150,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     currentUser,
     loading,
-    isFirebaseConfigured: isConfigured, // Use the flag from firebase/config
+    isFirebaseConfigured: isConfigured, 
     signUpWithEmail,
     loginWithEmail,
     signInWithGoogle,
