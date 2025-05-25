@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageSquare, Users, ArrowLeft, Loader2, ShieldAlert, Eye, Edit3, Trash2, Save } from 'lucide-react';
+import { MessageSquare, Users, ArrowLeft, Loader2, ShieldAlert, Eye, Edit3, Trash2, Save, AlertTriangle, Database } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,8 +30,10 @@ import {
   orderBy,
   Timestamp,
   writeBatch,
-  increment
+  increment,
+  FieldValue
 } from 'firebase/firestore';
+import { seedInitialForumData } from '@/lib/firestoreSeedData'; // Import the seeding function
 
 interface FirestoreTimestamp {
   seconds: number;
@@ -47,7 +49,7 @@ interface ForumTopic {
   lastActivity: Timestamp | FirestoreTimestamp | Date;
   postCount: number;
   views: number;
-  posts?: ForumPost[]; // Puede ser opcional y cargarse bajo demanda
+  posts?: ForumPost[]; 
 }
 
 interface ForumPost {
@@ -93,6 +95,40 @@ export default function AdminCommunityManagementPage() {
   const [postToDelete, setPostToDelete] = useState<ForumPost | null>(null);
   const [topicToDelete, setTopicToDelete] = useState<ForumTopic | null>(null);
 
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [seedStatusMessage, setSeedStatusMessage] = useState<string | null>(null);
+
+  // --- IMPORTANT: REPLACE THESE WITH ACTUAL UIDs OF YOUR TEST USERS ---
+  // These should match the UIDs of users created in your Firebase Authentication
+  const seedUserUids = {
+    admin: 'REPLACE_WITH_ACTUAL_ADMIN_UID', // UID for serdiegm@gmail.com
+    free: 'REPLACE_WITH_ACTUAL_FREE_USER_UID',   // UID for dginteligenciaartificial@gmail.com
+    pro: 'REPLACE_WITH_ACTUAL_PRO_USER_UID'     // UID for prueba@prueba.com
+  };
+  // --- END OF UID REPLACEMENT ---
+
+  const handleSeedData = async () => {
+    if (!db || !isAdmin) {
+      toast({ title: "Error", description: "No autorizado o DB no configurada.", variant: "destructive" });
+      return;
+    }
+    if (seedUserUids.admin.startsWith('REPLACE_') || seedUserUids.free.startsWith('REPLACE_') || seedUserUids.pro.startsWith('REPLACE_')) {
+      toast({ title: "Error de Configuración de Siembra", description: "Debes reemplazar los UIDs placeholder en AdminCommunityManagementPage.tsx y en firestoreSeedData.ts antes de sembrar datos.", variant: "destructive", duration: 10000 });
+      setSeedStatusMessage("Error: UIDs placeholder no reemplazados.");
+      return;
+    }
+    setIsSeeding(true);
+    setSeedStatusMessage("Sembrando datos iniciales...");
+    const result = await seedInitialForumData(db, seedUserUids);
+    setSeedStatusMessage(result);
+    toast({ title: "Resultado de Siembra de Datos", description: result, duration: 7000 });
+    setIsSeeding(false);
+    if (result.startsWith('Successfully')) {
+      fetchTopics(); // Refresh topics list
+    }
+  };
+
+
   const fetchTopics = async () => {
     if (!db || !isAdmin) {
       setIsLoadingTopics(false);
@@ -117,10 +153,10 @@ export default function AdminCommunityManagementPage() {
   };
 
   useEffect(() => {
-    if (isFirebaseConfigured && isAdmin) {
+    if (isFirebaseConfigured && isAdmin && db) {
       fetchTopics();
     }
-  }, [isFirebaseConfigured, isAdmin]);
+  }, [isFirebaseConfigured, isAdmin, db]);
 
   const fetchPostsForTopic = async (topicId: string) => {
     if (!db) return [];
@@ -162,7 +198,6 @@ export default function AdminCommunityManagementPage() {
     try {
       await updateDoc(postRef, { content: editedPostContent });
       
-      // Update local state
       const updatedPosts = selectedTopic.posts?.map(p =>
         p.id === editingPost.id ? { ...p, content: editedPostContent } : p
       ) || [];
@@ -185,14 +220,12 @@ export default function AdminCommunityManagementPage() {
     const batch = writeBatch(db);
 
     batch.delete(postRef);
-    batch.update(topicRef, { postCount: increment(-1) }); // Decrement postCount
+    batch.update(topicRef, { postCount: increment(-1) }); 
 
     try {
       await batch.commit();
-      // Update local state
       const updatedPosts = selectedTopic.posts?.filter(p => p.id !== postToDelete.id) || [];
       setSelectedTopic(prev => prev ? { ...prev, posts: updatedPosts, postCount: prev.postCount -1 } : null);
-      // Update topics list to reflect new postCount
       setTopics(prevTopics => prevTopics.map(t => t.id === selectedTopic.id ? {...t, postCount: t.postCount -1} : t));
 
       toast({ title: "Mensaje Eliminado", description: "El mensaje ha sido eliminado de Firestore.", variant: "destructive" });
@@ -212,16 +245,11 @@ export default function AdminCommunityManagementPage() {
 
     try {
       const batch = writeBatch(db);
-      // Delete the topic document
       batch.delete(topicRef);
-
-      // Delete all associated posts
       const postsSnapshot = await getDocs(postsQuery);
       postsSnapshot.forEach(doc => batch.delete(doc.ref));
       
       await batch.commit();
-
-      // Update local state
       setTopics(prevTopics => prevTopics.filter(topic => topic.id !== topicToDelete.id));
       
       toast({ title: "Tema Eliminado", description: "El tema y sus mensajes han sido eliminados de Firestore.", variant: "destructive" });
@@ -273,7 +301,6 @@ export default function AdminCommunityManagementPage() {
       )
   }
 
-
   return (
     <div className="container mx-auto py-8 space-y-6">
       <div className="flex justify-between items-center mb-6">
@@ -284,6 +311,33 @@ export default function AdminCommunityManagementPage() {
           <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />Volver al Panel de Administración</Button>
         </Link>
       </div>
+
+      <Card>
+        <CardHeader>
+            <CardTitle className="text-lg">Siembra de Datos Iniciales</CardTitle>
+            <CardDescription>
+                Usa este botón para poblar Firestore con datos de ejemplo para el foro. 
+                Reemplaza los UIDs placeholder en el código antes de usar.
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <Button onClick={handleSeedData} disabled={isSeeding}>
+                {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
+                Sembrar Datos Iniciales del Foro
+            </Button>
+            {seedStatusMessage && (
+                <Alert className={`mt-4 ${seedStatusMessage.includes('Error') ? 'variant-destructive' : 'variant-default'}`}>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>{seedStatusMessage.includes('Error') ? 'Error de Siembra' : 'Estado de Siembra'}</AlertTitle>
+                    <AlertDescription>{seedStatusMessage}</AlertDescription>
+                </Alert>
+            )}
+            <p className="text-xs text-muted-foreground mt-2">
+                Nota: Esta acción intentará no duplicar datos si ya existen temas.
+                Asegúrate de haber reemplazado los UIDs placeholder en el código de <code>AdminCommunityManagementPage.tsx</code> y <code>firestoreSeedData.ts</code>.
+            </p>
+        </CardContent>
+      </Card>
       
       <Card className="w-full shadow-lg">
         <CardHeader>
@@ -340,7 +394,6 @@ export default function AdminCommunityManagementPage() {
         </CardContent>
       </Card>
 
-      {/* View Posts Dialog */}
       {selectedTopic && (
         <Dialog open={isPostsDialogOpen} onOpenChange={(open) => { if(!open) setSelectedTopic(null); setIsPostsDialogOpen(open);}}>
           <DialogContent className="sm:max-w-2xl">
@@ -359,6 +412,7 @@ export default function AdminCommunityManagementPage() {
                     <Card key={post.id} className="p-3 shadow-sm">
                       <div className="flex items-start space-x-3">
                         <Avatar className="h-8 w-8 border">
+                           {/* Idealmente, aquí se buscaría la photoURL del usuario con post.userId */}
                           <AvatarImage src={`https://placehold.co/40x40.png?text=${post.userId.substring(0,2).toUpperCase()}`} alt={post.userId} data-ai-hint="user avatar" />
                           <AvatarFallback>{post.userId.substring(0, 2).toUpperCase()}</AvatarFallback>
                         </Avatar>
@@ -395,7 +449,6 @@ export default function AdminCommunityManagementPage() {
         </Dialog>
       )}
 
-      {/* Edit Post Dialog */}
       {editingPost && (
         <Dialog open={isEditPostDialogOpen} onOpenChange={setIsEditPostDialogOpen}>
             <DialogContent className="sm:max-w-md">
@@ -427,7 +480,6 @@ export default function AdminCommunityManagementPage() {
         </Dialog>
       )}
 
-      {/* Confirm Delete Post Dialog */}
       {postToDelete && (
         <AlertDialog open={!!postToDelete} onOpenChange={(open) => !open && setPostToDelete(null)}>
             <AlertDialogContent>
@@ -447,7 +499,6 @@ export default function AdminCommunityManagementPage() {
         </AlertDialog>
       )}
 
-      {/* Confirm Delete Topic Dialog */}
       {topicToDelete && (
         <AlertDialog open={!!topicToDelete} onOpenChange={(open) => !open && setTopicToDelete(null)}>
             <AlertDialogContent>
@@ -469,5 +520,3 @@ export default function AdminCommunityManagementPage() {
     </div>
   );
 }
-
-    
