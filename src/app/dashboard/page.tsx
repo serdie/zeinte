@@ -9,15 +9,18 @@ import { generateAIExplanation, type GenerateAIExplanationOutput, type GenerateA
 import { analyzeDocuments, type AnalyzeDocumentsOutput } from '@/ai/flows/analyze-documents';
 import { predictExamQuestions, type PredictExamQuestionsOutput } from '@/ai/flows/predict-exam-questions';
 import { PREDICTED_DATA_KEY, EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
-import type { PredictedData, AIExplanation, PredictedQuestion, ExamConfig, AnalysisDetails } from '@/types';
+import type { PredictedData, AIExplanation, PredictedQuestion, ExamConfig } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw, Microscope } from 'lucide-react';
+import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw, Microscope, Lock } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/contexts/AuthContext';
+import { UpgradeProAlert } from '@/components/ui/upgrade-pro-alert';
 
 const DEFAULT_NUM_QUESTIONS_REANALYSIS = "10";
+const FREE_USER_QUESTION_LIMIT = 3;
 
 export default function DashboardPage() {
   const [predictedData, setPredictedData] = useState<PredictedData | null>(null);
@@ -32,6 +35,8 @@ export default function DashboardPage() {
   const [numQuestionsForReanalysis, setNumQuestionsForReanalysis] = useState<string>(DEFAULT_NUM_QUESTIONS_REANALYSIS);
 
   const { toast } = useToast();
+  const { userTier } = useAuth();
+  const isFreeUser = userTier === 'free';
 
   useEffect(() => {
     const storedConfig = localStorage.getItem(EXAM_CONFIG_KEY);
@@ -49,16 +54,10 @@ export default function DashboardPage() {
     if (storedData) {
       try {
         const parsedData: PredictedData = JSON.parse(storedData);
-        if (parsedData.questions && parsedData.questions.length > 0 && typeof parsedData.questions[0] === 'string') {
-          console.warn("Old question format detected in localStorage. Clearing data.");
-          localStorage.removeItem(PREDICTED_DATA_KEY);
-          setPredictedData(null);
-        } else {
-          setPredictedData(parsedData);
-          setNumQuestionsForReanalysis(
-            parsedData.requestedNumberOfQuestions?.toString() || defaultNumQuestions
-          );
-        }
+        setPredictedData(parsedData);
+        setNumQuestionsForReanalysis(
+          parsedData.requestedNumberOfQuestions?.toString() || defaultNumQuestions
+        );
       } catch (error) {
         console.error("Failed to parse predicted data from localStorage", error);
         localStorage.removeItem(PREDICTED_DATA_KEY);
@@ -72,6 +71,23 @@ export default function DashboardPage() {
   }, []);
 
   const handleGetExplanation = useCallback(async (questionText: string, options: string[], correctAnswerIndex: number) => {
+    if (isFreeUser) {
+      toast({
+        title: "Funcionalidad Pro",
+        description: (
+          <div className="flex flex-col gap-2">
+            <span>Las explicaciones detalladas de la IA son una característica del Plan Pro.</span>
+            <Link href="/#pricing" passHref>
+              <Button variant="link" className="p-0 h-auto text-primary hover:underline">¡Actualiza tu plan!</Button>
+            </Link>
+          </div>
+        ),
+        variant: "default",
+        duration: 7000,
+      });
+      return;
+    }
+
     const questionContext = { questionText, options, correctAnswerIndex };
     setSelectedQuestionForExplanation(questionContext);
     setIsExplaining(true);
@@ -98,9 +114,25 @@ export default function DashboardPage() {
     } finally {
       setIsExplaining(false);
     }
-  }, [predictedData, toast]);
+  }, [predictedData, toast, isFreeUser]);
 
   const handleReAnalyze = async () => {
+    if (isFreeUser) {
+         toast({
+            title: "Funcionalidad Pro",
+            description: (
+            <div className="flex flex-col gap-2">
+                <span>La función de Re-analizar es parte del Plan Pro.</span>
+                <Link href="/#pricing" passHref>
+                <Button variant="link" className="p-0 h-auto text-primary hover:underline">¡Actualiza tu plan para usarla!</Button>
+                </Link>
+            </div>
+            ),
+            variant: "default",
+            duration: 7000,
+        });
+        return;
+    }
     if (!predictedData?.originalDocumentContent) {
       toast({
         title: "Falta contenido",
@@ -190,6 +222,10 @@ export default function DashboardPage() {
       </div>
     );
   }
+
+  const questionsToDisplay = isFreeUser 
+    ? predictedData.questions.slice(0, FREE_USER_QUESTION_LIMIT) 
+    : predictedData.questions;
   
   return (
     <div className="space-y-8">
@@ -225,46 +261,69 @@ export default function DashboardPage() {
           <Select 
             value={numQuestionsForReanalysis} 
             onValueChange={setNumQuestionsForReanalysis}
-            disabled={isReAnalyzing || !predictedData?.originalDocumentContent}
+            disabled={isReAnalyzing || !predictedData?.originalDocumentContent || isFreeUser}
           >
             <SelectTrigger id="num-questions-reanalysis-select" className="w-[150px] sm:w-auto">
               <SelectValue placeholder="Cantidad" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="5">5</SelectItem>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="15">15</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="25">25</SelectItem>
-              <SelectItem value="30">30</SelectItem>
+              {isFreeUser ? null : (
+                <>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="15">15</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="30">30</SelectItem>
+                </>
+              )}
             </SelectContent>
           </Select>
         </div>
         <Button 
           onClick={handleReAnalyze} 
-          disabled={isReAnalyzing || !predictedData?.originalDocumentContent}
+          disabled={isReAnalyzing || !predictedData?.originalDocumentContent || isFreeUser}
           variant="outline"
           className="shadow-md w-full sm:w-auto"
+          title={isFreeUser ? "Actualiza a Pro para re-analizar documentos" : "Re-analizar y generar nuevo examen"}
         >
           {isReAnalyzing ? (
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+          ) : isFreeUser ? (
+            <Lock className="mr-2 h-5 w-5" />
           ) : (
             <RefreshCw className="mr-2 h-5 w-5" />
           )}
           Re-analizar y Generar Nuevo Examen
         </Button>
       </div>
+      {isFreeUser && (
+        <UpgradeProAlert 
+            featureName="la función de re-análisis y la generación de más de 5 preguntas" 
+            className="mb-4" 
+            message="Estás viendo un número limitado de preguntas y algunas funciones están restringidas en el plan gratuito."
+        />
+      )}
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {predictedData.questions.map((q: PredictedQuestion, index) => (
+        {questionsToDisplay.map((q: PredictedQuestion, index) => (
           <PredictedQuestionCard
             key={index}
             question={q}
             onGetExplanation={handleGetExplanation}
             isExplainingCurrent={isExplaining && selectedQuestionForExplanation?.questionText === q.questionText}
+            isExplanationDisabled={isFreeUser}
           />
         ))}
       </div>
+      {isFreeUser && predictedData.questions.length > FREE_USER_QUESTION_LIMIT && (
+         <UpgradeProAlert 
+            featureName="visualizar todas las preguntas generadas" 
+            className="mt-6"
+            message={`Estás viendo ${FREE_USER_QUESTION_LIMIT} de ${predictedData.questions.length} preguntas generadas.`}
+        />
+      )}
 
       <AIExplanationDialog
         open={isExplanationDialogOpen}

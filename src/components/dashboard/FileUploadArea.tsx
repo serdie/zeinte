@@ -11,12 +11,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, Building, School, Briefcase } from 'lucide-react';
+import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, Building, School, Briefcase, Lock } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
 import type { ExamConfig } from '@/types';
-import { findExternalDocuments, type FindExternalDocumentsOutput, type DocumentSearchResult } from '@/ai/flows/find-external-documents';
+import { findExternalDocuments, type FindExternalDocumentsOutput } from '@/ai/flows/find-external-documents';
 import { Checkbox } from '../ui/checkbox';
+import { useAuth } from '@/contexts/AuthContext';
+import { UpgradeProAlert } from '@/components/ui/upgrade-pro-alert';
 
 interface FileUploadAreaProps {
   onAnalyze: (content: string, numQuestions: number) => Promise<void>;
@@ -25,6 +27,7 @@ interface FileUploadAreaProps {
 
 const MAX_FILES_UPLOAD = 30;
 const DEFAULT_NUM_QUESTIONS = 10;
+const FREE_USER_MAX_QUESTIONS_TO_GENERATE = "5";
 const MAX_TOTAL_SIZE_MB = 5; 
 const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
 
@@ -60,6 +63,8 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [numQuestions, setNumQuestions] = useState<string>(DEFAULT_NUM_QUESTIONS.toString());
   const { toast } = useToast();
+  const { userTier } = useAuth();
+  const isFreeUser = userTier === 'free';
 
   const [deepSearchTopic, setDeepSearchTopic] = useState("");
   const [deepSearchResults, setDeepSearchResults] = useState<FindExternalDocumentsOutput | null>(null);
@@ -73,17 +78,24 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
 
   useEffect(() => {
     const storedConfig = localStorage.getItem(EXAM_CONFIG_KEY);
+    let initialNumQuestions = isFreeUser ? FREE_USER_MAX_QUESTIONS_TO_GENERATE : DEFAULT_NUM_QUESTIONS.toString();
     if (storedConfig) {
       try {
         const parsedConfig: ExamConfig = JSON.parse(storedConfig);
         if (parsedConfig.defaultNumberOfQuestions) {
-          setNumQuestions(parsedConfig.defaultNumberOfQuestions.toString());
+            const configNum = parsedConfig.defaultNumberOfQuestions.toString();
+            if (isFreeUser && parseInt(configNum, 10) > parseInt(FREE_USER_MAX_QUESTIONS_TO_GENERATE, 10)) {
+                initialNumQuestions = FREE_USER_MAX_QUESTIONS_TO_GENERATE;
+            } else {
+                initialNumQuestions = configNum;
+            }
         }
       } catch (error) {
         console.error("Error parsing exam config for FileUploadArea:", error);
       }
     }
-  }, []);
+    setNumQuestions(initialNumQuestions);
+  }, [isFreeUser]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -106,6 +118,23 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   };
 
   const handleDeepSearch = useCallback(async (searchTopic?: string) => {
+    if (isFreeUser) {
+      toast({
+        title: "Funcionalidad Pro",
+        description: (
+            <div className="flex flex-col gap-2">
+                <span>Las sugerencias IA de documentos son una característica del Plan Pro.</span>
+                <Link href="/#pricing" passHref>
+                <Button variant="link" className="p-0 h-auto text-primary hover:underline">¡Actualiza tu plan!</Button>
+                </Link>
+            </div>
+        ),
+        variant: "default",
+        duration: 7000,
+      });
+      return;
+    }
+
     const topicToSearch = searchTopic || deepSearchTopic;
     if (!topicToSearch.trim()) {
       toast({ title: "Tema vacío", description: "Por favor, introduce un tema para la búsqueda.", variant: "destructive" });
@@ -114,7 +143,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     setIsDeepSearching(true);
     setDeepSearchResults(null);
     setSelectedDeepSearchDocIds([]);
-    if(!searchTopic) { // Only show toast if it's a manual search
+    if(!searchTopic) { 
         toast({
             title: "Buscando Sugerencias IA...",
             description: "La IA está generando ideas de documentos relevantes para tu tema. Esto puede tardar unos momentos.",
@@ -146,12 +175,26 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     } finally {
       setIsDeepSearching(false);
     }
-  }, [deepSearchTopic, toast]);
+  }, [deepSearchTopic, toast, isFreeUser]);
 
   const handleCommonExamClick = (exam: CommonExam) => {
     setDeepSearchTopic(exam.keywords);
-    // Automatically trigger search for IA suggestions with the new topic
-    // This makes the "Sugerencias IA" card update
+    if (isFreeUser) {
+        toast({
+            title: "Funcionalidad Pro",
+            description: (
+                <div className="flex flex-col gap-2">
+                    <span>Usar exámenes comunes para iniciar una búsqueda IA es parte del Plan Pro.</span>
+                    <Link href="/#pricing" passHref>
+                    <Button variant="link" className="p-0 h-auto text-primary hover:underline">¡Actualiza tu plan!</Button>
+                    </Link>
+                </div>
+            ),
+            variant: "default",
+            duration: 7000,
+        });
+        return;
+    }
     handleDeepSearch(exam.keywords); 
     toast({
         title: `Buscando sobre "${exam.name}"`,
@@ -161,6 +204,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   };
 
   const toggleDeepSearchDocSelection = (docId: string) => {
+    if (isFreeUser) return; // Prevent selection if free user
     setSelectedDeepSearchDocIds(prevSelected =>
       prevSelected.includes(docId)
         ? prevSelected.filter(id => id !== docId)
@@ -223,7 +267,16 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
         });
         return;
       }
-      onAnalyze(allFilesContent, parseInt(numQuestions, 10));
+      let finalNumQuestions = parseInt(numQuestions, 10);
+      if (isFreeUser && finalNumQuestions > parseInt(FREE_USER_MAX_QUESTIONS_TO_GENERATE, 10)) {
+        finalNumQuestions = parseInt(FREE_USER_MAX_QUESTIONS_TO_GENERATE, 10);
+        toast({
+          title: "Límite del Plan Gratuito",
+          description: `Se generarán ${FREE_USER_MAX_QUESTIONS_TO_GENERATE} preguntas como máximo para usuarios gratuitos.`,
+          variant: "default"
+        });
+      }
+      onAnalyze(allFilesContent, finalNumQuestions);
     } catch (error) {
       console.error("Error processing files:", error);
       toast({
@@ -245,7 +298,8 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
           variant="outline"
           className="h-auto p-4 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md"
           onClick={() => handleCommonExamClick(exam)}
-          disabled={isLoading || isDeepSearching}
+          disabled={isLoading || isDeepSearching || isFreeUser}
+          title={isFreeUser ? "Funcionalidad Pro: Actualiza para usar esta opción" : exam.name}
         >
           <Image 
             src={exam.logoPlaceholder} 
@@ -275,7 +329,6 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
       </div>
     </div>
   );
-
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -389,6 +442,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                 <TabsContent value="comunes" className="mt-4">
                   <p className="text-sm text-muted-foreground mb-3">
                     Selecciona un tipo de examen común. Esto rellenará el tema en la sección "Sugerencias IA" y buscará documentos relacionados (simulado).
+                    {isFreeUser && " (Funcionalidad Pro)"}
                   </p>
                   <div>
                     <h4 className="text-md font-semibold mt-4 mb-2 text-foreground">Universidades</h4>
@@ -396,6 +450,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                     <h4 className="text-md font-semibold mt-6 mb-2 text-foreground">Oposiciones</h4>
                     {renderCommonExams('Oposición')}
                   </div>
+                  {isFreeUser && <UpgradeProAlert featureName="la exploración de exámenes comunes" className="mt-4"/>}
                 </TabsContent>
                 <TabsContent value="comunidad">
                   {renderComingSoon("Exámenes de la Comunidad", "Aquí podrás encontrar y utilizar exámenes y material de estudio compartido por otros usuarios de la plataforma.")}
@@ -418,9 +473,11 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
               <CardTitle className="text-2xl flex items-center gap-2">
                 <Brain className="h-7 w-7 text-accent" />
                 Sugerencias IA de Documentos
+                 {isFreeUser && <Lock className="h-5 w-5 text-amber-500" />}
               </CardTitle>
               <CardDescription>
                 Introduce un tema y la IA sugerirá títulos y resúmenes de documentos relevantes. Podrás añadir su contenido simulado al análisis.
+                {isFreeUser && " (Funcionalidad Pro)"}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -434,23 +491,27 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                     onChange={(e) => setDeepSearchTopic(e.target.value)}
                     placeholder="Ej: Oposición agente forestal, Historia de España S.XX"
                     className="text-sm"
-                    disabled={isLoading || isDeepSearching}
+                    disabled={isLoading || isDeepSearching || isFreeUser}
                   />
-                  <Button onClick={() => handleDeepSearch()} disabled={isLoading || isDeepSearching || !deepSearchTopic.trim()} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                  <Button onClick={() => handleDeepSearch()} disabled={isLoading || isDeepSearching || !deepSearchTopic.trim() || isFreeUser} className="bg-accent hover:bg-accent/90 text-accent-foreground">
                     {isDeepSearching ? <Loader2 className="animate-spin" /> : <Search className="h-5 w-5" />}
                     <span className="ml-2 hidden sm:inline">Sugerir</span>
                   </Button>
                 </div>
               </div>
 
-              {isDeepSearching && (
+              {isFreeUser && (
+                <UpgradeProAlert featureName="las sugerencias IA de documentos" className="mt-4"/>
+              )}
+
+              {!isFreeUser && isDeepSearching && (
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="h-8 w-8 animate-spin text-accent" />
                   <p className="ml-2 text-muted-foreground">IA generando sugerencias...</p>
                 </div>
               )}
 
-              {deepSearchResults && (
+              {!isFreeUser && deepSearchResults && (
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground italic">{deepSearchResults.message}</p>
                   {deepSearchResults.results.length > 0 && (
@@ -462,7 +523,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                             id={`ds-${doc.id}`}
                             checked={selectedDeepSearchDocIds.includes(doc.id)}
                             onCheckedChange={() => toggleDeepSearchDocSelection(doc.id)}
-                            disabled={isLoading || isDeepSearching}
+                            disabled={isLoading || isDeepSearching || isFreeUser}
                             aria-label={`Seleccionar ${doc.title}`}
                             className="mt-1"
                           />
@@ -486,26 +547,37 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
       <div className="lg:col-span-2 space-y-6 p-6 border rounded-lg shadow-xl bg-card">
           <div className="space-y-2">
             <Label htmlFor="num-questions-select" className="text-lg font-semibold text-primary">Configuración Final del Análisis:</Label>
-            <p className="text-sm text-muted-foreground">Define cuántas preguntas quieres generar a partir de todos los documentos (subidos manualmente y/o seleccionados de las sugerencias IA).</p>
+            <p className="text-sm text-muted-foreground">Define cuántas preguntas quieres generar a partir de todos los documentos (subidos manualmente y/o seleccionados de las sugerencias IA).
+            {isFreeUser && ` (Máximo ${FREE_USER_MAX_QUESTIONS_TO_GENERATE} para usuarios gratuitos).`}
+            </p>
             <Select value={numQuestions} onValueChange={setNumQuestions} disabled={isLoading || isDeepSearching}>
               <SelectTrigger id="num-questions-select" className="w-full sm:w-[250px] text-base py-3">
                 <SelectValue placeholder="Selecciona cantidad" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="5">5 preguntas</SelectItem>
-                <SelectItem value="10">10 preguntas</SelectItem>
-                <SelectItem value="15">15 preguntas</SelectItem>
-                <SelectItem value="20">20 preguntas</SelectItem>
-                <SelectItem value="25">25 preguntas</SelectItem>
-                <SelectItem value="30">30 preguntas</SelectItem>
+                {!isFreeUser && (
+                  <>
+                    <SelectItem value="10">10 preguntas</SelectItem>
+                    <SelectItem value="15">15 preguntas</SelectItem>
+                    <SelectItem value="20">20 preguntas</SelectItem>
+                    <SelectItem value="25">25 preguntas</SelectItem>
+                    <SelectItem value="30">30 preguntas</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
+             {isFreeUser && numQuestions !== FREE_USER_MAX_QUESTIONS_TO_GENERATE && (
+                <p className="text-xs text-amber-600 mt-1">
+                    Has seleccionado {numQuestions} preguntas, pero se generarán {FREE_USER_MAX_QUESTIONS_TO_GENERATE} debido a tu plan gratuito.
+                </p>
+            )}
           </div>
 
           <Button
             type="submit"
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 text-lg font-semibold rounded-lg shadow-md transition-transform duration-150 ease-in-out active:scale-95"
-            disabled={isLoading || isDeepSearching || (selectedFiles.length === 0 && selectedDeepSearchDocIds.length === 0)}
+            disabled={isLoading || isDeepSearching || (selectedFiles.length === 0 && selectedDeepSearchDocIds.length === 0 && !isFreeUser) || (isFreeUser && selectedFiles.length === 0) }
           >
             {isLoading ? (
               <>

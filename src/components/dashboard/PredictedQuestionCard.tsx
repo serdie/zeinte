@@ -4,7 +4,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Sparkles, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Sparkles, Loader2, CheckCircle, XCircle, Lock } from 'lucide-react';
 import type { PredictedQuestion } from '@/types';
 import { useState, type MouseEvent } from 'react';
 import { cn } from '@/lib/utils';
@@ -13,9 +13,10 @@ interface PredictedQuestionCardProps {
   question: PredictedQuestion;
   onGetExplanation: (questionText: string, options: string[], correctAnswerIndex: number) => void;
   isExplainingCurrent: boolean;
+  isExplanationDisabled?: boolean;
 }
 
-export default function PredictedQuestionCard({ question, onGetExplanation, isExplainingCurrent }: PredictedQuestionCardProps) {
+export default function PredictedQuestionCard({ question, onGetExplanation, isExplainingCurrent, isExplanationDisabled }: PredictedQuestionCardProps) {
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
   const [answerRevealed, setAnswerRevealed] = useState(false);
 
@@ -111,8 +112,9 @@ export default function PredictedQuestionCard({ question, onGetExplanation, isEx
             e.stopPropagation(); // Prevent accordion toggle if card content is wrapped in one
             onGetExplanation(question.questionText, question.options, question.correctAnswerIndex);
           }}
-          disabled={isExplainingCurrent}
+          disabled={isExplainingCurrent || isExplanationDisabled}
           variant="outline"
+          title={isExplanationDisabled ? "Actualiza a Pro para explicaciones detalladas" : "Obtener explicación detallada de la IA"}
           className={cn(
             "bg-accent hover:bg-accent/90 text-accent-foreground border-accent hover:border-accent/90 flex-1",
             !answerRevealed && "sm:col-span-2 w-full" 
@@ -122,6 +124,11 @@ export default function PredictedQuestionCard({ question, onGetExplanation, isEx
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Obteniendo IA...
+            </>
+          ) : isExplanationDisabled ? (
+            <>
+              <Lock className="mr-2 h-4 w-4" />
+              Explicación Detallada (Pro)
             </>
           ) : (
             <>
