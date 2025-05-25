@@ -30,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es"> {/* Consider making lang dynamic with i18n if using i18n routing */}
+    <html lang="es">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <I18nProvider> {/* Wrap AuthProvider (and thus everything else) with I18nProvider */}
           <AuthProvider>
