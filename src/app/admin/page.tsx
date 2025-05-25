@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -74,9 +74,9 @@ export default function AdminPage() {
     try {
       const usersCollectionRef = collection(db, "users");
       const querySnapshot = await getDocs(usersCollectionRef);
-      const usersList = querySnapshot.docs.map(docSnapshot => ({ // Renamed doc to docSnapshot
-        id: docSnapshot.id, // Use docSnapshot.id which is the document ID from Firestore
-        uid: docSnapshot.data().uid || docSnapshot.id, // Ensure uid is present, fallback to id
+      const usersList = querySnapshot.docs.map(docSnapshot => ({ 
+        id: docSnapshot.id, 
+        uid: docSnapshot.data().uid || docSnapshot.id, 
         ...docSnapshot.data()
       } as AppUser));
       setUsers(usersList);
@@ -102,7 +102,7 @@ export default function AdminPage() {
   const handleOpenEditDialog = (user: AppUser) => {
     setEditingUser(user);
     setEditedDisplayName(user.displayName || "");
-    setEditedTier(user.tier || 'free'); // Default to 'free' if no tier
+    setEditedTier(user.tier || 'free'); 
     setIsEditDialogOpen(true);
   };
 
@@ -111,7 +111,7 @@ export default function AdminPage() {
     if (!editingUser || !db) return;
 
     setIsSavingUser(true);
-    const userRef = doc(db, "users", editingUser.uid); // Use UID for document ID
+    const userRef = doc(db, "users", editingUser.uid); 
     try {
       await updateDoc(userRef, {
         displayName: editedDisplayName,
@@ -120,7 +120,7 @@ export default function AdminPage() {
       toast({ title: "Usuario Actualizado", description: `Los datos de ${editingUser.email} han sido actualizados.`, variant: "default" });
       setIsEditDialogOpen(false);
       setEditingUser(null);
-      fetchUsers(); // Re-fetch users to update the list
+      fetchUsers(); 
     } catch (error: any) {
       console.error("Error updating user:", error);
       toast({ title: "Error al Actualizar", description: `No se pudo actualizar el usuario: ${error.message}`, variant: "destructive" });
@@ -133,12 +133,12 @@ export default function AdminPage() {
     if (!userToDelete || !db) return;
 
     setIsDeletingUser(true);
-    const userRef = doc(db, "users", userToDelete.uid); // Use UID for document ID
+    const userRef = doc(db, "users", userToDelete.uid); 
     try {
       await deleteDoc(userRef);
       toast({ title: "Usuario Eliminado de Firestore", description: `El registro de ${userToDelete.email} ha sido eliminado de la base de datos.`, variant: "default" });
-      setUserToDelete(null); // Close dialog by resetting userToDelete
-      fetchUsers(); // Re-fetch users
+      setUserToDelete(null); 
+      fetchUsers(); 
     } catch (error: any) {
       console.error("Error deleting user from Firestore:", error);
       toast({ title: "Error al Eliminar", description: `No se pudo eliminar el usuario de Firestore: ${error.message}`, variant: "destructive" });
@@ -261,11 +261,10 @@ export default function AdminPage() {
                         <Button variant="outline" size="sm" onClick={() => handleOpenEditDialog(user)} title="Editar Usuario">
                             <Edit3 className="h-4 w-4" />
                         </Button>
-                        <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="sm" onClick={() => setUserToDelete(user)} title="Eliminar Usuario (Firestore)">
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </AlertDialogTrigger>
+                        {/* Corrected: Removed AlertDialogTrigger wrapper, using simple Button */}
+                        <Button variant="destructive" size="sm" onClick={() => setUserToDelete(user)} title="Eliminar Usuario (Firestore)">
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -358,9 +357,9 @@ export default function AdminPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">Moderar temas y mensajes del foro, gestionar categorías, etc.</p>
+              <p className="text-sm text-muted-foreground">Moderar temas y mensajes del foro, gestionar categorías, etc. (Próximamente)</p>
               <Link href="/admin/community-management" passHref>
-                <Button variant="outline" size="sm" className="mt-3">Ir a Gestión de Comunidad</Button>
+                 <Button variant="outline" size="sm" className="mt-3">Ir a Gestión de Comunidad</Button>
               </Link>
             </CardContent>
           </Card>
