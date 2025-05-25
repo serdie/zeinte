@@ -16,10 +16,10 @@ const requiredEnvVars: Record<string, string | undefined> = {
 let allVarsPresent = true;
 let specificErrorMessages: string[] = [];
 
-// This code runs on the server during build and on the client side.
-// Console logs here might appear in both browser and server consoles depending on context.
-if (typeof window === 'undefined') { // Log only on server during build/startup for clarity
-    console.log("--- Firebase Environment Variable Check (Server Startup) ---");
+// This check primarily helps during server startup/build.
+// In the browser, process.env variables are baked in at build time.
+if (typeof window === 'undefined') { // Log detailed checks on server startup
+    console.log("\n--- Firebase Environment Variable Check (Server Startup) ---");
 }
 
 for (const varName in requiredEnvVars) {
@@ -27,14 +27,17 @@ for (const varName in requiredEnvVars) {
   if (!varValue) {
     const errorMessage = `🛑 CRITICAL Firebase Configuration Error: Environment variable ${varName} is MISSING or EMPTY. Please ensure it is correctly set in your .env.local file (in the project root). After adding/correcting it, YOU MUST RESTART your Next.js development server. Firebase will NOT initialize correctly without it.`;
     specificErrorMessages.push(errorMessage);
+    if (typeof window === 'undefined') console.error(errorMessage); // Log each missing var on server
+    
     if (varName === 'NEXT_PUBLIC_FIREBASE_API_KEY') {
-        specificErrorMessages.push("    🔥 Specific Issue: The API KEY (NEXT_PUBLIC_FIREBASE_API_KEY) is the most critical piece for Firebase to connect. It cannot be found or is empty. Ensure it's in .env.local AND you've RESTARTED your server.");
+        const specificApiKeyMessage = "    🔥 Specific Issue: The API KEY (NEXT_PUBLIC_FIREBASE_API_KEY) is the most critical piece for Firebase to connect. It cannot be found or is empty. Ensure it's in .env.local AND you've RESTARTED your server.";
+        specificErrorMessages.push(specificApiKeyMessage);
+        if (typeof window === 'undefined') console.error(specificApiKeyMessage);
     }
     allVarsPresent = false;
   } else {
-    if (typeof window === 'undefined') { // Server-side log
+    if (typeof window === 'undefined') { // Server-side log for present variables
         if (varName === 'NEXT_PUBLIC_FIREBASE_API_KEY') {
-          // Avoid logging the full API key value
           console.log(`✅ ${varName} is present (e.g., ${varValue.substring(0,5)}...${varValue.slice(-5)})`);
         } else {
           console.log(`✅ ${varName} is present.`);
@@ -63,70 +66,68 @@ if (allVarsPresent) {
       firebaseAppInstance = initializeApp(firebaseConfig);
       if (typeof window === 'undefined') console.log("✅ Firebase App initialized successfully.");
     } catch (error) {
-      if (typeof window === 'undefined') console.error("🔥 Firebase initialization error during initializeApp:", error);
-      specificErrorMessages.push(`🔥 Firebase initializeApp error: ${(error as Error).message}`);
+      const initErrorMsg = `🔥 Firebase initializeApp error: ${(error as Error).message}. This can happen if config values are present but malformed.`;
+      specificErrorMessages.push(initErrorMsg);
+      if (typeof window === 'undefined') console.error(initErrorMsg);
       allVarsPresent = false; // Mark as not configured if init fails
     }
   } else {
     firebaseAppInstance = getApps()[0];
-    // Check if the re-used instance is valid (has a name, which it should if properly initialized)
     if (firebaseAppInstance && firebaseAppInstance.name) {
         if (typeof window === 'undefined') console.log("✅ Firebase App re-used existing instance successfully.");
     } else {
-        // This case is unlikely if getApps() returns an item, but good to be defensive
-        if (typeof window === 'undefined') console.error("🔥 Could not properly re-use existing Firebase App instance.");
-        specificErrorMessages.push("🔥 Could not re-use existing Firebase App instance.");
-        firebaseAppInstance = undefined; // Ensure it's undefined
+        const reuseErrorMsg = "🔥 Could not properly re-use existing Firebase App instance. This is unexpected.";
+        specificErrorMessages.push(reuseErrorMsg);
+        if (typeof window === 'undefined') console.error(reuseErrorMsg);
+        firebaseAppInstance = undefined;
         allVarsPresent = false;
     }
   }
 
-  // Attempt to initialize Auth, Firestore, etc., only if app instance is valid
-  if (firebaseAppInstance && allVarsPresent) {
+  if (firebaseAppInstance && allVarsPresent) { // Check allVarsPresent again in case initializeApp failed
     try {
       firebaseAuthInstance = getAuth(firebaseAppInstance);
       firebaseGoogleProviderInstance = new GoogleAuthProvider();
       firestoreInstance = getFirestore(firebaseAppInstance);
       if (typeof window === 'undefined') console.log("✅ Firebase Auth, Google Provider, and Firestore initialized successfully.");
     } catch (error) {
-      if (typeof window === 'undefined') console.error("🔥 Error initializing Firebase Auth, Google Provider or Firestore:", error);
-      specificErrorMessages.push(`🔥 Firebase Auth/Provider/Firestore init error: ${(error as Error).message}`);
+      const servicesErrorMsg = `🔥 Error initializing Firebase Auth, Google Provider or Firestore: ${(error as Error).message}`;
+      specificErrorMessages.push(servicesErrorMsg);
+      if (typeof window === 'undefined') console.error(servicesErrorMsg);
       firebaseAuthInstance = undefined;
       firebaseGoogleProviderInstance = undefined;
       firestoreInstance = undefined;
-      allVarsPresent = false; // Mark as not configured if these critical services fail
+      allVarsPresent = false; 
     }
   } else if (allVarsPresent && !firebaseAppInstance) {
-    // This case means allVarsPresent was true initially, but app instance became undefined.
-    // This could happen if initializeApp itself threw an error caught above.
-    if (typeof window === 'undefined') console.error("🔥 Firebase App instance is undefined after attempted initialization, though vars seemed present.");
-    specificErrorMessages.push("🔥 Firebase App instance became undefined unexpectedly.");
+    // This case means allVarsPresent was true initially, but app instance became undefined (e.g. initializeApp threw)
+    const appInstanceErrorMsg = "🔥 Firebase App instance became undefined after attempted initialization, despite vars seeming present initially.";
+    specificErrorMessages.push(appInstanceErrorMsg);
+    if (typeof window === 'undefined') console.error(appInstanceErrorMsg);
     allVarsPresent = false;
   }
 }
 
-// Final check and logging
-// The 'typeof window !== "undefined"' check ensures these detailed error dumps only happen in the browser console for the user,
-// while the server console gets more direct logs from the loop above.
-if (!allVarsPresent && typeof window !== 'undefined') { // Only show this general error in the browser console if checks failed
+// This final summary error is more likely to be seen in the browser console if client-side checks also fail.
+// Server-side logs above are more granular.
+if (!allVarsPresent && typeof window !== 'undefined') { 
     const detailedErrors = specificErrorMessages.join("\n");
     console.error(
         `\n\n--- 🚨 Firebase Environment Variable Check FAILED ---\n${detailedErrors}\nFirebase will NOT be initialized. Please check your .env.local file and RESTART your server. Check server console for more details if running locally.\n---`
     );
-} else if (!allVarsPresent && typeof window === 'undefined') { // Server console detailed logs
-    // specificErrorMessages.forEach(msg => console.error(msg)); // Already logged in the loop
+} else if (!allVarsPresent && typeof window === 'undefined') { 
+    // Already logged granular errors on server, but a final summary is good.
     console.error(
-        "\n\n--- 🚨 Firebase Environment Variable Check FAILED. One or more required Firebase variables are missing or initialization failed. Firebase will NOT be initialized. Please check your .env.local file and RESTART your server. Review previous logs for specifics. ---"
+        "\n\n--- 🚨 Firebase Environment Variable Check FAILED. One or more required Firebase variables are missing or Firebase services failed to initialize. Firebase will NOT be initialized. Please check your .env.local file, ensure values are correct, and RESTART your server. Review previous logs for specifics. ---"
     );
 }
 
 
-// The flag `isFirebaseFullyConfigured` will be false if any env var was missing OR if initializeApp or getAuth/getFirestore failed.
 export const isFirebaseFullyConfigured = allVarsPresent && !!firebaseAppInstance && !!firebaseAuthInstance && !!firestoreInstance;
 
 export {
   firebaseAppInstance as app,
   firebaseAuthInstance as auth,
   firebaseGoogleProviderInstance as googleProvider,
-  firestoreInstance as db, // Export Firestore instance
+  firestoreInstance as db,
 };

@@ -11,10 +11,9 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut as firebaseSignOut,
-  AuthError
+  type AuthError // Ensure AuthError is imported
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-// Import the flag and instances from firebase/config
 import { auth, googleProvider, db, isFirebaseFullyConfigured } from '@/firebase/config'; 
 import { useRouter } from 'next/navigation';
 
@@ -40,24 +39,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (!isConfigured || !auth) { 
-      if (typeof window !== 'undefined') { // Only log in browser
+      if (typeof window !== 'undefined') { 
         console.warn("AuthContext: Firebase auth is not configured, auth object is undefined, or required environment variables are missing/incorrect. Skipping onAuthStateChanged listener. isFirebaseFullyConfigured:", isConfigured, "auth object exists:", !!auth);
       }
       setLoading(false);
-      setCurrentUser(null); // Ensure currentUser is null if not configured
+      setCurrentUser(null); 
       return;
     }
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       setLoading(false);
+    }, (error) => {
+      // This error callback for onAuthStateChanged can catch deeper initialization issues
+      console.error("AuthContext: Error in onAuthStateChanged listener:", error);
+      setLoading(false);
+      setCurrentUser(null);
+      // If Firebase is not configured, it's possible this listener itself errors out.
+      // The `isConfigured` check at the top is primary, but this adds a layer.
     });
     return () => unsubscribe();
   }, [isConfigured]); 
 
   const handleAuthError = (error: AuthError): string => {
     console.error("Firebase Auth Error:", error.code, error.message);
-    // If Firebase is not configured, always return the specific config error message
     if (!isConfigured || error.code === 'auth/invalid-api-key' || error.code === 'auth/internal-error' || error.code === 'auth/configuration-not-found' || error.code === 'auth/missing-config' || error.code === 'auth/network-request-failed') {
         return FIREBASE_CONFIG_ERROR_MESSAGE;
     }
@@ -90,10 +95,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      // userCredential.user will be set by onAuthStateChanged
-      // setCurrentUser(userCredential.user); // Not strictly necessary here due to onAuthStateChanged
-      
-      // Save user info to Firestore
       const userRef = doc(db, "users", userCredential.user.uid);
       await setDoc(userRef, {
         uid: userCredential.user.uid,
@@ -102,11 +103,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         displayName: userCredential.user.displayName || email.split('@')[0],
         provider: 'email/password',
       });
+      // onAuthStateChanged will set currentUser and setLoading(false)
       return userCredential.user;
     } catch (error) {
+      setLoading(false); // Ensure loading is false on error
       return handleAuthError(error as AuthError);
-    } finally {
-      // setLoading(false); // onAuthStateChanged will handle this
     }
   };
 
@@ -115,12 +116,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // setCurrentUser(userCredential.user); // Handled by onAuthStateChanged
+      // onAuthStateChanged will set currentUser and setLoading(false)
       return userCredential.user;
     } catch (error) {
+      setLoading(false); // Ensure loading is false on error
       return handleAuthError(error as AuthError);
-    } finally {
-      // setLoading(false); // onAuthStateChanged will handle this
     }
   };
 
@@ -129,9 +129,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      // setCurrentUser(result.user); // Handled by onAuthStateChanged
-      
-      // Save/Update user info in Firestore
       const userRef = doc(db, "users", result.user.uid);
       await setDoc(userRef, {
         uid: result.user.uid,
@@ -141,22 +138,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         lastLogin: serverTimestamp(),
         provider: 'google.com',
       }, { merge: true }); 
+      // onAuthStateChanged will set currentUser and setLoading(false)
       return result.user;
     } catch (error) {
+      setLoading(false); // Ensure loading is false on error
       return handleAuthError(error as AuthError);
-    } finally {
-      // setLoading(false); // onAuthStateChanged will handle this
     }
   };
 
   const logout = async (): Promise<void | string> => {
-    if (!isConfigured) { // If not configured, don't even try to sign out from Firebase
+    if (!isConfigured) {
         setCurrentUser(null);
         setLoading(false);
         if (router) router.push('/login');
         return FIREBASE_CONFIG_ERROR_MESSAGE;
     }
-    if (!auth) { // Should be covered by !isConfigured, but as a safeguard
+    if (!auth) { 
         setCurrentUser(null);
         setLoading(false);
         if (router) router.push('/login');
@@ -166,14 +163,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       await firebaseSignOut(auth);
-      // setCurrentUser(null); // Handled by onAuthStateChanged
+      // onAuthStateChanged will set currentUser to null and setLoading(false)
       if (router) router.push('/login'); 
     } catch (error) {
+      setLoading(false); // Ensure loading is false on error
       console.error("Error signing out from Firebase: ", error);
-      // setLoading(false); // onAuthStateChanged will handle this
       return handleAuthError(error as AuthError);
     } 
-    // setLoading(false) will be called by onAuthStateChanged when user becomes null
   };
 
   const value = {
