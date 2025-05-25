@@ -27,12 +27,11 @@ for (const varName in requiredEnvVars) {
   if (!varValue) {
     const errorMessage = `🛑 CRITICAL Firebase Configuration Error: Environment variable ${varName} is MISSING or EMPTY. Please ensure it is correctly set in your .env.local file (in the project root). After adding/correcting it, YOU MUST RESTART your Next.js development server. Firebase will NOT initialize correctly without it.`;
     specificErrorMessages.push(errorMessage);
-    if (typeof window === 'undefined') console.error(errorMessage); // Log each missing var on server
-    
-    if (varName === 'NEXT_PUBLIC_FIREBASE_API_KEY') {
-        const specificApiKeyMessage = "    🔥 Specific Issue: The API KEY (NEXT_PUBLIC_FIREBASE_API_KEY) is the most critical piece for Firebase to connect. It cannot be found or is empty. Ensure it's in .env.local AND you've RESTARTED your server.";
-        specificErrorMessages.push(specificApiKeyMessage);
-        if (typeof window === 'undefined') console.error(specificApiKeyMessage);
+    if (typeof window === 'undefined') { // Log specific missing var on server
+        console.error(errorMessage); // This will appear in your `npm run dev` terminal
+        if (varName === 'NEXT_PUBLIC_FIREBASE_API_KEY') {
+            console.error("    🔥 Specific Issue: The API KEY (NEXT_PUBLIC_FIREBASE_API_KEY) is the most critical piece for Firebase to connect. It cannot be found or is empty. Ensure it's in .env.local AND you've RESTARTED your server.");
+        }
     }
     allVarsPresent = false;
   } else {
@@ -110,13 +109,15 @@ if (allVarsPresent) {
 
 
 // Final check and summary logs
+// These console.error calls will appear in the browser console if `allVarsPresent` is false,
+// or in the server console if `allVarsPresent` is false and it's a server-side context.
 if (!allVarsPresent && typeof window !== 'undefined') { 
     const detailedErrors = specificErrorMessages.join("\n");
     console.error(
         `\n\n--- 🚨 Firebase Environment Variable Check FAILED ---\n${detailedErrors}\nFirebase will NOT be initialized. Please check your .env.local file and RESTART your server. Check server console for more details if running locally.\n---`
     );
 } else if (!allVarsPresent && typeof window === 'undefined') { 
-    // Server console detailed logs (specific messages already logged above)
+    // Server console detailed logs (specific messages already logged above during the loop)
     console.error(
         "\n\n--- 🚨 SERVER-SIDE: Firebase Environment Variable Check FAILED. One or more required Firebase variables are missing or Firebase services failed to initialize. Firebase will NOT be initialized. Please check your .env.local file, ensure values are correct, and RESTART your server. Review previous server logs for specifics. ---"
     );
@@ -125,10 +126,10 @@ if (!allVarsPresent && typeof window !== 'undefined') {
 
 export const isFirebaseFullyConfigured = allVarsPresent && !!firebaseAppInstance && !!firebaseAuthInstance && !!firestoreInstance && !!firebaseGoogleProviderInstance;
 
+// Export potentially undefined instances so AuthContext can check them
 export {
   firebaseAppInstance as app,
   firebaseAuthInstance as auth,
   firebaseGoogleProviderInstance as googleProvider,
   firestoreInstance as db,
 };
-

@@ -27,7 +27,7 @@ interface AuthContextType {
   logout: () => Promise<void | string>;
 }
 
-const FIREBASE_CONFIG_ERROR_MESSAGE = "Error de Configuración de Firebase: La aplicación no pudo conectarse a Firebase. Esto se debe a que faltan variables de configuración esenciales (como NEXT_PUBLIC_FIREBASE_API_KEY) en el archivo .env.local, o los valores son incorrectos. Por favor, revisa la configuración de tu proyecto y los logs de la consola del servidor (donde ejecutas 'npm run dev'). Después de corregir el archivo .env.local, DEBES REINICIAR el servidor de desarrollo. La autenticación y las funciones de base de datos no funcionarán hasta que esto se resuelva.";
+const FIREBASE_CONFIG_ERROR_MESSAGE = "Error de Configuración de Firebase: La aplicación no pudo conectarse a Firebase. Esto se debe a que faltan variables de configuración esenciales (como NEXT_PUBLIC_FIREBASE_API_KEY) en el archivo .env.local, o los valores son incorrectos. Por favor, revisa la configuración de tu proyecto, el archivo .env.local y los logs de la consola del servidor (donde ejecutas 'npm run dev') para ver qué variables específicas faltan. Después de corregir el archivo .env.local, DEBES REINICIAR el servidor de desarrollo. La autenticación y las funciones de base de datos no funcionarán hasta que esto se resuelva.";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -42,7 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (!isConfigured || !auth) { 
       if (typeof window !== 'undefined' && !initialConfigWarningShown) { 
-        console.warn("AuthContext: Firebase auth is not configured or not available. isFirebaseFullyConfigured:", isConfigured, "auth object exists:", !!auth, ". This usually means required environment variables (NEXT_PUBLIC_FIREBASE_...) are missing from .env.local or incorrect. Please check your .env.local file and RESTART your development server. Authentication features will be disabled.");
+        console.warn("AuthContext: Firebase auth is not configured or not available. isFirebaseFullyConfigured:", isConfigured, "auth object exists:", !!auth, ". This usually means required environment variables (NEXT_PUBLIC_FIREBASE_...) are missing from .env.local or incorrect. Please check your .env.local file AND your server console logs, then RESTART your development server. Authentication features will be disabled.");
         setInitialConfigWarningShown(true);
       }
       setLoading(false);
@@ -59,12 +59,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentUser(null);
     });
     return () => unsubscribe();
-  }, [isConfigured, auth, initialConfigWarningShown]); 
+  }, [isConfigured, initialConfigWarningShown]); 
 
   const handleAuthError = (error: AuthError): string => {
     console.error("Firebase Auth Error Code:", error.code, "Message:", error.message);
     // Check if the error is due to Firebase not being configured, even if an auth operation was attempted.
-    if (!isConfigured || error.code === 'auth/invalid-api-key' || error.code === 'auth/internal-error' || error.code === 'auth/configuration-not-found' || error.code === 'auth/missing-config' || error.code === 'auth/network-request-failed' || (error.message && error.message.toLowerCase().includes("api key not valid"))) {
+    if (!isConfigured || !auth || !db || error.code === 'auth/invalid-api-key' || error.code === 'auth/internal-error' || error.code === 'auth/configuration-not-found' || error.code === 'auth/missing-config' || error.code === 'auth/network-request-failed' || (error.message && error.message.toLowerCase().includes("api key not valid"))) {
         return FIREBASE_CONFIG_ERROR_MESSAGE;
     }
     switch (error.code) {
@@ -79,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       case 'auth/user-disabled':
         return 'Este usuario ha sido deshabilitado.';
       case 'auth/user-not-found':
-      case 'auth/invalid-credential': // This can cover wrong email or password
+      case 'auth/invalid-credential': 
         return 'Credenciales incorrectas. Verifica tu correo y contraseña.';
       case 'auth/wrong-password':
         return 'La contraseña es incorrecta.';
@@ -96,7 +96,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUpWithEmail = async (email: string, password: string): Promise<User | string> => {
-    if (!isConfigured || !auth || !db) return FIREBASE_CONFIG_ERROR_MESSAGE;
+    if (!isConfigured || !auth || !db) {
+        console.error("signUpWithEmail: Firebase is not configured. Check .env.local and server logs.");
+        return FIREBASE_CONFIG_ERROR_MESSAGE;
+    }
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -108,7 +111,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         displayName: userCredential.user.displayName || email.split('@')[0],
         provider: 'email/password',
       });
-      // onAuthStateChanged will eventually set currentUser and setLoading(false)
       return userCredential.user;
     } catch (error) {
       setLoading(false);
@@ -117,11 +119,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginWithEmail = async (email: string, password: string): Promise<User | string> => {
-    if (!isConfigured || !auth) return FIREBASE_CONFIG_ERROR_MESSAGE;
+    if (!isConfigured || !auth) {
+        console.error("loginWithEmail: Firebase is not configured. Check .env.local and server logs.");
+        return FIREBASE_CONFIG_ERROR_MESSAGE;
+    }
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // onAuthStateChanged will eventually set currentUser and setLoading(false)
       return userCredential.user;
     } catch (error) {
       setLoading(false);
@@ -130,7 +134,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signInWithGoogle = async (): Promise<User | string> => {
-    if (!isConfigured || !auth || !googleProvider || !db) return FIREBASE_CONFIG_ERROR_MESSAGE;
+    if (!isConfigured || !auth || !googleProvider || !db) {
+        console.error("signInWithGoogle: Firebase is not configured. Check .env.local and server logs.");
+        return FIREBASE_CONFIG_ERROR_MESSAGE;
+    }
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
@@ -143,7 +150,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         lastLogin: serverTimestamp(),
         provider: 'google.com',
       }, { merge: true }); 
-      // onAuthStateChanged will eventually set currentUser and setLoading(false)
       return result.user;
     } catch (error) {
       setLoading(false);
@@ -170,7 +176,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       await firebaseSignOut(auth);
-      // onAuthStateChanged will set currentUser to null and setLoading(false)
       if (router) router.push('/login'); 
     } catch (error) {
       setLoading(false); 
@@ -199,4 +204,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-
