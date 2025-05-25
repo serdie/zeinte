@@ -12,34 +12,37 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-
-const navItems = [
-  { href: '/', label: 'Inicio', icon: Home, public: true },
-  { href: '/dashboard', label: 'Panel de Estudio', icon: BookOpenText, protected: true },
-  { href: '/upload', label: 'Subir Documentos', icon: UploadCloud, protected: true },
-  { href: '/configure', label: 'Configura tu examen', icon: Settings, protected: true },
-  { href: '/community', label: 'Comunidad', icon: Users, protected: true },
-  { href: '/profile', label: 'Mi Perfil', icon: User, protected: true },
-];
-
-const adminNavItem = { href: '/admin', label: 'Panel de Admin', icon: ShieldCheck };
-
-const authNavItems = {
-  login: { href: '/login', label: 'Iniciar Sesión', icon: LogIn },
-  signup: { href: '/signup', label: 'Registrarse', icon: UserPlus },
-};
+import { useI18n } from '@/contexts/I18nContext'; // Import useI18n
 
 export default function SidebarNav() {
   const pathname = usePathname();
   const { currentUser, logout, loading, isFirebaseConfigured, isAdmin } = useAuth();
   const { toast } = useToast();
+  const { t } = useI18n(); // Get translation function
+
+  const navItems = [
+    { href: '/', labelKey: 'sidebar.home', icon: Home, public: true },
+    { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: BookOpenText, protected: true },
+    { href: '/upload', labelKey: 'sidebar.upload', icon: UploadCloud, protected: true },
+    { href: '/configure', labelKey: 'sidebar.configureExam', icon: Settings, protected: true },
+    { href: '/community', labelKey: 'sidebar.community', icon: Users, protected: true },
+    { href: '/profile', labelKey: 'sidebar.profile', icon: User, protected: true },
+  ];
+
+  const adminNavItem = { href: '/admin', labelKey: 'sidebar.adminPanel', icon: ShieldCheck };
+
+  const authNavItems = {
+    login: { href: '/login', labelKey: 'sidebar.login', icon: LogIn },
+    signup: { href: '/signup', labelKey: 'sidebar.signup', icon: UserPlus },
+  };
+
 
   const handleLogout = async () => {
     const result = await logout();
-    if (typeof result === 'string') {
-      toast({ title: "Error al Cerrar Sesión", description: result, variant: "destructive" });
-    } else {
-      toast({ title: "Sesión Cerrada", description: "Has cerrado sesión exitosamente.", variant: "default" });
+    if (typeof result === 'string') { // Error message returned
+      toast({ title: t('authContext.logoutErrorToastTitle'), description: result, variant: "destructive" });
+    } else { // Success
+      toast({ title: t('authContext.logoutSuccessToastTitle'), description: t('authContext.logoutSuccessToastDescription'), variant: "default" });
       // Router will redirect via ConditionalLayout or AuthContext effect
     }
   };
@@ -48,17 +51,16 @@ export default function SidebarNav() {
     <SidebarMenu className="flex flex-col justify-between h-full p-2 space-y-2">
       <div className="space-y-1">
         {navItems.map((item) => {
-          // Hide protected routes if Firebase is configured AND user is not logged in.
-          // If Firebase is NOT configured, show all main routes; ConditionalLayout will handle behavior.
           if (item.protected && isFirebaseConfigured && !currentUser) return null;
           
+          const label = t(item.labelKey);
           return (
             <SidebarMenuItem key={item.href}>
               <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === item.href}
-                  tooltip={item.label}
+                  tooltip={label}
                   className={cn(
                     "justify-start w-full",
                     pathname === item.href 
@@ -69,7 +71,7 @@ export default function SidebarNav() {
                   <a>
                     <item.icon className="h-5 w-5" />
                     <span className="group-data-[collapsible=icon]:hidden">
-                      {item.label}
+                      {label}
                     </span>
                   </a>
                 </SidebarMenuButton>
@@ -77,14 +79,13 @@ export default function SidebarNav() {
             </SidebarMenuItem>
           )
         })}
-        {/* Admin Panel Link */}
         {isAdmin && currentUser && isFirebaseConfigured && (
           <SidebarMenuItem key={adminNavItem.href}>
             <Link href={adminNavItem.href} passHref legacyBehavior>
               <SidebarMenuButton
                 asChild
                 isActive={pathname === adminNavItem.href}
-                tooltip={adminNavItem.label}
+                tooltip={t(adminNavItem.labelKey)}
                 className={cn(
                   "justify-start w-full",
                   pathname === adminNavItem.href 
@@ -95,7 +96,7 @@ export default function SidebarNav() {
                 <a>
                   <adminNavItem.icon className="h-5 w-5" />
                   <span className="group-data-[collapsible=icon]:hidden">
-                    {adminNavItem.label}
+                    {t(adminNavItem.labelKey)}
                   </span>
                 </a>
               </SidebarMenuButton>
@@ -106,26 +107,26 @@ export default function SidebarNav() {
 
       <div className="mt-auto space-y-1">
          <div className="px-2 py-1 group-data-[collapsible=icon]:hidden">
-          {loading && <p className="text-xs text-sidebar-foreground/70">Cargando usuario...</p>}
+          {loading && <p className="text-xs text-sidebar-foreground/70">{t('sidebar.userLoading')}</p>}
           {!loading && currentUser && (
-            <p className="text-xs text-sidebar-foreground/70 truncate" title={currentUser.email || "Usuario"}>
-              {currentUser.email || "Usuario Conectado"}
+            <p className="text-xs text-sidebar-foreground/70 truncate" title={currentUser.email || t('sidebar.userConnected')}>
+              {currentUser.email || t('sidebar.userConnected')}
               {isAdmin && <span className="text-accent ml-1">(Admin)</span>}
             </p>
           )}
-          {!isFirebaseConfigured && !loading && <p className="text-xs text-destructive">Firebase no configurado</p>}
+          {!isFirebaseConfigured && !loading && <p className="text-xs text-destructive">{t('sidebar.firebaseNotConfigured')}</p>}
         </div>
         {currentUser && isFirebaseConfigured ? (
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleLogout}
-              tooltip="Cerrar Sesión"
+              tooltip={t('sidebar.logout')}
               className="justify-start w-full hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              disabled={loading} // Disable only if auth operation is in progress
+              disabled={loading}
             >
               <LogOut className="h-5 w-5" />
               <span className="group-data-[collapsible=icon]:hidden">
-                Cerrar Sesión
+                {t('sidebar.logout')}
               </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -136,7 +137,7 @@ export default function SidebarNav() {
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === authNavItems.login.href}
-                  tooltip={authNavItems.login.label}
+                  tooltip={t(authNavItems.login.labelKey)}
                   className={cn(
                     "justify-start w-full",
                     pathname === authNavItems.login.href
@@ -147,7 +148,7 @@ export default function SidebarNav() {
                   <a>
                     <authNavItems.login.icon className="h-5 w-5" />
                     <span className="group-data-[collapsible=icon]:hidden">
-                      {authNavItems.login.label}
+                      {t(authNavItems.login.labelKey)}
                     </span>
                   </a>
                 </SidebarMenuButton>
@@ -158,7 +159,7 @@ export default function SidebarNav() {
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === authNavItems.signup.href}
-                  tooltip={authNavItems.signup.label}
+                  tooltip={t(authNavItems.signup.labelKey)}
                   className={cn(
                     "justify-start w-full",
                     pathname === authNavItems.signup.href
@@ -169,7 +170,7 @@ export default function SidebarNav() {
                   <a>
                     <authNavItems.signup.icon className="h-5 w-5" />
                     <span className="group-data-[collapsible=icon]:hidden">
-                      {authNavItems.signup.label}
+                      {t(authNavItems.signup.labelKey)}
                     </span>
                   </a>
                 </SidebarMenuButton>

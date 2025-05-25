@@ -16,25 +16,35 @@ import SidebarNav from './SidebarNav';
 import { Brain } from 'lucide-react';
 import Link from 'next/link';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useI18n } from '@/contexts/I18nContext'; // Import useI18n
+import LanguageSwitcher from './LanguageSwitcher'; // Import LanguageSwitcher
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-const getHeaderTitle = (pathname: string): string => {
-  // Modificado: la página de inicio ('/') ya no usará este layout.
-  if (pathname.startsWith('/dashboard')) return "Panel de Estudio";
-  if (pathname.startsWith('/upload')) return "Subir Documentos";
-  if (pathname.startsWith('/configure')) return "Configuración de Examen";
-  if (pathname.startsWith('/community')) return "Comunidad de Estudio";
-  if (pathname.startsWith('/profile')) return "Mi Perfil";
-  return "AdivinaExamen"; // Título por defecto para otras rutas
-};
+// No need for getHeaderTitle function here, as it's handled by SidebarNav for active state
+// and titles are managed by each page or a more robust i18n routing solution for metadata.
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const isMobile = useIsMobile();
   const pathname = usePathname();
-  const headerTitle = getHeaderTitle(pathname);
+  const { t } = useI18n();
+
+  const getDynamicHeaderTitle = (currentPathname: string): string => {
+    if (currentPathname.startsWith('/dashboard')) return t("appLayout.dashboardTitle");
+    if (currentPathname.startsWith('/upload')) return t("appLayout.uploadTitle");
+    if (currentPathname.startsWith('/configure')) return t("appLayout.configureTitle");
+    if (currentPathname.startsWith('/community')) return t("appLayout.communityTitle");
+    if (currentPathname.startsWith('/profile')) return t("appLayout.profileTitle");
+    if (currentPathname.startsWith('/admin/app-settings')) return t("appLayout.adminAppSettingsTitle");
+    if (currentPathname.startsWith('/admin/community-management')) return t("appLayout.adminCommunityManagementTitle");
+    if (currentPathname.startsWith('/admin')) return t("appLayout.adminTitle");
+    return t("appLayout.defaultTitle");
+  };
+  
+  const headerTitle = getDynamicHeaderTitle(pathname);
+
 
   return (
     <SidebarProvider defaultOpen={!isMobile} open={isMobile ? false : undefined}>
@@ -66,7 +76,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               {headerTitle}
             </h2>
           </div>
-          {/* Placeholder for potential future elements in header */}
+          <LanguageSwitcher /> {/* Add LanguageSwitcher to the header */}
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
           {children}
@@ -75,4 +85,3 @@ export default function AppLayout({ children }: AppLayoutProps) {
     </SidebarProvider>
   );
 }
-

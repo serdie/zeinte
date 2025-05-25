@@ -7,53 +7,41 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { UploadCloud, BrainCircuit, Lightbulb, Sparkles, BookOpenText, Settings, Users, CheckCircle, ArrowRight, Star, Zap, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
+import { useI18n } from '@/contexts/I18nContext'; // Import useI18n
 
-const features = [
-  {
-    icon: UploadCloud,
-    title: "Sube tus Documentos Fácilmente",
-    shortText: "Carga exámenes, temarios y apuntes (PDF, DOCX, TXT).",
-    longText: "Arrastra y suelta o selecciona archivos desde tu dispositivo. AdivinaExamen procesará múltiples formatos para extraer la información relevante y prepararla para el análisis inteligente."
-  },
-  {
-    icon: BrainCircuit,
-    title: "Análisis Profundo con IA",
-    shortText: "IA identifica temas clave y patrones de exámenes pasados.",
-    longText: "Nuestra inteligencia artificial examina el contenido de tus documentos, identificando temas recurrentes, preguntas frecuentes y la estructura general del curso. Si detecta exámenes anteriores, analiza su metodología y la importancia relativa de los temas."
-  },
-  {
-    icon: Lightbulb,
-    title: "Predicción Inteligente de Preguntas",
-    shortText: "Genera preguntas tipo test que podrían aparecer en tu examen.",
-    longText: "Basándose en el análisis exhaustivo, AdivinaExamen predice posibles preguntas de examen. Estas preguntas están diseñadas para imitar el estilo, la dificultad y el formato de las pruebas reales, dándote una ventaja única."
-  },
-  {
-    icon: Sparkles,
-    title: "Explicaciones Claras y Detalladas",
-    shortText: "Entiende cada respuesta con explicaciones tipo profesor.",
-    longText: "Para cada pregunta predicha, la IA genera una explicación detallada. No solo te dice cuál es la respuesta correcta, sino que razona por qué lo es y por qué las otras opciones son incorrectas, como si tuvieras un tutor personal."
-  },
-  {
-    icon: BookOpenText,
-    title: "Interfaz de Estudio Interactiva",
-    shortText: "Visualiza preguntas, responde y recibe feedback al instante.",
-    longText: "Estudia de manera eficiente con una interfaz diseñada para el aprendizaje. Responde a las preguntas, comprueba tus aciertos y errores, y accede a las explicaciones detalladas para reforzar tu conocimiento."
-  },
-  {
-    icon: Settings,
-    title: "Configuración Personalizada",
-    shortText: "Adapta la generación de exámenes a tus necesidades.",
-    longText: "Ajusta el número de preguntas por defecto que quieres que se generen. Próximamente, podrás configurar otros aspectos como el tipo de examen (test, desarrollo, oral) para una preparación aún más a medida."
-  },
-  {
-    icon: Users,
-    title: "Comunidad de Estudio (Simulada)",
-    shortText: "Explora foros y aprende de otros (simulación actual).",
-    longText: "Accede a nuestra sección de comunidad donde encontrarás foros de discusión simulados con temas relevantes para diversas oposiciones y estudios. En el futuro, podrás interactuar y compartir tus propias experiencias."
-  }
+const featureKeys = [
+  "uploadDocs",
+  "deepAnalysis",
+  "smartPrediction",
+  "clearExplanations",
+  "interactiveStudy",
+  "customConfig",
+  "studyCommunity"
 ];
 
+// Helper to map keys to icons
+const iconMap: { [key: string]: React.ElementType } = {
+  uploadDocs: UploadCloud,
+  deepAnalysis: BrainCircuit,
+  smartPrediction: Lightbulb,
+  clearExplanations: Sparkles,
+  interactiveStudy: BookOpenText,
+  customConfig: Settings,
+  studyCommunity: Users
+};
+
+
 export default function HomePage() {
+  const { t } = useI18n();
+
+  const features = featureKeys.map(key => ({
+    key,
+    icon: iconMap[key],
+    title: t(`features.${key}Title`),
+    shortText: t(`features.${key}Short`),
+    longText: t(`features.${key}Long`)
+  }));
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 text-foreground">
       {/* Hero Section */}
@@ -61,15 +49,15 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <BrainCircuit className="h-20 w-20 text-primary mx-auto mb-6" />
           <h1 className="text-4xl md:text-5xl font-bold mb-6 text-primary">
-            AdivinaExamen: Tu Aliado Inteligente para Aprobar
+            {t('homePage.mainTitle')}
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-            Transforma tus apuntes y exámenes pasados en una poderosa herramienta de estudio. Sube tus documentos, y nuestra IA analizará el contenido, predecirá preguntas clave y te ayudará a prepararte como nunca antes.
+            {t('homePage.subtitle')}
           </p>
           <Link href="/upload" passHref>
             <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground text-lg px-10 py-6 rounded-lg shadow-md transition-transform duration-150 ease-in-out active:scale-95">
               <UploadCloud className="mr-3 h-6 w-6" />
-              Empezar Ahora
+              {t('homePage.startNowButton')}
             </Button>
           </Link>
         </div>
@@ -77,10 +65,10 @@ export default function HomePage() {
 
       {/* Features Section */}
       <section className="py-12 container mx-auto px-4">
-        <h2 className="text-3xl font-semibold text-center mb-10 text-foreground">¿Cómo te ayuda AdivinaExamen?</h2>
+        <h2 className="text-3xl font-semibold text-center mb-10 text-foreground">{t('homePage.howItHelpsTitle')}</h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <Card key={index} className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
+          {features.map((feature) => (
+            <Card key={feature.key} className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
               <CardHeader>
                 <div className="flex items-center gap-3 mb-3">
                   <feature.icon className="h-10 w-10 text-primary" />
@@ -90,9 +78,9 @@ export default function HomePage() {
               </CardHeader>
               <CardContent className="flex-grow">
                 <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value={`item-${index}`} className="border-t pt-2">
+                  <AccordionItem value={`item-${feature.key}`} className="border-t pt-2">
                     <AccordionTrigger className="text-sm text-accent hover:text-accent/80 py-2">
-                      Saber más...
+                      {t('features.knowMore')}
                     </AccordionTrigger>
                     <AccordionContent className="text-sm text-foreground/80 pt-2">
                       {feature.longText}
@@ -108,53 +96,53 @@ export default function HomePage() {
       {/* How it Works Section */}
       <section className="py-16 bg-muted/50 mt-12">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-semibold text-center mb-10 text-foreground">Simple, Rápido y Efectivo</h2>
+          <h2 className="text-3xl font-semibold text-center mb-10 text-foreground">{t('homePage.simpleFastEffectiveTitle')}</h2>
           <div className="grid md:grid-cols-3 gap-8 text-center">
             <div className="p-6 bg-card rounded-lg shadow-md">
               <div className="p-4 bg-primary text-primary-foreground rounded-full inline-block mb-4 text-2xl font-bold">1</div>
-              <h3 className="text-xl font-semibold mb-2 text-foreground">Sube tus Archivos</h3>
-              <p className="text-muted-foreground text-sm">PDFs, DOCXs, TXTs... todo tu material de estudio es bienvenido.</p>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">{t('homePage.step1Title')}</h3>
+              <p className="text-muted-foreground text-sm">{t('homePage.step1Description')}</p>
             </div>
             <div className="p-6 bg-card rounded-lg shadow-md">
               <div className="p-4 bg-primary text-primary-foreground rounded-full inline-block mb-4 text-2xl font-bold">2</div>
-              <h3 className="text-xl font-semibold mb-2 text-foreground">Análisis IA</h3>
-              <p className="text-muted-foreground text-sm">Dejamos que nuestra IA identifique lo crucial y prediga preguntas.</p>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">{t('homePage.step2Title')}</h3>
+              <p className="text-muted-foreground text-sm">{t('homePage.step2Description')}</p>
             </div>
             <div className="p-6 bg-card rounded-lg shadow-md">
               <div className="p-4 bg-primary text-primary-foreground rounded-full inline-block mb-4 text-2xl font-bold">3</div>
-              <h3 className="text-xl font-semibold mb-2 text-foreground">Estudia y Aprueba</h3>
-              <p className="text-muted-foreground text-sm">Practica con preguntas tipo test y explicaciones detalladas.</p>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">{t('homePage.step3Title')}</h3>
+              <p className="text-muted-foreground text-sm">{t('homePage.step3Description')}</p>
             </div>
           </div>
         </div>
       </section>
       
       {/* Pricing/Subscription Section */}
-      <section className="py-16 container mx-auto px-4 mt-12">
-        <h2 className="text-3xl font-semibold text-center mb-4 text-foreground">Elige tu Plan</h2>
+      <section id="pricing" className="py-16 container mx-auto px-4 mt-12">
+        <h2 className="text-3xl font-semibold text-center mb-4 text-foreground">{t('homePage.choosePlanTitle')}</h2>
         <p className="text-lg text-muted-foreground text-center max-w-xl mx-auto mb-10">
-          Comienza gratis o desbloquea todo el potencial de AdivinaExamen con nuestro Plan Pro.
+          {t('homePage.choosePlanSubtitle')}
         </p>
         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {/* Free Trial Card */}
           <Card className="shadow-lg flex flex-col bg-card border-2 border-primary/30 hover:border-primary/70 transition-colors">
             <CardHeader className="text-center pb-4">
               <Zap className="h-12 w-12 text-primary mx-auto mb-4" />
-              <CardTitle className="text-2xl text-primary">Prueba Gratuita</CardTitle>
-              <CardDescription className="text-base">Ideal para empezar y conocer la app.</CardDescription>
+              <CardTitle className="text-2xl text-primary">{t('homePage.freeTrialTitle')}</CardTitle>
+              <CardDescription className="text-base">{t('homePage.freeTrialDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="flex-grow space-y-3">
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />Análisis de hasta 3 documentos.</li>
-                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />Generación de hasta 10 preguntas por análisis.</li>
-                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />Explicaciones IA básicas.</li>
-                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />Acceso limitado a la Comunidad (simulada).</li>
+                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />{t('homePage.freeTrialFeature1')}</li>
+                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />{t('homePage.freeTrialFeature2')}</li>
+                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />{t('homePage.freeTrialFeature3')}</li>
+                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />{t('homePage.freeTrialFeature4')}</li>
               </ul>
             </CardContent>
             <CardFooter className="mt-auto">
               <Link href="/upload" passHref className="w-full">
                 <Button size="lg" variant="outline" className="w-full text-primary border-primary hover:bg-primary/10 hover:text-primary py-3 text-md">
-                  Comenzar Prueba Gratuita
+                  {t('homePage.startFreeTrialButton')}
                 </Button>
               </Link>
             </CardFooter>
@@ -167,23 +155,23 @@ export default function HomePage() {
             </div>
             <CardHeader className="text-center pb-4">
               <Star className="h-12 w-12 text-accent mx-auto mb-4" />
-              <CardTitle className="text-2xl text-accent">Plan Pro</CardTitle>
-              <CardDescription className="text-base">Desbloquea todas las funcionalidades.</CardDescription>
+              <CardTitle className="text-2xl text-accent">{t('homePage.proPlanTitle')}</CardTitle>
+              <CardDescription className="text-base">{t('homePage.proPlanDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="flex-grow space-y-3">
-               <p className="text-3xl font-bold text-center text-accent mb-3">9,95€<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
+               <p className="text-3xl font-bold text-center text-accent mb-3">{t('homePage.proPlanPrice')}<span className="text-sm font-normal text-muted-foreground">{t('homePage.proPlanPriceSuffix')}</span></p>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />Análisis ilimitado de documentos.</li>
-                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />Generación ilimitada de preguntas.</li>
-                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />Explicaciones IA avanzadas y detalladas.</li>
-                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />Acceso completo a la Comunidad (futuro).</li>
-                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />Guardar y gestionar tus exámenes y análisis (futuro).</li>
-                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />Soporte prioritario (futuro).</li>
+                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />{t('homePage.proPlanFeature1')}</li>
+                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />{t('homePage.proPlanFeature2')}</li>
+                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />{t('homePage.proPlanFeature3')}</li>
+                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />{t('homePage.proPlanFeature4')}</li>
+                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />{t('homePage.proPlanFeature5')}</li>
+                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />{t('homePage.proPlanFeature6')}</li>
               </ul>
             </CardContent>
             <CardFooter className="mt-auto">
-              <Button size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-md" onClick={() => alert('Funcionalidad de suscripción Pro próximamente disponible.')}>
-                Suscribirse al Plan Pro
+              <Button size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-md" onClick={() => alert(t('homePage.subscribeProAlert'))}>
+                {t('homePage.subscribeProButton')}
               </Button>
             </CardFooter>
           </Card>
@@ -192,25 +180,25 @@ export default function HomePage() {
 
       {/* Call to Action Section */}
       <section className="py-20 text-center container mx-auto px-4">
-        <h2 className="text-3xl font-bold mb-6 text-foreground">¿Listo para Revolucionar tu Estudio?</h2>
+        <h2 className="text-3xl font-bold mb-6 text-foreground">{t('homePage.revolutionizeStudyTitle')}</h2>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-          Deja de adivinar y empieza a prepararte con la inteligencia artificial de AdivinaExamen.
+          {t('homePage.revolutionizeStudySubtitle')}
         </p>
         <Link href="/upload" passHref>
           <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-xl px-12 py-7 rounded-lg shadow-lg transition-transform duration-150 ease-in-out active:scale-95">
             <Sparkles className="mr-3 h-7 w-7" />
-            ¡Probar Gratis Ahora!
+            {t('homePage.tryFreeButton')}
           </Button>
         </Link>
       </section>
 
        {/* Placeholder for Testimonials or Use Cases - future enhancement */}
       <section className="py-12 container mx-auto px-4">
-        <h2 className="text-2xl font-semibold text-center mb-8 text-foreground opacity-50">Próximamente: Casos de Éxito y Testimonios</h2>
+        <h2 className="text-2xl font-semibold text-center mb-8 text-foreground opacity-50">{t('homePage.comingSoonTestimonials')}</h2>
         <div className="flex justify-center items-center">
             <Image 
                 src="https://placehold.co/600x300.png" 
-                alt="Próximamente testimonios" 
+                alt={t('homePage.comingSoonTestimonials')}
                 width={600} 
                 height={300} 
                 className="rounded-lg opacity-60 shadow-md"
@@ -221,10 +209,9 @@ export default function HomePage() {
       
       <footer className="text-center py-8 mt-12 border-t border-border">
         <p className="text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} Search and Make S.L (CIF: B45786787). Todos los derechos reservados.
+          &copy; {new Date().getFullYear()} Search and Make S.L (CIF: B45786787). {t('homePage.footerRights')}
         </p>
       </footer>
     </div>
   );
 }
-

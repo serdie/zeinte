@@ -19,6 +19,7 @@ import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw, Microscope, Lock, 
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 import { UpgradeProAlert } from '@/components/ui/upgrade-pro-alert';
+import { useI18n } from '@/contexts/I18nContext'; // Import useI18n
 
 const DEFAULT_NUM_QUESTIONS_REANALYSIS = "10";
 const FREE_USER_QUESTION_LIMIT = 3;
@@ -26,6 +27,7 @@ const FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS = "5";
 const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 export default function DashboardPage() {
+  const { t } = useI18n(); // Get translation function
   const [predictedData, setPredictedData] = useState<PredictedData | null>(null);
   const [isLoadingInitialData, setIsLoadingInitialData] = useState(true);
   const [isReAnalyzing, setIsReAnalyzing] = useState(false);
@@ -91,12 +93,12 @@ export default function DashboardPage() {
   const handleGetExplanation = useCallback(async (questionText: string, options: string[], correctAnswerIndex: number) => {
     if (isFreeUser) {
       toast({
-        title: "Funcionalidad Pro",
+        title: t('upgradeProAlert.title'),
         description: (
           <div className="flex flex-col gap-2">
-            <span>Las explicaciones detalladas de la IA son una característica del Plan Pro.</span>
+            <span>{t('predictedQuestionCard.getAIDetailsButtonProTooltip')}</span>
             <Link href="/#pricing" passHref>
-              <Button variant="link" className="p-0 h-auto text-primary hover:underline">¡Actualiza tu plan!</Button>
+              <Button variant="link" className="p-0 h-auto text-primary hover:underline">{t('upgradeProAlert.updateNow')}</Button>
             </Link>
           </div>
         ),
@@ -113,26 +115,26 @@ export default function DashboardPage() {
     setCurrentExplanation(null); 
 
     try {
-      const topic = predictedData?.recurringThemes?.[0] || predictedData?.potentialFocusAreas?.[0] || "Tema General";
+      const topic = predictedData?.recurringThemes?.[0] || predictedData?.potentialFocusAreas?.[0] || "General Topic"; // Consider translating "General Topic"
       
       const result: GenerateAIExplanationOutput = await generateAIExplanation({ ...questionContext, topic });
       if (result && result.explanation) {
         setCurrentExplanation({ question: questionText, explanation: result.explanation, topic });
       } else {
-        throw new Error("La explicación recibida está vacía o no es válida.");
+        throw new Error(t('aiExplanationDialog.noExplanation')); // Or a more specific error
       }
     } catch (error) {
       console.error("Error generating AI explanation:", error);
       setCurrentExplanation(null); 
       toast({
-        title: "Error al generar explicación",
-        description: (error instanceof Error ? error.message : "No se pudo obtener la explicación detallada.") + " Inténtalo de nuevo.",
+        title: t('common.error'), // Generic error title
+        description: (error instanceof Error ? error.message : t('aiExplanationDialog.noExplanation')) + " " + t('common.tryAgain'),
         variant: "destructive",
       });
     } finally {
       setIsExplaining(false);
     }
-  }, [predictedData, toast, isFreeUser]);
+  }, [predictedData, toast, isFreeUser, t]);
 
   const handleReAnalyze = async () => {
     if (isFreeUser) {
@@ -145,8 +147,8 @@ export default function DashboardPage() {
 
     if (!predictedData?.originalDocumentContent) {
       toast({
-        title: "Falta contenido",
-        description: "No hay contenido de documento para re-analizar. Sube documentos primero o el contenido anterior no fue guardado (posiblemente debido a su tamaño). Revisa la sección 'Configura tu examen' para más detalles.",
+        title: t('fileUploadArea.toastEmptyContentTitle'),
+        description: t('fileUploadArea.toastEmptyContentDescription'), // Or more specific message for re-analysis
         variant: "destructive",
         duration: 7000,
       });
@@ -158,22 +160,22 @@ export default function DashboardPage() {
     if (isFreeUser && requestedNum > parseInt(FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS, 10)) {
         requestedNum = parseInt(FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS, 10);
         toast({
-            title: "Límite del Plan Gratuito",
-            description: `Se generarán un máximo de ${FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS} preguntas para usuarios gratuitos.`,
+            title: t('fileUploadArea.toastFreeUserLimitTitle'),
+            description: t('fileUploadArea.toastFreeUserLimitDescription', { maxQuestions: FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS }),
             variant: "default"
         });
     }
 
     try {
       toast({
-        title: "Re-procesando Documentos",
-        description: "Realizando un análisis profundo del contenido de tus documentos...",
+        title: t('uploadPage.processingDocumentToastTitle'),
+        description: t('uploadPage.processingDocumentToastDescription'),
       });
       const analysisResult: AnalyzeDocumentsOutput = await analyzeDocuments({ documentContent: predictedData.originalDocumentContent });
       
       toast({
-        title: "Análisis Detallado Completo",
-        description: "Generando nuevas predicciones de preguntas basadas en el análisis avanzado...",
+        title: t('uploadPage.analysisCompleteToastTitle'),
+        description: t('uploadPage.analysisCompleteToastDescription'),
       });
       const predictionResult: PredictExamQuestionsOutput = await predictExamQuestions({ 
         analysisSummary: analysisResult.summary,
@@ -202,16 +204,16 @@ export default function DashboardPage() {
       }
 
       toast({
-        title: "¡Nuevas Preguntas Listas!",
-        description: `Se ha generado un nuevo conjunto de ${predictionResult.questions.length} preguntas con análisis mejorado.`,
+        title: t('uploadPage.successToastTitle'),
+        description: t('dashboardPage.questionsReadyTitle'), // Re-using a similar title
         variant: "default",
       });
       
     } catch (error) {
       console.error("Error during AI re-processing:", error);
       toast({
-        title: "Error en el Re-procesamiento Avanzado",
-        description: (error instanceof Error ? error.message : "Hubo un problema al re-analizar los documentos o predecir preguntas.") + " Inténtalo de nuevo.",
+        title: t('uploadPage.errorProcessingToastTitle'),
+        description: (error instanceof Error ? error.message : t('uploadPage.errorProcessingToastFallback')) + " " + t('common.tryAgain'),
         variant: "destructive",
       });
     } finally {
@@ -223,7 +225,7 @@ export default function DashboardPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center p-6">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <p className="text-xl text-muted-foreground">Cargando datos...</p>
+        <p className="text-xl text-muted-foreground">{t('dashboardPage.loadingData')}</p>
       </div>
     );
   }
@@ -232,14 +234,14 @@ export default function DashboardPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center p-6 bg-card rounded-lg shadow-xl">
         <BookOpenText className="h-20 w-20 text-primary mb-6" />
-        <h2 className="text-3xl font-semibold text-foreground mb-3">Panel de Estudio Vacío</h2>
+        <h2 className="text-3xl font-semibold text-foreground mb-3">{t('dashboardPage.emptyTitle')}</h2>
         <p className="text-lg text-muted-foreground mb-8 max-w-md">
-          Parece que aún no has analizado ningún documento. ¡Sube tus apuntes, temarios o exámenes para empezar a estudiar de forma inteligente!
+          {t('dashboardPage.emptySubtitle')}
         </p>
         <Link href="/upload" passHref>
           <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground text-base px-8 py-6 rounded-lg shadow-md transition-transform duration-150 ease-in-out active:scale-95">
             <UploadCloud className="mr-3 h-6 w-6" />
-            Subir Documentos Ahora
+            {t('dashboardPage.uploadDocsButton')}
           </Button>
         </Link>
       </div>
@@ -254,22 +256,21 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <Alert className="border-primary bg-primary/10">
         <Info className="h-5 w-5 text-primary" />
-        <AlertTitle className="font-semibold text-primary">¡Preguntas Listas para Estudiar!</AlertTitle>
+        <AlertTitle className="font-semibold text-primary">{t('dashboardPage.questionsReadyTitle')}</AlertTitle>
         <AlertDescription className="text-primary/80">
-          Hemos analizado tus documentos y estas son las preguntas tipo test que creemos podrían aparecer en tu examen. 
-          Selecciona una opción para ver si es correcta y pide a la IA una explicación detallada. ¡Mucha suerte!
+          {t('dashboardPage.questionsReadyDescription')}
           <br />
-          <span className="font-medium">Resumen del análisis:</span> {predictedData.analysisSummary.substring(0,150)}...
+          <span className="font-medium">{t('dashboardPage.analysisSummaryLabel')}</span> {predictedData.analysisSummary.substring(0,150)}...
           {predictedData.recurringThemes && predictedData.recurringThemes.length > 0 && (
-            <span className="block mt-1 text-sm"><span className="font-medium">Temas principales:</span> {predictedData.recurringThemes.join(', ')}.</span>
+            <span className="block mt-1 text-sm"><span className="font-medium">{t('dashboardPage.mainThemesLabel')}</span> {predictedData.recurringThemes.join(', ')}.</span>
           )}
            {predictedData.potentialFocusAreas && predictedData.potentialFocusAreas.length > 0 && (
-            <span className="block mt-1 text-sm"><span className="font-medium">Áreas de enfoque detectadas:</span> {predictedData.potentialFocusAreas.join(', ')}.</span>
+            <span className="block mt-1 text-sm"><span className="font-medium">{t('dashboardPage.focusAreasLabel')}</span> {predictedData.potentialFocusAreas.join(', ')}.</span>
           )}
           {predictedData.identifiedExamPatterns && (
             <Alert variant="default" className="mt-2 bg-primary/10 border-primary/30">
                 <Microscope className="h-4 w-4 text-primary" />
-                <AlertTitle className="text-primary text-sm">Patrones de Examen Identificados</AlertTitle>
+                <AlertTitle className="text-primary text-sm">{t('dashboardPage.examPatternsIdentifiedTitle')}</AlertTitle>
                 <AlertDescription className="text-primary/70 text-xs">
                     {predictedData.identifiedExamPatterns}
                 </AlertDescription>
@@ -280,14 +281,14 @@ export default function DashboardPage() {
 
       <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mb-4">
         <div className="flex items-center gap-2">
-          <Label htmlFor="num-questions-reanalysis-select" className="text-sm font-medium">Número de preguntas:</Label>
+          <Label htmlFor="num-questions-reanalysis-select" className="text-sm font-medium">{t('dashboardPage.numQuestionsLabel')}</Label>
           <Select 
             value={numQuestionsForReanalysis} 
             onValueChange={setNumQuestionsForReanalysis}
             disabled={isReAnalyzing || !predictedData?.originalDocumentContent}
           >
             <SelectTrigger id="num-questions-reanalysis-select" className="w-[150px] sm:w-auto">
-              <SelectValue placeholder="Cantidad" />
+              <SelectValue placeholder={t('common.selectOption')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="5">5</SelectItem>
@@ -308,21 +309,21 @@ export default function DashboardPage() {
           disabled={isReAnalyzing || !predictedData?.originalDocumentContent}
           variant="outline"
           className="shadow-md w-full sm:w-auto"
-          title={isFreeUser ? "Actualiza a Pro para re-analizar documentos (o espera 24h para otro gratis)" : "Re-analizar y generar nuevo examen"}
+          title={isFreeUser ? t('dashboardPage.reanalyzeButtonProTooltip') : t('dashboardPage.reanalyzeButton')}
         >
           {isReAnalyzing ? (
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
           ) : (
             <RefreshCw className="mr-2 h-5 w-5" />
           )}
-          Re-analizar y Generar Nuevo Examen
+          {t('dashboardPage.reanalyzeButton')}
         </Button>
       </div>
       {isFreeUser && (
         <UpgradeProAlert 
-            featureName="la función de re-análisis ilimitado y la generación de más de 5 preguntas" 
+            featureName={t('dashboardPage.upgradeProAlertReanalysis')}
             className="mb-4" 
-            message="Estás viendo un número limitado de preguntas y algunas funciones están restringidas en el plan gratuito. Puedes generar un examen gratis al día."
+            message={t('dashboardPage.upgradeProAlertReanalysisMessage')}
         />
       )}
 
@@ -340,9 +341,9 @@ export default function DashboardPage() {
       </div>
       {isFreeUser && predictedData.questions.length > FREE_USER_QUESTION_LIMIT && (
          <UpgradeProAlert 
-            featureName="visualizar todas las preguntas generadas" 
+            featureName={t('dashboardPage.upgradeProAlertViewAll')}
             className="mt-6"
-            message={`Estás viendo ${FREE_USER_QUESTION_LIMIT} de ${predictedData.questions.length} preguntas generadas.`}
+            message={t('dashboardPage.upgradeProAlertViewAllMessage', { count: FREE_USER_QUESTION_LIMIT, total: predictedData.questions.length })}
         />
       )}
 
@@ -358,17 +359,17 @@ export default function DashboardPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-amber-600">
-                <AlertTriangle className="h-6 w-6" /> Límite Diario Alcanzado
+                <AlertTriangle className="h-6 w-6" /> {t('dashboardPage.dailyLimitReachedTitle')}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-base text-muted-foreground">
-              Has alcanzado el límite de un examen gratuito por día. Para generar más exámenes y acceder a todas las funcionalidades avanzadas, considera actualizar a nuestro Plan Pro.
+              {t('dashboardPage.dailyLimitReachedDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4">
-            <AlertDialogCancel onClick={() => setShowUpgradeDialog(false)}>Cerrar</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setShowUpgradeDialog(false)}>{t('common.close')}</AlertDialogCancel>
             <Link href="/#pricing" passHref>
               <Button className="bg-amber-500 hover:bg-amber-600 text-white" onClick={() => setShowUpgradeDialog(false)}>
-                <ExternalLink className="mr-2 h-4 w-4" /> Ver Planes Pro
+                <ExternalLink className="mr-2 h-4 w-4" /> {t('dashboardPage.viewProPlansButton')}
               </Button>
             </Link>
           </AlertDialogFooter>
