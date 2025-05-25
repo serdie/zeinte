@@ -34,6 +34,7 @@ for (const varName in requiredEnvVars) {
   } else {
     if (typeof window === 'undefined') { // Server-side log
         if (varName === 'NEXT_PUBLIC_FIREBASE_API_KEY') {
+          // Avoid logging the full API key value
           console.log(`✅ ${varName} is present (e.g., ${varValue.substring(0,5)}...${varValue.slice(-5)})`);
         } else {
           console.log(`✅ ${varName} is present.`);
@@ -64,20 +65,23 @@ if (allVarsPresent) {
     } catch (error) {
       if (typeof window === 'undefined') console.error("🔥 Firebase initialization error during initializeApp:", error);
       specificErrorMessages.push(`🔥 Firebase initializeApp error: ${(error as Error).message}`);
-      allVarsPresent = false;
+      allVarsPresent = false; // Mark as not configured if init fails
     }
   } else {
     firebaseAppInstance = getApps()[0];
+    // Check if the re-used instance is valid (has a name, which it should if properly initialized)
     if (firebaseAppInstance && firebaseAppInstance.name) {
         if (typeof window === 'undefined') console.log("✅ Firebase App re-used existing instance successfully.");
     } else {
+        // This case is unlikely if getApps() returns an item, but good to be defensive
         if (typeof window === 'undefined') console.error("🔥 Could not properly re-use existing Firebase App instance.");
         specificErrorMessages.push("🔥 Could not re-use existing Firebase App instance.");
-        firebaseAppInstance = undefined;
+        firebaseAppInstance = undefined; // Ensure it's undefined
         allVarsPresent = false;
     }
   }
 
+  // Attempt to initialize Auth, Firestore, etc., only if app instance is valid
   if (firebaseAppInstance && allVarsPresent) {
     try {
       firebaseAuthInstance = getAuth(firebaseAppInstance);
@@ -90,32 +94,39 @@ if (allVarsPresent) {
       firebaseAuthInstance = undefined;
       firebaseGoogleProviderInstance = undefined;
       firestoreInstance = undefined;
-      allVarsPresent = false;
+      allVarsPresent = false; // Mark as not configured if these critical services fail
     }
   } else if (allVarsPresent && !firebaseAppInstance) {
-    if (typeof window === 'undefined') console.error("🔥 Firebase App instance is undefined after attempted initialization.");
+    // This case means allVarsPresent was true initially, but app instance became undefined.
+    // This could happen if initializeApp itself threw an error caught above.
+    if (typeof window === 'undefined') console.error("🔥 Firebase App instance is undefined after attempted initialization, though vars seemed present.");
     specificErrorMessages.push("🔥 Firebase App instance became undefined unexpectedly.");
     allVarsPresent = false;
   }
 }
 
+// Final check and logging
+// The 'typeof window !== "undefined"' check ensures these detailed error dumps only happen in the browser console for the user,
+// while the server console gets more direct logs from the loop above.
 if (!allVarsPresent && typeof window !== 'undefined') { // Only show this general error in the browser console if checks failed
     const detailedErrors = specificErrorMessages.join("\n");
     console.error(
         `\n\n--- 🚨 Firebase Environment Variable Check FAILED ---\n${detailedErrors}\nFirebase will NOT be initialized. Please check your .env.local file and RESTART your server. Check server console for more details if running locally.\n---`
     );
 } else if (!allVarsPresent && typeof window === 'undefined') { // Server console detailed logs
-    specificErrorMessages.forEach(msg => console.error(msg));
+    // specificErrorMessages.forEach(msg => console.error(msg)); // Already logged in the loop
     console.error(
         "\n\n--- 🚨 Firebase Environment Variable Check FAILED. One or more required Firebase variables are missing or initialization failed. Firebase will NOT be initialized. Please check your .env.local file and RESTART your server. Review previous logs for specifics. ---"
     );
 }
 
 
+// The flag `isFirebaseFullyConfigured` will be false if any env var was missing OR if initializeApp or getAuth/getFirestore failed.
+export const isFirebaseFullyConfigured = allVarsPresent && !!firebaseAppInstance && !!firebaseAuthInstance && !!firestoreInstance;
+
 export {
   firebaseAppInstance as app,
   firebaseAuthInstance as auth,
   firebaseGoogleProviderInstance as googleProvider,
   firestoreInstance as db, // Export Firestore instance
-  allVarsPresent as isFirebaseFullyConfigured
 };

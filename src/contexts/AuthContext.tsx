@@ -44,6 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn("AuthContext: Firebase auth is not configured, auth object is undefined, or required environment variables are missing/incorrect. Skipping onAuthStateChanged listener. isFirebaseFullyConfigured:", isConfigured, "auth object exists:", !!auth);
       }
       setLoading(false);
+      setCurrentUser(null); // Ensure currentUser is null if not configured
       return;
     }
 
@@ -56,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleAuthError = (error: AuthError): string => {
     console.error("Firebase Auth Error:", error.code, error.message);
+    // If Firebase is not configured, always return the specific config error message
     if (!isConfigured || error.code === 'auth/invalid-api-key' || error.code === 'auth/internal-error' || error.code === 'auth/configuration-not-found' || error.code === 'auth/missing-config' || error.code === 'auth/network-request-failed') {
         return FIREBASE_CONFIG_ERROR_MESSAGE;
     }
@@ -88,21 +90,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      setCurrentUser(userCredential.user);
-      // Ejemplo: Guardar información del usuario en Firestore
+      // userCredential.user will be set by onAuthStateChanged
+      // setCurrentUser(userCredential.user); // Not strictly necessary here due to onAuthStateChanged
+      
+      // Save user info to Firestore
       const userRef = doc(db, "users", userCredential.user.uid);
       await setDoc(userRef, {
         uid: userCredential.user.uid,
         email: userCredential.user.email,
         createdAt: serverTimestamp(),
-        displayName: userCredential.user.displayName || email.split('@')[0], // usa el nombre de usuario del email si no hay displayName
+        displayName: userCredential.user.displayName || email.split('@')[0],
         provider: 'email/password',
       });
       return userCredential.user;
     } catch (error) {
       return handleAuthError(error as AuthError);
     } finally {
-      setLoading(false);
+      // setLoading(false); // onAuthStateChanged will handle this
     }
   };
 
@@ -111,12 +115,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      setCurrentUser(userCredential.user);
+      // setCurrentUser(userCredential.user); // Handled by onAuthStateChanged
       return userCredential.user;
     } catch (error) {
       return handleAuthError(error as AuthError);
     } finally {
-      setLoading(false);
+      // setLoading(false); // onAuthStateChanged will handle this
     }
   };
 
@@ -125,8 +129,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      setCurrentUser(result.user);
-      // Ejemplo: Guardar/Actualizar información del usuario en Firestore
+      // setCurrentUser(result.user); // Handled by onAuthStateChanged
+      
+      // Save/Update user info in Firestore
       const userRef = doc(db, "users", result.user.uid);
       await setDoc(userRef, {
         uid: result.user.uid,
@@ -135,31 +140,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         photoURL: result.user.photoURL,
         lastLogin: serverTimestamp(),
         provider: 'google.com',
-      }, { merge: true }); // merge:true para actualizar si ya existe
+      }, { merge: true }); 
       return result.user;
     } catch (error) {
       return handleAuthError(error as AuthError);
     } finally {
-      setLoading(false);
+      // setLoading(false); // onAuthStateChanged will handle this
     }
   };
 
   const logout = async (): Promise<void | string> => {
+    if (!isConfigured) { // If not configured, don't even try to sign out from Firebase
+        setCurrentUser(null);
+        setLoading(false);
+        if (router) router.push('/login');
+        return FIREBASE_CONFIG_ERROR_MESSAGE;
+    }
+    if (!auth) { // Should be covered by !isConfigured, but as a safeguard
+        setCurrentUser(null);
+        setLoading(false);
+        if (router) router.push('/login');
+        return "Firebase Auth no está disponible.";
+    }
+
     setLoading(true);
     try {
-      if (isConfigured && auth) { 
-        await firebaseSignOut(auth);
-      }
+      await firebaseSignOut(auth);
+      // setCurrentUser(null); // Handled by onAuthStateChanged
+      if (router) router.push('/login'); 
     } catch (error) {
       console.error("Error signing out from Firebase: ", error);
-    } finally {
-      setCurrentUser(null); 
-      if (router) router.push('/login'); 
-      setLoading(false);
-      if (!isConfigured) { 
-        return FIREBASE_CONFIG_ERROR_MESSAGE;
-      }
-    }
+      // setLoading(false); // onAuthStateChanged will handle this
+      return handleAuthError(error as AuthError);
+    } 
+    // setLoading(false) will be called by onAuthStateChanged when user becomes null
   };
 
   const value = {
