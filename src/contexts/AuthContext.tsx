@@ -20,6 +20,7 @@ import { auth as firebaseAuthService, googleProvider as firebaseGoogleProvider, 
 const FIREBASE_GENERAL_CONFIG_ERROR_MESSAGE = "Error de Configuración General de Firebase: La aplicación no pudo conectarse correctamente. Esto suele deberse a variables de entorno (NEXT_PUBLIC_FIREBASE_...) faltantes o incorrectas en '.env.local'. Por favor, revisa tu archivo '.env.local' y los logs de la consola del servidor. Después de corregir el archivo .env.local, DEBES REINICIAR el servidor de desarrollo. La autenticación y las funciones de base de datos no funcionarán hasta que esto se resuelva.";
 export const ADMIN_EMAIL = "serdiegm@gmail.com";
 export const FREE_USER_EMAIL = "dginteligenciaartificial@gmail.com";
+export const PRO_USER_EMAIL = "prueba@prueba.com"; // Added Pro user email
 
 export type UserTier = 'admin' | 'pro' | 'free' | null;
 
@@ -62,7 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    if (!auth || !firestoreDb) { // Added firestoreDb check here too
+    if (!auth || !firestoreDb) { 
         if (typeof window !== 'undefined' && !initialConfigWarningShown) {
             console.error("AuthContext: Critical error - Firebase auth or firestore service instance is undefined. Authentication will not work properly.");
             setInitialConfigWarningShown(true);
@@ -84,22 +85,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             determinedTier = 'admin';
         } else if (user.email?.toLowerCase() === FREE_USER_EMAIL.toLowerCase()) {
             determinedTier = 'free';
+        } else if (user.email?.toLowerCase() === PRO_USER_EMAIL.toLowerCase()) { // Check for Pro user
+            determinedTier = 'pro';
         } else {
             // For other users, respect DB tier or default to 'pro' if new/unspecified
+            // For a stricter system, you might default new users to 'free'
             determinedTier = userDocSnap.exists() && userDocSnap.data()?.tier ? userDocSnap.data()?.tier as UserTier : 'pro';
         }
         
         // Ensure the determined tier is saved/updated in Firestore
-        // This will also handle new user creation in saveUserToFirestore
         await saveUserToFirestore(user, determinedTier); 
 
         setIsAdmin(determinedTier === 'admin');
         setUserTier(determinedTier);
-        setCurrentUser(user); // Set currentUser after tier logic
+        setCurrentUser(user); 
       } else {
         setIsAdmin(false);
         setUserTier(null);
-        setCurrentUser(null); // Ensure currentUser is null when user logs out
+        setCurrentUser(null); 
       }
       setLoading(false);
     }, (error) => {
@@ -164,22 +167,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         displayName: user.displayName || user.email?.split('@')[0] || 'Usuario',
         photoURL: user.photoURL,
         providerData: user.providerData.map(p => ({ providerId: p.providerId, uid: p.uid })),
-        tier: tierToSave, // Use the tier passed as an argument
+        tier: tierToSave, 
     };
 
-    if (!userSnap.exists()) {
-        // New user, set createdAt
-        await setDoc(userRef, {
-            ...userData,
-            createdAt: serverTimestamp(),
-            lastLogin: serverTimestamp(),
-        });
-    } else {
-        // Existing user, update lastLogin and merge other data, especially tier
-        await setDoc(userRef, {
-            ...userData, // ensure latest displayName, photoURL etc. are updated
-            lastLogin: serverTimestamp(),
-        }, { merge: true });
+    try {
+      if (!userSnap.exists()) {
+          // New user, set createdAt
+          await setDoc(userRef, {
+              ...userData,
+              createdAt: serverTimestamp(),
+              lastLogin: serverTimestamp(),
+          });
+      } else {
+          // Existing user, update lastLogin and merge other data, especially tier
+          await setDoc(userRef, {
+              ...userData, 
+              lastLogin: serverTimestamp(),
+          }, { merge: true });
+      }
+    } catch (error) {
+        console.error("Error saving user to Firestore:", error);
+        // Handle error appropriately, e.g., show a toast to the user
     }
   };
 
@@ -192,14 +200,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      // Tier determination will now happen in onAuthStateChanged after this
-      // await saveUserToFirestore(userCredential.user); 
-      // No need to call saveUserToFirestore here, onAuthStateChanged will handle it.
+      // Tier determination and saving to Firestore will happen in onAuthStateChanged
       return userCredential.user;
     } catch (error) {
       return handleAuthError(error as AuthError);
     } finally {
-      setLoading(false); // Ensure loading is set to false
+      setLoading(false); 
     }
   };
 
@@ -216,7 +222,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       return handleAuthError(error as AuthError);
     } finally {
-      setLoading(false); // Ensure loading is set to false
+      setLoading(false); 
     }
   };
 
@@ -233,7 +239,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       return handleAuthError(error as AuthError);
     } finally {
-      setLoading(false); // Ensure loading is set to false
+      setLoading(false); 
     }
   };
 
@@ -261,10 +267,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // onAuthStateChanged will handle setting currentUser, isAdmin, userTier to null and loading to false
     } catch (error) {
       console.error("Error signing out from Firebase: ", error);
+      // Ensure loading is set to false even if onAuthStateChanged will also set it
+      // but userTier and isAdmin etc. will be reset by onAuthStateChanged
+      setLoading(false); 
       return handleAuthError(error as AuthError);
-    } finally {
-       setLoading(false); // Ensure loading is set to false, even if onAuthStateChanged will also set it
-    }
+    } 
+    // setLoading(false) will be handled by the onAuthStateChanged listener when user becomes null.
   };
 
   const value = {
