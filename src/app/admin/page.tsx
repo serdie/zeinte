@@ -180,7 +180,7 @@ export default function AdminPage() {
       <div className="mt-10 space-y-6">
         <h2 className="text-2xl font-semibold text-foreground border-b pb-2">Otras Funciones del CMS</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="opacity-60 cursor-not-allowed">
+          <Card>
             <CardHeader>
               <CardTitle className="text-xl flex items-center">
                 <MessageSquare className="h-5 w-5 mr-2" />
@@ -189,7 +189,9 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">Moderar temas y mensajes del foro, gestionar categorías, etc.</p>
-              <Button variant="outline" size="sm" className="mt-3" disabled>Ir a Gestión de Comunidad (Próximamente)</Button>
+              <Link href="/admin/community-management" passHref>
+                <Button variant="outline" size="sm" className="mt-3">Ir a Gestión de Comunidad</Button>
+              </Link>
             </CardContent>
           </Card>
             <Card>
