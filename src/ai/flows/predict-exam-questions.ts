@@ -62,6 +62,7 @@ const prompt = ai.definePrompt({
   output: {schema: PredictExamQuestionsOutputSchema},
   prompt: `You are an expert exam question creator. Your task is to generate high-quality, multiple-choice exam questions in Spanish.
 These questions must be **directly and accurately** based on the provided "Document Summary", "Key Themes", "Potential Focus Areas", and importantly, any "Identified Exam Patterns & Methodology".
+If possible, try to make the questions varied if the source material allows for it.
 
 Document Summary:
 {{{analysisSummary}}}
@@ -130,3 +131,4 @@ const predictExamQuestionsFlow = ai.defineFlow(
     return output;
   }
 );
+

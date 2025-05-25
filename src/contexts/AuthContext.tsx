@@ -62,9 +62,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    if (!auth) {
+    if (!auth || !firestoreDb) { // Added firestoreDb check here too
         if (typeof window !== 'undefined' && !initialConfigWarningShown) {
-            console.error("AuthContext: Critical error - Firebase auth service instance is undefined. Authentication will not work.");
+            console.error("AuthContext: Critical error - Firebase auth or firestore service instance is undefined. Authentication will not work properly.");
             setInitialConfigWarningShown(true);
         }
         setLoading(false);
@@ -75,31 +75,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      if (user && firestoreDb) { // Ensure firestoreDb is available
+      if (user && firestoreDb) {
         const userDocRef = doc(firestoreDb, "users", user.uid);
         const userDocSnap = await getDoc(userDocRef);
-        let currentTier: UserTier = 'pro'; // Default to pro
+        let determinedTier: UserTier;
 
-        if (userDocSnap.exists() && userDocSnap.data()?.tier) {
-          currentTier = userDocSnap.data()?.tier as UserTier;
+        if (user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+            determinedTier = 'admin';
+        } else if (user.email?.toLowerCase() === FREE_USER_EMAIL.toLowerCase()) {
+            determinedTier = 'free';
         } else {
-          // If no tier in DB, assign based on email
-          if (user.email === ADMIN_EMAIL) {
-            currentTier = 'admin';
-          } else if (user.email === FREE_USER_EMAIL) {
-            currentTier = 'free';
-          }
-          // Save/update the tier in Firestore if it wasn't there or needs initialization
-          await saveUserToFirestore(user, currentTier); 
+            // For other users, respect DB tier or default to 'pro' if new/unspecified
+            determinedTier = userDocSnap.exists() && userDocSnap.data()?.tier ? userDocSnap.data()?.tier as UserTier : 'pro';
         }
         
-        setIsAdmin(currentTier === 'admin');
-        setUserTier(currentTier);
+        // Ensure the determined tier is saved/updated in Firestore
+        // This will also handle new user creation in saveUserToFirestore
+        await saveUserToFirestore(user, determinedTier); 
 
+        setIsAdmin(determinedTier === 'admin');
+        setUserTier(determinedTier);
+        setCurrentUser(user); // Set currentUser after tier logic
       } else {
         setIsAdmin(false);
         setUserTier(null);
+        setCurrentUser(null); // Ensure currentUser is null when user logs out
       }
       setLoading(false);
     }, (error) => {
@@ -150,26 +150,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const saveUserToFirestore = async (user: User, tierOverride?: UserTier) => {
+  const saveUserToFirestore = async (user: User, tierToSave: UserTier) => {
     if (!firestoreDb) {
-        console.warn("Firestore DB instance is not available, cannot save user.");
+        console.warn("AuthContext: Firestore DB instance is not available, cannot save user.");
         return;
     }
     const userRef = doc(firestoreDb, "users", user.uid);
     const userSnap = await getDoc(userRef);
-
-    let determinedTier = tierOverride;
-    if (!determinedTier) {
-        if (user.email === ADMIN_EMAIL) {
-            determinedTier = 'admin';
-        } else if (user.email === FREE_USER_EMAIL) {
-            determinedTier = 'free';
-        } else {
-            // Default new users (not admin, not specific free email) to 'pro' for now
-            // Or check existing tier if userSnap exists
-            determinedTier = userSnap.exists() && userSnap.data()?.tier ? userSnap.data()?.tier : 'pro';
-        }
-    }
 
     const userData = {
         uid: user.uid,
@@ -177,7 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         displayName: user.displayName || user.email?.split('@')[0] || 'Usuario',
         photoURL: user.photoURL,
         providerData: user.providerData.map(p => ({ providerId: p.providerId, uid: p.uid })),
-        tier: determinedTier,
+        tier: tierToSave, // Use the tier passed as an argument
     };
 
     if (!userSnap.exists()) {
@@ -196,6 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+
   const signUpWithEmail = async (email: string, password: string): Promise<User | string> => {
     if (!firebaseConfigStatus || !auth || !firestoreDb) {
         console.error("signUpWithEmail: Firebase is not configured or services are not available.");
@@ -204,11 +192,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await saveUserToFirestore(userCredential.user); // Tier will be assigned based on email or default to 'pro'
+      // Tier determination will now happen in onAuthStateChanged after this
+      // await saveUserToFirestore(userCredential.user); 
+      // No need to call saveUserToFirestore here, onAuthStateChanged will handle it.
       return userCredential.user;
     } catch (error) {
-      setLoading(false);
       return handleAuthError(error as AuthError);
+    } finally {
+      setLoading(false); // Ensure loading is set to false
     }
   };
 
@@ -220,11 +211,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      await saveUserToFirestore(userCredential.user); // Update last login and potentially tier
+      // onAuthStateChanged will handle updating Firestore (lastLogin, tier check)
       return userCredential.user;
     } catch (error) {
-      setLoading(false);
       return handleAuthError(error as AuthError);
+    } finally {
+      setLoading(false); // Ensure loading is set to false
     }
   };
 
@@ -236,11 +228,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      await saveUserToFirestore(result.user);
+      // onAuthStateChanged will handle saving/updating user in Firestore
       return result.user;
     } catch (error) {
-      setLoading(false);
       return handleAuthError(error as AuthError);
+    } finally {
+      setLoading(false); // Ensure loading is set to false
     }
   };
 
@@ -268,9 +261,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // onAuthStateChanged will handle setting currentUser, isAdmin, userTier to null and loading to false
     } catch (error) {
       console.error("Error signing out from Firebase: ", error);
-      setLoading(false); 
       return handleAuthError(error as AuthError);
-    } 
+    } finally {
+       setLoading(false); // Ensure loading is set to false, even if onAuthStateChanged will also set it
+    }
   };
 
   const value = {
@@ -295,3 +289,4 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
