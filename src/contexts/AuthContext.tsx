@@ -37,9 +37,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Memoize Firebase services to prevent re-initialization on re-renders if they were props
   const auth = useMemo(() => firebaseAuthService, []);
   const googleProvider = useMemo(() => firebaseGoogleProvider, []);
-  const firestoreDb = useMemo(() => firestoreDbService, []);
+  const firestoreDb = useMemo(() => firestoreDbService, []); // Corrected: useMemo for firestoreDb
   const firebaseConfigStatus = useMemo(() => isFirebaseFullyConfigured, []);
   const [initialConfigWarningShown, setInitialConfigWarningShown] = useState(false);
 
@@ -47,7 +48,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (!firebaseConfigStatus) {
       if (typeof window !== 'undefined' && !initialConfigWarningShown) {
-        console.warn("AuthContext: Firebase services are not configured or available. isFirebaseFullyConfigured:", firebaseConfigStatus, "auth object exists:", !!auth, "firestoreDb object exists:", !!firestoreDb, ". This usually means required environment variables (NEXT_PUBLIC_FIREBASE_...) are missing from .env.local or incorrect. Please check your .env.local file AND your server console logs, then RESTART your development server. Authentication features will be disabled.");
+        // This console warning is crucial for developers
+        console.warn("AuthContext: Firebase services are not configured or available (isFirebaseFullyConfigured:", firebaseConfigStatus,"). isFirebaseFullyConfigured flag is derived from src/firebase/config.ts. This usually means required environment variables (NEXT_PUBLIC_FIREBASE_...) are missing from .env.local or incorrect. Please check your .env.local file AND your server console logs, then RESTART your development server. Authentication features will be disabled.");
         setInitialConfigWarningShown(true);
       }
       setLoading(false);
@@ -56,7 +58,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
+    // If firebaseConfigStatus is true, auth should be defined.
+    // If auth is somehow still undefined here despite firebaseConfigStatus being true,
+    // it indicates a deeper issue with src/firebase/config.ts logic not correctly setting up auth.
     if (!auth) {
+        if (typeof window !== 'undefined' && !initialConfigWarningShown) {
+            console.error("AuthContext: Critical error - Firebase is reported as configured (isFirebaseFullyConfigured is true), but the 'auth' service instance is undefined. This indicates an issue in src/firebase/config.ts. Authentication will not work.");
+            setInitialConfigWarningShown(true);
+        }
         setLoading(false);
         setCurrentUser(null);
         setIsAdmin(false);
@@ -75,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => unsubscribe();
-  }, [firebaseConfigStatus, auth, firestoreDb, initialConfigWarningShown]);
+  }, [firebaseConfigStatus, auth, firestoreDb, initialConfigWarningShown]); // firestoreDb added as dependency for completeness
 
   const handleAuthError = (error: AuthError): string => {
     console.error("Firebase Auth Error Code:", error.code, "Message:", error.message);
@@ -94,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       case 'auth/user-disabled':
         return 'Este usuario ha sido deshabilitado.';
       case 'auth/user-not-found':
-      case 'auth/invalid-credential':
+      case 'auth/invalid-credential': // Common for wrong email/password combination
         return 'Credenciales incorrectas. Verifica tu correo y contraseña.';
       case 'auth/wrong-password':
         return 'La contraseña es incorrecta.';
@@ -128,7 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: userCredential.user.email,
         createdAt: serverTimestamp(),
         displayName: userCredential.user.displayName || email.split('@')[0],
-        provider: 'email/password',
+        provider: 'password', // Standard providerId for email/password
       });
       return userCredential.user;
     } catch (error) {
@@ -145,6 +154,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // Optionally, update last login timestamp in Firestore here if desired
+      // const userRef = doc(firestoreDb, "users", userCredential.user.uid);
+      // await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true });
       return userCredential.user;
     } catch (error) {
       setLoading(false);
@@ -166,9 +178,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: result.user.email,
         displayName: result.user.displayName,
         photoURL: result.user.photoURL,
+        createdAt: serverTimestamp(), // Add createdAt on first Google sign-in if not merging
         lastLogin: serverTimestamp(),
-        provider: 'google.com',
-      }, { merge: true });
+        provider: result.user.providerData?.[0]?.providerId || 'google.com',
+      }, { merge: true }); // Merge true to avoid overwriting createdAt if user signed up with email first
       return result.user;
     } catch (error) {
       setLoading(false);
@@ -177,35 +190,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async (): Promise<void | string> => {
+    // Check firebaseConfigStatus first for a more graceful failure message source.
     if (!firebaseConfigStatus) {
-        if (typeof window !== 'undefined') console.warn("Logout attempt failed: Firebase is not configured.");
+        if (typeof window !== 'undefined') console.warn("Logout attempt failed: Firebase is not configured. Check .env.local and restart server.");
+        // Update local state even if Firebase isn't configured, to clear UI
         setCurrentUser(null);
         setIsAdmin(false);
         setLoading(false);
-        // Router will handle redirect via ConditionalLayout or similar
-        return FIREBASE_GENERAL_CONFIG_ERROR_MESSAGE;
+        return FIREBASE_GENERAL_CONFIG_ERROR_MESSAGE; // Provide consistent error message
     }
+    // If configured, but auth service is missing, it's an internal setup error in config.ts
     if (!auth) {
-        if (typeof window !== 'undefined') console.warn("Logout attempt failed: Firebase Auth service is not available.");
+        if (typeof window !== 'undefined') console.warn("Logout attempt failed: Firebase Auth service is not available, though Firebase reported as configured. Check src/firebase/config.ts.");
         setCurrentUser(null);
         setIsAdmin(false);
         setLoading(false);
-        // Router will handle redirect
-        return "Firebase Auth no está disponible.";
+        return "Servicio de autenticación de Firebase no disponible. Revisa la configuración.";
     }
 
     setLoading(true);
     try {
       await firebaseSignOut(auth);
-      setCurrentUser(null); 
-      setIsAdmin(false);
-      // Router will handle redirect via ConditionalLayout or similar
+      // onAuthStateChanged will set currentUser to null and loading to false
     } catch (error) {
       console.error("Error signing out from Firebase: ", error);
+      // setLoading will be handled by onAuthStateChanged or here if error is immediate
+      setLoading(false); 
       return handleAuthError(error as AuthError);
-    } finally {
-      setLoading(false);
-    }
+    } 
+    // No finally setLoading(false) here, onAuthStateChanged should handle it for success.
+    // If signOut fails, it's handled above.
   };
 
   const value = {
