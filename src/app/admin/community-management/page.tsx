@@ -11,108 +11,233 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { mockForumTopics as initialMockForumTopics, type MockForumTopic, type MockPost } from '@/lib/mockCommunityData';
 import { MessageSquare, Users, ArrowLeft, Loader2, ShieldAlert, Eye, Edit3, Trash2, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Added import
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { db } from '@/firebase/config';
+import { 
+  collection, 
+  getDocs, 
+  doc, 
+  getDoc, 
+  updateDoc, 
+  deleteDoc, 
+  query, 
+  where, 
+  orderBy,
+  Timestamp,
+  writeBatch,
+  increment
+} from 'firebase/firestore';
+
+interface FirestoreTimestamp {
+  seconds: number;
+  nanoseconds: number;
+}
+
+interface ForumTopic {
+  id: string;
+  title: string;
+  description: string;
+  authorId: string;
+  createdAt: Timestamp | FirestoreTimestamp | Date;
+  lastActivity: Timestamp | FirestoreTimestamp | Date;
+  postCount: number;
+  views: number;
+  posts?: ForumPost[]; // Puede ser opcional y cargarse bajo demanda
+}
+
+interface ForumPost {
+  id: string;
+  topicId: string;
+  userId: string;
+  content: string;
+  timestamp: Timestamp | FirestoreTimestamp | Date;
+  likes: number;
+}
+
+const formatFirestoreTimestamp = (timestamp: Timestamp | FirestoreTimestamp | Date | undefined): string => {
+  if (!timestamp) return 'N/A';
+  let date: Date;
+  if (timestamp instanceof Timestamp) {
+    date = timestamp.toDate();
+  } else if (timestamp instanceof Date) {
+    date = timestamp;
+  } else if (timestamp && typeof (timestamp as FirestoreTimestamp).seconds === 'number') {
+    date = new Date((timestamp as FirestoreTimestamp).seconds * 1000);
+  } else {
+    return 'Fecha inválida';
+  }
+  return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+};
+
 
 export default function AdminCommunityManagementPage() {
-  const { currentUser, isAdmin, loading: authLoading } = useAuth();
+  const { currentUser, isAdmin, loading: authLoading, isFirebaseConfigured } = useAuth();
   const { toast } = useToast();
 
-  const [topics, setTopics] = useState<MockForumTopic[]>([]);
-  const [selectedTopic, setSelectedTopic] = useState<MockForumTopic | null>(null);
+  const [topics, setTopics] = useState<ForumTopic[]>([]);
+  const [selectedTopic, setSelectedTopic] = useState<ForumTopic | null>(null);
+  const [isLoadingTopics, setIsLoadingTopics] = useState(true);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
+  
   const [isPostsDialogOpen, setIsPostsDialogOpen] = useState(false);
   
-  const [editingPost, setEditingPost] = useState<MockPost | null>(null);
+  const [editingPost, setEditingPost] = useState<ForumPost | null>(null);
   const [editedPostContent, setEditedPostContent] = useState("");
   const [isEditPostDialogOpen, setIsEditPostDialogOpen] = useState(false);
 
-  const [postToDelete, setPostToDelete] = useState<{topicId: string, postId: string} | null>(null);
-  const [topicToDelete, setTopicToDelete] = useState<string | null>(null); // topicId
+  const [postToDelete, setPostToDelete] = useState<ForumPost | null>(null);
+  const [topicToDelete, setTopicToDelete] = useState<ForumTopic | null>(null);
+
+  const fetchTopics = async () => {
+    if (!db || !isAdmin) {
+      setIsLoadingTopics(false);
+      return;
+    }
+    setIsLoadingTopics(true);
+    try {
+      const topicsCollectionRef = collection(db, "forumTopics");
+      const q = query(topicsCollectionRef, orderBy("lastActivity", "desc"));
+      const querySnapshot = await getDocs(q);
+      const topicsList = querySnapshot.docs.map(docSnapshot => ({
+        id: docSnapshot.id,
+        ...docSnapshot.data()
+      } as ForumTopic));
+      setTopics(topicsList);
+    } catch (error) {
+      console.error("Error fetching forum topics:", error);
+      toast({ title: "Error al Cargar Temas", description: "No se pudieron cargar los temas del foro desde Firestore.", variant: "destructive" });
+    } finally {
+      setIsLoadingTopics(false);
+    }
+  };
 
   useEffect(() => {
-    // Simulate fetching topics. In a real app, this would be from Firestore.
-    // Deep copy to allow in-memory modifications without affecting the original mock
-    setTopics(JSON.parse(JSON.stringify(initialMockForumTopics))); 
-  }, []);
+    if (isFirebaseConfigured && isAdmin) {
+      fetchTopics();
+    }
+  }, [isFirebaseConfigured, isAdmin]);
 
-  const handleViewPosts = (topic: MockForumTopic) => {
-    setSelectedTopic(topic);
+  const fetchPostsForTopic = async (topicId: string) => {
+    if (!db) return [];
+    setIsLoadingPosts(true);
+    try {
+      const postsCollectionRef = collection(db, "forumPosts");
+      const q = query(postsCollectionRef, where("topicId", "==", topicId), orderBy("timestamp", "asc"));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(docSnapshot => ({
+        id: docSnapshot.id,
+        ...docSnapshot.data()
+      } as ForumPost));
+    } catch (error) {
+      console.error("Error fetching posts for topic:", topicId, error);
+      toast({ title: "Error al Cargar Mensajes", description: "No se pudieron cargar los mensajes para este tema.", variant: "destructive" });
+      return [];
+    } finally {
+      setIsLoadingPosts(false);
+    }
+  };
+
+  const handleViewPosts = async (topic: ForumTopic) => {
+    const posts = await fetchPostsForTopic(topic.id);
+    setSelectedTopic({ ...topic, posts });
     setIsPostsDialogOpen(true);
   };
 
-  const handleOpenEditPostDialog = (post: MockPost) => {
+  const handleOpenEditPostDialog = (post: ForumPost) => {
     setEditingPost(post);
     setEditedPostContent(post.content);
     setIsEditPostDialogOpen(true);
   };
 
-  const handleSaveEditedPost = (event: FormEvent) => {
+  const handleSaveEditedPost = async (event: FormEvent) => {
     event.preventDefault();
-    if (!editingPost || !selectedTopic) return;
+    if (!editingPost || !selectedTopic || !db) return;
 
-    setTopics(prevTopics =>
-      prevTopics.map(topic =>
-        topic.id === selectedTopic.id
-          ? {
-              ...topic,
-              posts: topic.posts.map(p =>
-                p.id === editingPost.id ? { ...p, content: editedPostContent } : p
-              ),
-            }
-          : topic
-      )
-    );
-    // Update selectedTopic as well so the modal reflects changes immediately
-    setSelectedTopic(prevSelected => prevSelected ? {
-        ...prevSelected,
-        posts: prevSelected.posts.map(p => 
-            p.id === editingPost.id ? { ...p, content: editedPostContent } : p
-        )
-    } : null);
+    const postRef = doc(db, "forumPosts", editingPost.id);
+    try {
+      await updateDoc(postRef, { content: editedPostContent });
+      
+      // Update local state
+      const updatedPosts = selectedTopic.posts?.map(p =>
+        p.id === editingPost.id ? { ...p, content: editedPostContent } : p
+      ) || [];
+      setSelectedTopic(prev => prev ? { ...prev, posts: updatedPosts } : null);
 
-    toast({ title: "Post Actualizado", description: "El contenido del mensaje ha sido modificado (en memoria).", variant: "default" });
-    setIsEditPostDialogOpen(false);
-    setEditingPost(null);
+      toast({ title: "Mensaje Actualizado", description: "El contenido del mensaje ha sido modificado en Firestore.", variant: "default" });
+      setIsEditPostDialogOpen(false);
+      setEditingPost(null);
+    } catch (error) {
+      console.error("Error updating post:", error);
+      toast({ title: "Error al Actualizar", description: "No se pudo actualizar el mensaje.", variant: "destructive" });
+    }
   };
   
-  const confirmDeletePost = () => {
-    if (!postToDelete || !selectedTopic) return;
+  const confirmDeletePost = async () => {
+    if (!postToDelete || !selectedTopic || !db) return;
     
-    setTopics(prevTopics => 
-        prevTopics.map(topic => 
-            topic.id === postToDelete.topicId 
-            ? { ...topic, posts: topic.posts.filter(p => p.id !== postToDelete.postId), postCount: topic.postCount -1 }
-            : topic
-        )
-    );
-    setSelectedTopic(prevSelected => prevSelected ? {
-        ...prevSelected,
-        posts: prevSelected.posts.filter(p => p.id !== postToDelete.postId),
-        postCount: prevSelected.postCount -1
-    } : null);
+    const postRef = doc(db, "forumPosts", postToDelete.id);
+    const topicRef = doc(db, "forumTopics", selectedTopic.id);
+    const batch = writeBatch(db);
 
-    toast({ title: "Post Eliminado", description: "El mensaje ha sido eliminado (en memoria).", variant: "destructive" });
-    setPostToDelete(null);
-  };
+    batch.delete(postRef);
+    batch.update(topicRef, { postCount: increment(-1) }); // Decrement postCount
 
-  const confirmDeleteTopic = () => {
-    if (!topicToDelete) return;
-    setTopics(prevTopics => prevTopics.filter(topic => topic.id !== topicToDelete));
-    toast({ title: "Tema Eliminado", description: "El tema y sus mensajes han sido eliminados (en memoria).", variant: "destructive" });
-    setTopicToDelete(null);
-    if (selectedTopic && selectedTopic.id === topicToDelete) {
-        setIsPostsDialogOpen(false);
-        setSelectedTopic(null);
+    try {
+      await batch.commit();
+      // Update local state
+      const updatedPosts = selectedTopic.posts?.filter(p => p.id !== postToDelete.id) || [];
+      setSelectedTopic(prev => prev ? { ...prev, posts: updatedPosts, postCount: prev.postCount -1 } : null);
+      // Update topics list to reflect new postCount
+      setTopics(prevTopics => prevTopics.map(t => t.id === selectedTopic.id ? {...t, postCount: t.postCount -1} : t));
+
+      toast({ title: "Mensaje Eliminado", description: "El mensaje ha sido eliminado de Firestore.", variant: "destructive" });
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      toast({ title: "Error al Eliminar", description: "No se pudo eliminar el mensaje.", variant: "destructive" });
+    } finally {
+      setPostToDelete(null);
     }
   };
 
+  const confirmDeleteTopic = async () => {
+    if (!topicToDelete || !db) return;
+    
+    const topicRef = doc(db, "forumTopics", topicToDelete.id);
+    const postsQuery = query(collection(db, "forumPosts"), where("topicId", "==", topicToDelete.id));
 
-  if (authLoading) {
+    try {
+      const batch = writeBatch(db);
+      // Delete the topic document
+      batch.delete(topicRef);
+
+      // Delete all associated posts
+      const postsSnapshot = await getDocs(postsQuery);
+      postsSnapshot.forEach(doc => batch.delete(doc.ref));
+      
+      await batch.commit();
+
+      // Update local state
+      setTopics(prevTopics => prevTopics.filter(topic => topic.id !== topicToDelete.id));
+      
+      toast({ title: "Tema Eliminado", description: "El tema y sus mensajes han sido eliminados de Firestore.", variant: "destructive" });
+      if (selectedTopic && selectedTopic.id === topicToDelete.id) {
+          setIsPostsDialogOpen(false);
+          setSelectedTopic(null);
+      }
+    } catch (error) {
+      console.error("Error deleting topic and its posts:", error);
+      toast({ title: "Error al Eliminar Tema", description: "No se pudo eliminar el tema y sus mensajes.", variant: "destructive" });
+    } finally {
+      setTopicToDelete(null);
+    }
+  };
+
+  if (authLoading || isLoadingTopics) {
     return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /> <span className="ml-3 text-lg">Cargando...</span></div>;
   }
 
@@ -128,36 +253,52 @@ export default function AdminCommunityManagementPage() {
       </div>
     );
   }
+  
+  if (!isFirebaseConfigured || !db) {
+      return (
+        <div className="container mx-auto py-10 px-4">
+            <Alert variant="destructive" className="mb-6">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Error de Configuración de Firebase</AlertTitle>
+                <AlertDescription>
+                    Firebase Firestore no está configurado o disponible. El panel de gestión de comunidad no puede funcionar.
+                </AlertDescription>
+            </Alert>
+             <div className="text-center">
+                <Link href="/admin" passHref>
+                    <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />Volver al Panel de Administración</Button>
+                </Link>
+            </div>
+        </div>
+      )
+  }
+
 
   return (
     <div className="container mx-auto py-8 space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
-          <MessageSquare className="h-8 w-8" /> Gestión de Contenido de la Comunidad
+          <MessageSquare className="h-8 w-8" /> Gestión de Contenido de la Comunidad (Firestore)
         </h1>
         <Link href="/admin" passHref>
           <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />Volver al Panel de Administración</Button>
         </Link>
       </div>
       
-      <Alert variant="default" className="bg-primary/10 border-primary/50">
-        <ShieldAlert className="h-4 w-4 text-primary" />
-        <AlertTitle className="text-primary">Modo de Demostración</AlertTitle>
-        <AlertDescription className="text-primary/80">
-          Actualmente, esta sección opera con datos simulados en memoria. Cualquier edición o eliminación no será persistente y se reiniciará al recargar la página. La integración completa con Firestore para la gestión de datos reales de la comunidad es una funcionalidad futura.
-        </AlertDescription>
-      </Alert>
-
       <Card className="w-full shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl">Temas del Foro (Gestión en Memoria)</CardTitle>
+          <CardTitle className="text-xl">Temas del Foro (desde Firestore)</CardTitle>
           <CardDescription>
-            Visualiza, edita y elimina temas y mensajes de la comunidad. Los cambios son temporales.
+            Visualiza, edita y elimina temas y mensajes de la comunidad. Los cambios son persistentes.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {topics.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No hay temas en el foro para mostrar.</p>
+          {isLoadingTopics ? (
+             <div className="flex items-center justify-center py-10">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" /> Cargando temas del foro...
+            </div>
+          ) : topics.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">No hay temas en el foro para mostrar en Firestore.</p>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -175,18 +316,18 @@ export default function AdminCommunityManagementPage() {
                   {topics.map((topic) => (
                     <TableRow key={topic.id}>
                       <TableCell className="font-medium max-w-xs truncate" title={topic.title}>{topic.title}</TableCell>
-                      <TableCell>{topic.authorId}</TableCell>
+                      <TableCell className="truncate max-w-[100px]" title={topic.authorId}>{topic.authorId}</TableCell>
                       <TableCell className="text-center">{topic.postCount}</TableCell>
                       <TableCell className="text-center">{topic.views}</TableCell>
-                      <TableCell>{topic.lastActivity}</TableCell>
+                      <TableCell>{formatFirestoreTimestamp(topic.lastActivity)}</TableCell>
                       <TableCell className="text-right space-x-1">
                         <Button variant="outline" size="sm" onClick={() => handleViewPosts(topic)} title="Ver/Gestionar Mensajes">
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm" disabled title="Editar Tema (Próximamente en Firestore)">
+                        <Button variant="outline" size="sm" disabled title="Editar Tema (Funcionalidad futura)">
                           <Edit3 className="h-4 w-4" />
                         </Button>
-                        <Button variant="destructive" size="sm" onClick={() => setTopicToDelete(topic.id)} title="Eliminar Tema">
+                        <Button variant="destructive" size="sm" onClick={() => setTopicToDelete(topic)} title="Eliminar Tema">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </TableCell>
@@ -201,44 +342,49 @@ export default function AdminCommunityManagementPage() {
 
       {/* View Posts Dialog */}
       {selectedTopic && (
-        <Dialog open={isPostsDialogOpen} onOpenChange={setIsPostsDialogOpen}>
+        <Dialog open={isPostsDialogOpen} onOpenChange={(open) => { if(!open) setSelectedTopic(null); setIsPostsDialogOpen(open);}}>
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle className="text-2xl text-primary">Mensajes en: {selectedTopic.title}</DialogTitle>
               <DialogDescription>
-                Visualiza, edita o elimina mensajes del tema. Los cambios son temporales.
+                Visualiza, edita o elimina mensajes del tema. Los cambios son persistentes en Firestore.
               </DialogDescription>
             </DialogHeader>
             <ScrollArea className="max-h-[60vh] pr-2 my-4">
-              <div className="space-y-4">
-                {selectedTopic.posts.map((post: MockPost) => (
-                  <Card key={post.id} className="p-3 shadow-sm">
-                    <div className="flex items-start space-x-3">
-                      <Avatar className="h-8 w-8 border">
-                        <AvatarImage src={`https://placehold.co/40x40.png?text=${post.userId.substring(0,2).toUpperCase()}`} alt={post.userId} data-ai-hint="user avatar" />
-                        <AvatarFallback>{post.userId.substring(0, 2).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between text-xs">
-                          <p className="font-semibold text-foreground">{post.userId}</p>
-                          <p className="text-muted-foreground">{post.timestamp}</p>
-                        </div>
-                        <p className="text-sm text-foreground/90 mt-1 whitespace-pre-line">{post.content}</p>
-                        <div className="mt-2 flex items-center space-x-2">
-                           <Button variant="outline" size="xs" onClick={() => handleOpenEditPostDialog(post)} className="text-xs">
-                             <Edit3 className="h-3 w-3 mr-1" />Editar
-                           </Button>
-                           <Button variant="destructive" size="xs" onClick={() => setPostToDelete({ topicId: selectedTopic.id, postId: post.id})} className="text-xs">
-                             <Trash2 className="h-3 w-3 mr-1" />Eliminar
-                           </Button>
-                           <span className="text-xs text-muted-foreground ml-auto">{post.likes} Me gusta</span>
+              {isLoadingPosts ? (
+                <div className="flex items-center justify-center py-6"><Loader2 className="h-6 w-6 animate-spin text-primary mr-2" /> Cargando mensajes...</div>
+              ) : selectedTopic.posts && selectedTopic.posts.length > 0 ? (
+                <div className="space-y-4">
+                  {selectedTopic.posts.map((post: ForumPost) => (
+                    <Card key={post.id} className="p-3 shadow-sm">
+                      <div className="flex items-start space-x-3">
+                        <Avatar className="h-8 w-8 border">
+                          <AvatarImage src={`https://placehold.co/40x40.png?text=${post.userId.substring(0,2).toUpperCase()}`} alt={post.userId} data-ai-hint="user avatar" />
+                          <AvatarFallback>{post.userId.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <p className="font-semibold text-foreground truncate max-w-[150px]" title={post.userId}>{post.userId}</p>
+                            <p className="text-muted-foreground">{formatFirestoreTimestamp(post.timestamp)}</p>
+                          </div>
+                          <p className="text-sm text-foreground/90 mt-1 whitespace-pre-line">{post.content}</p>
+                          <div className="mt-2 flex items-center space-x-2">
+                             <Button variant="outline" size="xs" onClick={() => handleOpenEditPostDialog(post)} className="text-xs">
+                               <Edit3 className="h-3 w-3 mr-1" />Editar
+                             </Button>
+                             <Button variant="destructive" size="xs" onClick={() => setPostToDelete(post)} className="text-xs">
+                               <Trash2 className="h-3 w-3 mr-1" />Eliminar
+                             </Button>
+                             <span className="text-xs text-muted-foreground ml-auto">{post.likes} Me gusta</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Card>
-                ))}
-                {selectedTopic.posts.length === 0 && <p className="text-muted-foreground text-center">No hay mensajes en este tema.</p>}
-              </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center">No hay mensajes en este tema.</p>
+              )}
             </ScrollArea>
             <DialogFooter>
               <DialogClose asChild>
@@ -255,7 +401,7 @@ export default function AdminCommunityManagementPage() {
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Editar Mensaje</DialogTitle>
-                    <DialogDescription>Modifica el contenido del mensaje. Los cambios son temporales.</DialogDescription>
+                    <DialogDescription>Modifica el contenido del mensaje. Los cambios se guardarán en Firestore.</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSaveEditedPost} className="space-y-4 py-4">
                     <div>
@@ -288,7 +434,7 @@ export default function AdminCommunityManagementPage() {
                 <AlertDialogHeader>
                     <AlertDialogTitle>¿Eliminar Mensaje?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Estás a punto de eliminar este mensaje. Esta acción es temporal y se reiniciará al recargar la página. ¿Estás seguro?
+                        Estás a punto de eliminar este mensaje de Firestore. Esta acción no se puede deshacer. ¿Estás seguro?
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -308,7 +454,7 @@ export default function AdminCommunityManagementPage() {
                 <AlertDialogHeader>
                     <AlertDialogTitle>¿Eliminar Tema del Foro?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Estás a punto de eliminar este tema y todos sus mensajes asociados. Esta acción es temporal y se reiniciará al recargar la página. ¿Estás seguro?
+                        Estás a punto de eliminar este tema y todos sus mensajes asociados de Firestore. Esta acción no se puede deshacer. ¿Estás seguro?
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -320,8 +466,8 @@ export default function AdminCommunityManagementPage() {
             </AlertDialogContent>
         </AlertDialog>
       )}
-
     </div>
   );
 }
 
+    
