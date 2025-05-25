@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, UploadCloud, Settings, User, Users, Home, LogIn, LogOut, UserPlus } from 'lucide-react';
+import { BookOpenText, UploadCloud, Settings, User, Users, Home, LogIn, LogOut, UserPlus, ShieldCheck } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button'; // For logout button
 import { useToast } from '@/hooks/use-toast';
 
 const navItems = [
@@ -23,6 +22,8 @@ const navItems = [
   { href: '/profile', label: 'Mi Perfil', icon: User, protected: true },
 ];
 
+const adminNavItem = { href: '/admin', label: 'Panel de Admin', icon: ShieldCheck };
+
 const authNavItems = {
   login: { href: '/login', label: 'Iniciar Sesión', icon: LogIn },
   signup: { href: '/signup', label: 'Registrarse', icon: UserPlus },
@@ -30,7 +31,7 @@ const authNavItems = {
 
 export default function SidebarNav() {
   const pathname = usePathname();
-  const { currentUser, logout, loading, isFirebaseConfigured } = useAuth();
+  const { currentUser, logout, loading, isFirebaseConfigured, isAdmin } = useAuth();
   const { toast } = useToast();
 
   const handleLogout = async () => {
@@ -39,7 +40,7 @@ export default function SidebarNav() {
       toast({ title: "Error al Cerrar Sesión", description: result, variant: "destructive" });
     } else {
       toast({ title: "Sesión Cerrada", description: "Has cerrado sesión exitosamente.", variant: "default" });
-      // Router will redirect via AuthContext
+      // Router will redirect via ConditionalLayout or AuthContext effect
     }
   };
 
@@ -47,8 +48,10 @@ export default function SidebarNav() {
     <SidebarMenu className="flex flex-col justify-between h-full p-2 space-y-2">
       <div className="space-y-1">
         {navItems.map((item) => {
-          if (item.protected && !currentUser && isFirebaseConfigured) return null; // Hide protected routes if not logged in (and Firebase is configured)
-          // If Firebase is not configured, show all main routes, but they will redirect to login which will show config error
+          // Hide protected routes if Firebase is configured AND user is not logged in.
+          // If Firebase is NOT configured, show all main routes; ConditionalLayout will handle behavior.
+          if (item.protected && isFirebaseConfigured && !currentUser) return null;
+          
           return (
             <SidebarMenuItem key={item.href}>
               <Link href={item.href} passHref legacyBehavior>
@@ -74,6 +77,31 @@ export default function SidebarNav() {
             </SidebarMenuItem>
           )
         })}
+        {/* Admin Panel Link */}
+        {isAdmin && currentUser && isFirebaseConfigured && (
+          <SidebarMenuItem key={adminNavItem.href}>
+            <Link href={adminNavItem.href} passHref legacyBehavior>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === adminNavItem.href}
+                tooltip={adminNavItem.label}
+                className={cn(
+                  "justify-start w-full",
+                  pathname === adminNavItem.href 
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90" 
+                    : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                )}
+              >
+                <a>
+                  <adminNavItem.icon className="h-5 w-5" />
+                  <span className="group-data-[collapsible=icon]:hidden">
+                    {adminNavItem.label}
+                  </span>
+                </a>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+        )}
       </div>
 
       <div className="mt-auto space-y-1">
@@ -82,9 +110,10 @@ export default function SidebarNav() {
           {!loading && currentUser && (
             <p className="text-xs text-sidebar-foreground/70 truncate" title={currentUser.email || "Usuario"}>
               {currentUser.email || "Usuario Conectado"}
+              {isAdmin && <span className="text-accent ml-1">(Admin)</span>}
             </p>
           )}
-          {!isFirebaseConfigured && <p className="text-xs text-destructive">Firebase no configurado</p>}
+          {!isFirebaseConfigured && !loading && <p className="text-xs text-destructive">Firebase no configurado</p>}
         </div>
         {currentUser && isFirebaseConfigured ? (
           <SidebarMenuItem>
@@ -92,7 +121,7 @@ export default function SidebarNav() {
               onClick={handleLogout}
               tooltip="Cerrar Sesión"
               className="justify-start w-full hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              disabled={loading || !isFirebaseConfigured}
+              disabled={loading} // Disable only if auth operation is in progress
             >
               <LogOut className="h-5 w-5" />
               <span className="group-data-[collapsible=icon]:hidden">
