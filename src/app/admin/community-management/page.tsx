@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Added import
 
 export default function AdminCommunityManagementPage() {
   const { currentUser, isAdmin, loading: authLoading } = useAuth();
@@ -80,7 +81,7 @@ export default function AdminCommunityManagementPage() {
   };
   
   const confirmDeletePost = () => {
-    if (!postToDelete) return;
+    if (!postToDelete || !selectedTopic) return;
     
     setTopics(prevTopics => 
         prevTopics.map(topic => 
