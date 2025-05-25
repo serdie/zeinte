@@ -51,11 +51,11 @@ export default function UploadPage() {
 
       toast({
         title: "¡Éxito!",
-        description: "Preguntas predichas y listas para estudiar. Redirigiendo...",
+        description: "Preguntas predichas y listas para estudiar. Redirigiendo al panel...",
         variant: "default",
       });
       
-      router.push('/');
+      router.push('/dashboard'); // MODIFIED: Redirect to dashboard
 
     } catch (error) {
       console.error("Error during AI processing:", error);

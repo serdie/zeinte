@@ -2,6 +2,7 @@
 "use client";
 
 import type React from 'react';
+import { usePathname } from 'next/navigation';
 import {
   SidebarProvider,
   Sidebar,
@@ -20,9 +21,20 @@ interface AppLayoutProps {
   children: React.ReactNode;
 }
 
+const getHeaderTitle = (pathname: string): string => {
+  if (pathname === '/') return "Bienvenido a AdivinaExamen";
+  if (pathname.startsWith('/dashboard')) return "Panel de Estudio";
+  if (pathname.startsWith('/upload')) return "Subir Documentos";
+  if (pathname.startsWith('/configure')) return "Configuración de Examen";
+  if (pathname.startsWith('/community')) return "Comunidad de Estudio";
+  if (pathname.startsWith('/profile')) return "Mi Perfil";
+  return "AdivinaExamen";
+};
+
 export default function AppLayout({ children }: AppLayoutProps) {
   const isMobile = useIsMobile();
-  const headerTitle = "Panel de Estudio"; 
+  const pathname = usePathname();
+  const headerTitle = getHeaderTitle(pathname);
 
   return (
     <SidebarProvider defaultOpen={!isMobile} open={isMobile ? false : undefined}>
@@ -40,7 +52,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </SidebarContent>
         <SidebarFooter className="p-4 group-data-[collapsible=icon]:hidden">
           <p className="text-xs text-sidebar-foreground/70">
-            © {new Date().getFullYear()} AdivinaExamen
+            © {new Date().getFullYear()} Search and Make S.L (CIF: B45786787)
           </p>
         </SidebarFooter>
       </Sidebar>

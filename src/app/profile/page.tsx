@@ -33,9 +33,9 @@ export default function ProfilePage() {
               className="mx-auto rounded-lg opacity-70"
               data-ai-hint="construct gears"
             />
-          <Link href="/" passHref>
+          <Link href="/dashboard" passHref>
             <Button variant="outline" className="mt-4">
-              Volver al Panel Principal
+              Volver al Panel de Estudio
             </Button>
           </Link>
         </CardContent>

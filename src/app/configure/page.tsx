@@ -12,6 +12,8 @@ import { EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
 import type { ExamConfig, ExamType } from '@/types';
 import { Save, Settings, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import Link from 'next/link';
+
 
 const DEFAULT_CONFIG: ExamConfig = {
   defaultNumberOfQuestions: 10,
@@ -150,6 +152,13 @@ export default function ConfigureExamPage() {
           La función "Re-analizar y Generar Nuevo Examen" en el Panel de Estudio depende del contenido textual de los documentos que hayas subido previamente. Este contenido se guarda en el almacenamiento local de tu navegador, el cual tiene límites de tamaño (generalmente 5-10MB). Si los documentos originales son muy grandes o numerosos, es posible que no se guarden completamente, y la función de re-análisis podría no tener datos suficientes.
         </AlertDescription>
       </Alert>
+       <div className="text-center mt-8">
+         <Link href="/dashboard" passHref>
+            <Button variant="outline">
+              Volver al Panel de Estudio
+            </Button>
+          </Link>
+       </div>
     </div>
   );
 }

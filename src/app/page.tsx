@@ -1,278 +1,162 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import PredictedQuestionCard from '@/components/dashboard/PredictedQuestionCard';
-import AIExplanationDialog from '@/components/dashboard/AIExplanationDialog';
-import { generateAIExplanation, type GenerateAIExplanationOutput, type GenerateAIExplanationInput } from '@/ai/flows/generate-ai-explanations';
-import { analyzeDocuments, type AnalyzeDocumentsOutput } from '@/ai/flows/analyze-documents';
-import { predictExamQuestions, type PredictExamQuestionsOutput } from '@/ai/flows/predict-exam-questions';
-import { PREDICTED_DATA_KEY, EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
-import type { PredictedData, AIExplanation, PredictedQuestion, ExamConfig, AnalysisDetails } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw, Microscope } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { UploadCloud, BrainCircuit, Lightbulb, Sparkles, BookOpenText, Settings, Users, CheckCircle, ArrowRight } from 'lucide-react';
+import Image from 'next/image';
 
-const DEFAULT_NUM_QUESTIONS_REANALYSIS = "10";
-
-export default function DashboardPage() {
-  const [predictedData, setPredictedData] = useState<PredictedData | null>(null);
-  const [isLoadingInitialData, setIsLoadingInitialData] = useState(true);
-  const [isReAnalyzing, setIsReAnalyzing] = useState(false);
-  
-  const [currentExplanation, setCurrentExplanation] = useState<AIExplanation | null>(null);
-  const [isExplaining, setIsExplaining] = useState(false);
-  const [selectedQuestionForExplanation, setSelectedQuestionForExplanation] = useState<Omit<GenerateAIExplanationInput, 'topic'> | null>(null);
-  const [isExplanationDialogOpen, setIsExplanationDialogOpen] = useState(false);
-
-  const [numQuestionsForReanalysis, setNumQuestionsForReanalysis] = useState<string>(DEFAULT_NUM_QUESTIONS_REANALYSIS);
-
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const storedConfig = localStorage.getItem(EXAM_CONFIG_KEY);
-    let defaultNumQuestions = DEFAULT_NUM_QUESTIONS_REANALYSIS;
-    if (storedConfig) {
-      try {
-        const parsedConfig: ExamConfig = JSON.parse(storedConfig);
-        if (parsedConfig.defaultNumberOfQuestions) {
-          defaultNumQuestions = parsedConfig.defaultNumberOfQuestions.toString();
-        }
-      } catch (e) { console.error("Failed to parse exam config for dashboard", e); }
-    }
-    
-    const storedData = localStorage.getItem(PREDICTED_DATA_KEY);
-    if (storedData) {
-      try {
-        const parsedData: PredictedData = JSON.parse(storedData);
-        if (parsedData.questions && parsedData.questions.length > 0 && typeof parsedData.questions[0] === 'string') {
-          console.warn("Old question format detected in localStorage. Clearing data.");
-          localStorage.removeItem(PREDICTED_DATA_KEY);
-          setPredictedData(null);
-        } else {
-          setPredictedData(parsedData);
-          setNumQuestionsForReanalysis(
-            parsedData.requestedNumberOfQuestions?.toString() || defaultNumQuestions
-          );
-        }
-      } catch (error) {
-        console.error("Failed to parse predicted data from localStorage", error);
-        localStorage.removeItem(PREDICTED_DATA_KEY);
-        setPredictedData(null);
-        setNumQuestionsForReanalysis(defaultNumQuestions);
-      }
-    } else {
-        setNumQuestionsForReanalysis(defaultNumQuestions);
-    }
-    setIsLoadingInitialData(false);
-  }, []);
-
-  const handleGetExplanation = useCallback(async (questionText: string, options: string[], correctAnswerIndex: number) => {
-    const questionContext = { questionText, options, correctAnswerIndex };
-    setSelectedQuestionForExplanation(questionContext);
-    setIsExplaining(true);
-    setIsExplanationDialogOpen(true);
-    setCurrentExplanation(null); 
-
-    try {
-      const topic = predictedData?.recurringThemes?.[0] || predictedData?.potentialFocusAreas?.[0] || "Tema General";
-      
-      const result: GenerateAIExplanationOutput = await generateAIExplanation({ ...questionContext, topic });
-      if (result && result.explanation) {
-        setCurrentExplanation({ question: questionText, explanation: result.explanation, topic });
-      } else {
-        throw new Error("La explicación recibida está vacía o no es válida.");
-      }
-    } catch (error) {
-      console.error("Error generating AI explanation:", error);
-      setCurrentExplanation(null); 
-      toast({
-        title: "Error al generar explicación",
-        description: (error instanceof Error ? error.message : "No se pudo obtener la explicación detallada.") + " Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsExplaining(false);
-    }
-  }, [predictedData, toast]);
-
-  const handleReAnalyze = async () => {
-    if (!predictedData?.originalDocumentContent) {
-      toast({
-        title: "Falta contenido",
-        description: "No hay contenido de documento para re-analizar. Sube documentos primero o el contenido anterior no fue guardado (posiblemente debido a su tamaño). Revisa la sección 'Configura tu examen' para más detalles.",
-        variant: "destructive",
-        duration: 7000,
-      });
-      return;
-    }
-
-    setIsReAnalyzing(true);
-    const requestedNum = parseInt(numQuestionsForReanalysis, 10);
-    try {
-      toast({
-        title: "Re-procesando Documentos",
-        description: "Realizando un análisis profundo del contenido de tus documentos...",
-      });
-      const analysisResult: AnalyzeDocumentsOutput = await analyzeDocuments({ documentContent: predictedData.originalDocumentContent });
-      
-      toast({
-        title: "Análisis Detallado Completo",
-        description: "Generando nuevas predicciones de preguntas basadas en el análisis avanzado...",
-      });
-      const predictionResult: PredictExamQuestionsOutput = await predictExamQuestions({ 
-        analysisSummary: analysisResult.summary,
-        recurringThemes: analysisResult.recurringThemes,
-        numberOfQuestions: requestedNum,
-        identifiedExamPatterns: analysisResult.identifiedExamPatterns,
-        potentialFocusAreas: analysisResult.potentialFocusAreas,
-      });
-
-      const newDataToStore: PredictedData = {
-        questions: predictionResult.questions,
-        analysisSummary: analysisResult.summary,
-        recurringThemes: analysisResult.recurringThemes,
-        timestamp: Date.now(),
-        originalDocumentContent: predictedData.originalDocumentContent,
-        requestedNumberOfQuestions: requestedNum,
-        identifiedExamPatterns: analysisResult.identifiedExamPatterns,
-        potentialFocusAreas: analysisResult.potentialFocusAreas,
-      };
-
-      localStorage.setItem(PREDICTED_DATA_KEY, JSON.stringify(newDataToStore));
-      setPredictedData(newDataToStore);
-
-      toast({
-        title: "¡Nuevas Preguntas Listas!",
-        description: `Se ha generado un nuevo conjunto de ${predictionResult.questions.length} preguntas con análisis mejorado.`,
-        variant: "default",
-      });
-      
-    } catch (error) {
-      console.error("Error during AI re-processing:", error);
-      toast({
-        title: "Error en el Re-procesamiento Avanzado",
-        description: (error instanceof Error ? error.message : "Hubo un problema al re-analizar los documentos o predecir preguntas.") + " Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsReAnalyzing(false);
-    }
-  };
-
-  if (isLoadingInitialData) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center p-6">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <p className="text-xl text-muted-foreground">Cargando datos...</p>
-      </div>
-    );
+const features = [
+  {
+    icon: UploadCloud,
+    title: "Sube tus Documentos Fácilmente",
+    shortText: "Carga exámenes, temarios y apuntes (PDF, DOCX, TXT).",
+    longText: "Arrastra y suelta o selecciona archivos desde tu dispositivo. AdivinaExamen procesará múltiples formatos para extraer la información relevante y prepararla para el análisis inteligente."
+  },
+  {
+    icon: BrainCircuit,
+    title: "Análisis Profundo con IA",
+    shortText: "IA identifica temas clave y patrones de exámenes pasados.",
+    longText: "Nuestra inteligencia artificial examina el contenido de tus documentos, identificando temas recurrentes, preguntas frecuentes y la estructura general del curso. Si detecta exámenes anteriores, analiza su metodología y la importancia relativa de los temas."
+  },
+  {
+    icon: Lightbulb,
+    title: "Predicción Inteligente de Preguntas",
+    shortText: "Genera preguntas tipo test que podrían aparecer en tu examen.",
+    longText: "Basándose en el análisis exhaustivo, AdivinaExamen predice posibles preguntas de examen. Estas preguntas están diseñadas para imitar el estilo, la dificultad y el formato de las pruebas reales, dándote una ventaja única."
+  },
+  {
+    icon: Sparkles,
+    title: "Explicaciones Claras y Detalladas",
+    shortText: "Entiende cada respuesta con explicaciones tipo profesor.",
+    longText: "Para cada pregunta predicha, la IA genera una explicación detallada. No solo te dice cuál es la respuesta correcta, sino que razona por qué lo es y por qué las otras opciones son incorrectas, como si tuvieras un tutor personal."
+  },
+  {
+    icon: BookOpenText,
+    title: "Interfaz de Estudio Interactiva",
+    shortText: "Visualiza preguntas, responde y recibe feedback al instante.",
+    longText: "Estudia de manera eficiente con una interfaz diseñada para el aprendizaje. Responde a las preguntas, comprueba tus aciertos y errores, y accede a las explicaciones detalladas para reforzar tu conocimiento."
+  },
+  {
+    icon: Settings,
+    title: "Configuración Personalizada",
+    shortText: "Adapta la generación de exámenes a tus necesidades.",
+    longText: "Ajusta el número de preguntas por defecto que quieres que se generen. Próximamente, podrás configurar otros aspectos como el tipo de examen (test, desarrollo, oral) para una preparación aún más a medida."
+  },
+  {
+    icon: Users,
+    title: "Comunidad de Estudio (Simulada)",
+    shortText: "Explora foros y aprende de otros (simulación actual).",
+    longText: "Accede a nuestra sección de comunidad donde encontrarás foros de discusión simulados con temas relevantes para diversas oposiciones y estudios. En el futuro, podrás interactuar y compartir tus propias experiencias."
   }
+];
 
-  if (!predictedData || !predictedData.questions || predictedData.questions.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center p-6 bg-card rounded-lg shadow-xl">
-        <BookOpenText className="h-20 w-20 text-primary mb-6" />
-        <h2 className="text-3xl font-semibold text-foreground mb-3">Bienvenido a AdivinaExamen</h2>
-        <p className="text-lg text-muted-foreground mb-8 max-w-md">
-          Parece que aún no has analizado ningún documento. ¡Sube tus apuntes, temarios o exámenes para empezar a estudiar de forma inteligente!
+export default function HomePage() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 text-foreground">
+      {/* Hero Section */}
+      <section className="py-16 md:py-24 text-center bg-card shadow-lg rounded-b-xl mb-12">
+        <div className="container mx-auto px-4">
+          <BrainCircuit className="h-20 w-20 text-primary mx-auto mb-6" />
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-primary">
+            AdivinaExamen: Tu Aliado Inteligente para Aprobar
+          </h1>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+            Transforma tus apuntes y exámenes pasados en una poderosa herramienta de estudio. Sube tus documentos, y nuestra IA analizará el contenido, predecirá preguntas clave y te ayudará a prepararte como nunca antes.
+          </p>
+          <Link href="/upload" passHref>
+            <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground text-lg px-10 py-6 rounded-lg shadow-md transition-transform duration-150 ease-in-out active:scale-95">
+              <UploadCloud className="mr-3 h-6 w-6" />
+              Empezar Ahora
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-12 container mx-auto px-4">
+        <h2 className="text-3xl font-semibold text-center mb-10 text-foreground">¿Cómo te ayuda AdivinaExamen?</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {features.map((feature, index) => (
+            <Card key={index} className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-3">
+                  <feature.icon className="h-10 w-10 text-primary" />
+                  <CardTitle className="text-xl text-primary">{feature.title}</CardTitle>
+                </div>
+                <CardDescription className="text-sm text-muted-foreground h-12">{feature.shortText}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value={`item-${index}`} className="border-t pt-2">
+                    <AccordionTrigger className="text-sm text-accent hover:text-accent/80 py-2">
+                      Saber más...
+                    </AccordionTrigger>
+                    <AccordionContent className="text-sm text-foreground/80 pt-2">
+                      {feature.longText}
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* How it Works Section */}
+      <section className="py-16 bg-muted/50 mt-12">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-semibold text-center mb-10 text-foreground">Simple, Rápido y Efectivo</h2>
+          <div className="grid md:grid-cols-3 gap-8 text-center">
+            <div className="p-6 bg-card rounded-lg shadow-md">
+              <div className="p-4 bg-primary text-primary-foreground rounded-full inline-block mb-4 text-2xl font-bold">1</div>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Sube tus Archivos</h3>
+              <p className="text-muted-foreground text-sm">PDFs, DOCXs, TXTs... todo tu material de estudio es bienvenido.</p>
+            </div>
+            <div className="p-6 bg-card rounded-lg shadow-md">
+              <div className="p-4 bg-primary text-primary-foreground rounded-full inline-block mb-4 text-2xl font-bold">2</div>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Análisis IA</h3>
+              <p className="text-muted-foreground text-sm">Dejamos que nuestra IA identifique lo crucial y prediga preguntas.</p>
+            </div>
+            <div className="p-6 bg-card rounded-lg shadow-md">
+              <div className="p-4 bg-primary text-primary-foreground rounded-full inline-block mb-4 text-2xl font-bold">3</div>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Estudia y Aprueba</h3>
+              <p className="text-muted-foreground text-sm">Practica con preguntas tipo test y explicaciones detalladas.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Call to Action Section */}
+      <section className="py-20 text-center container mx-auto px-4">
+        <h2 className="text-3xl font-bold mb-6 text-foreground">¿Listo para Revolucionar tu Estudio?</h2>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+          Deja de adivinar y empieza a prepararte con la inteligencia artificial de AdivinaExamen.
         </p>
         <Link href="/upload" passHref>
-          <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground text-base px-8 py-6 rounded-lg shadow-md transition-transform duration-150 ease-in-out active:scale-95">
-            <UploadCloud className="mr-3 h-6 w-6" />
-            Subir Documentos Ahora
+          <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-xl px-12 py-7 rounded-lg shadow-lg transition-transform duration-150 ease-in-out active:scale-95">
+            <Sparkles className="mr-3 h-7 w-7" />
+            ¡Probar Ahora!
           </Button>
         </Link>
-      </div>
-    );
-  }
-  
-  return (
-    <div className="space-y-8">
-      <Alert className="border-primary bg-primary/10">
-        <Info className="h-5 w-5 text-primary" />
-        <AlertTitle className="font-semibold text-primary">¡Preguntas Listas para Estudiar!</AlertTitle>
-        <AlertDescription className="text-primary/80">
-          Hemos analizado tus documentos y estas son las preguntas tipo test que creemos podrían aparecer en tu examen. 
-          Selecciona una opción para ver si es correcta y pide a la IA una explicación detallada. ¡Mucha suerte!
-          <br />
-          <span className="font-medium">Resumen del análisis:</span> {predictedData.analysisSummary.substring(0,150)}...
-          {predictedData.recurringThemes && predictedData.recurringThemes.length > 0 && (
-            <span className="block mt-1 text-sm"><span className="font-medium">Temas principales:</span> {predictedData.recurringThemes.join(', ')}.</span>
-          )}
-           {predictedData.potentialFocusAreas && predictedData.potentialFocusAreas.length > 0 && (
-            <span className="block mt-1 text-sm"><span className="font-medium">Áreas de enfoque detectadas:</span> {predictedData.potentialFocusAreas.join(', ')}.</span>
-          )}
-          {predictedData.identifiedExamPatterns && (
-            <Alert variant="default" className="mt-2 bg-primary/10 border-primary/30">
-                <Microscope className="h-4 w-4 text-primary" />
-                <AlertTitle className="text-primary text-sm">Patrones de Examen Identificados</AlertTitle>
-                <AlertDescription className="text-primary/70 text-xs">
-                    {predictedData.identifiedExamPatterns}
-                </AlertDescription>
-            </Alert>
-          )}
-        </AlertDescription>
-      </Alert>
+      </section>
 
-      <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mb-4">
-        <div className="flex items-center gap-2">
-          <Label htmlFor="num-questions-reanalysis-select" className="text-sm font-medium">Número de preguntas:</Label>
-          <Select 
-            value={numQuestionsForReanalysis} 
-            onValueChange={setNumQuestionsForReanalysis}
-            disabled={isReAnalyzing || !predictedData?.originalDocumentContent}
-          >
-            <SelectTrigger id="num-questions-reanalysis-select" className="w-[150px] sm:w-auto">
-              <SelectValue placeholder="Cantidad" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="5">5</SelectItem>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="15">15</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="25">25</SelectItem>
-              <SelectItem value="30">30</SelectItem>
-            </SelectContent>
-          </Select>
+       {/* Placeholder for Testimonials or Use Cases - future enhancement */}
+      <section className="py-12 container mx-auto px-4">
+        <h2 className="text-2xl font-semibold text-center mb-8 text-foreground opacity-50">Próximamente: Casos de Éxito y Testimonios</h2>
+        <div className="flex justify-center items-center">
+            <Image 
+                src="https://placehold.co/600x300.png" 
+                alt="Próximamente testimonios" 
+                width={600} 
+                height={300} 
+                className="rounded-lg opacity-60 shadow-md"
+                data-ai-hint="students celebrating graduation"
+            />
         </div>
-        <Button 
-          onClick={handleReAnalyze} 
-          disabled={isReAnalyzing || !predictedData?.originalDocumentContent}
-          variant="outline"
-          className="shadow-md w-full sm:w-auto"
-        >
-          {isReAnalyzing ? (
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          ) : (
-            <RefreshCw className="mr-2 h-5 w-5" />
-          )}
-          Re-analizar y Generar Nuevo Examen
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {predictedData.questions.map((q: PredictedQuestion, index) => (
-          <PredictedQuestionCard
-            key={index}
-            question={q}
-            onGetExplanation={handleGetExplanation}
-            isExplainingCurrent={isExplaining && selectedQuestionForExplanation?.questionText === q.questionText}
-          />
-        ))}
-      </div>
-
-      <AIExplanationDialog
-        open={isExplanationDialogOpen}
-        onOpenChange={setIsExplanationDialogOpen}
-        question={currentExplanation?.question || selectedQuestionForExplanation?.questionText}
-        explanation={currentExplanation?.explanation || null}
-        isLoading={isExplaining && !currentExplanation}
-      />
+      </section>
     </div>
   );
 }
