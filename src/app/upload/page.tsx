@@ -7,13 +7,17 @@ import FileUploadArea from '@/components/dashboard/FileUploadArea';
 import { analyzeDocuments, type AnalyzeDocumentsOutput } from '@/ai/flows/analyze-documents';
 import { predictExamQuestions, type PredictExamQuestionsOutput } from '@/ai/flows/predict-exam-questions';
 import { useToast } from "@/hooks/use-toast";
-import { PREDICTED_DATA_KEY } from '@/lib/localStorageKeys';
+import { PREDICTED_DATA_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY } from '@/lib/localStorageKeys';
 import type { PredictedData } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 export default function UploadPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { userTier } = useAuth();
+  const isFreeUser = userTier === 'free';
 
   const handleAnalyze = async (content: string, numQuestions: number) => {
     setIsLoading(true);
@@ -49,13 +53,17 @@ export default function UploadPage() {
 
       localStorage.setItem(PREDICTED_DATA_KEY, JSON.stringify(dataToStore));
 
+      if (isFreeUser) {
+        localStorage.setItem(FREE_USER_LAST_GENERATION_TIMESTAMP_KEY, Date.now().toString());
+      }
+
       toast({
         title: "¡Éxito!",
         description: "Preguntas predichas y listas para estudiar. Redirigiendo al panel...",
         variant: "default",
       });
       
-      router.push('/dashboard'); // MODIFIED: Redirect to dashboard
+      router.push('/dashboard');
 
     } catch (error) {
       console.error("Error during AI processing:", error);

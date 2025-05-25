@@ -18,8 +18,8 @@ import { doc, setDoc, serverTimestamp, getFirestore, type Firestore, getDoc } fr
 import { auth as firebaseAuthService, googleProvider as firebaseGoogleProvider, db as firestoreDbService, isFirebaseFullyConfigured, app as firebaseAppInstance } from '@/firebase/config';
 
 const FIREBASE_GENERAL_CONFIG_ERROR_MESSAGE = "Error de Configuración General de Firebase: La aplicación no pudo conectarse correctamente. Esto suele deberse a variables de entorno (NEXT_PUBLIC_FIREBASE_...) faltantes o incorrectas en '.env.local'. Por favor, revisa tu archivo '.env.local' y los logs de la consola del servidor. Después de corregir el archivo .env.local, DEBES REINICIAR el servidor de desarrollo. La autenticación y las funciones de base de datos no funcionarán hasta que esto se resuelva.";
-const ADMIN_EMAIL = "serdiegm@gmail.com";
-const FREE_USER_EMAIL = "dginteligenciaartificial@gmail.com";
+export const ADMIN_EMAIL = "serdiegm@gmail.com";
+export const FREE_USER_EMAIL = "dginteligenciaartificial@gmail.com";
 
 export type UserTier = 'admin' | 'pro' | 'free' | null;
 
@@ -76,18 +76,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
-      if (user) {
-        const adminStatus = user.email === ADMIN_EMAIL;
-        setIsAdmin(adminStatus);
-        if (adminStatus) {
-          setUserTier('admin');
-        } else if (user.email === FREE_USER_EMAIL) {
-          setUserTier('free');
+      if (user && firestoreDb) { // Ensure firestoreDb is available
+        const userDocRef = doc(firestoreDb, "users", user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        let currentTier: UserTier = 'pro'; // Default to pro
+
+        if (userDocSnap.exists() && userDocSnap.data()?.tier) {
+          currentTier = userDocSnap.data()?.tier as UserTier;
         } else {
-          // For now, other authenticated users default to 'pro'
-          // In a real app, this would come from their subscription status in Firestore
-          setUserTier('pro'); 
+          // If no tier in DB, assign based on email
+          if (user.email === ADMIN_EMAIL) {
+            currentTier = 'admin';
+          } else if (user.email === FREE_USER_EMAIL) {
+            currentTier = 'free';
+          }
+          // Save/update the tier in Firestore if it wasn't there or needs initialization
+          await saveUserToFirestore(user, currentTier); 
         }
+        
+        setIsAdmin(currentTier === 'admin');
+        setUserTier(currentTier);
+
       } else {
         setIsAdmin(false);
         setUserTier(null);
@@ -133,7 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       case 'auth/account-exists-with-different-credential':
         return 'Ya existe una cuenta con este correo electrónico pero con un método de inicio de sesión diferente (por ejemplo, Google o contraseña). Intenta iniciar sesión con el método original.';
       case 'auth/configuration-not-found':
-         return 'Error de configuración del proveedor de autenticación (auth/configuration-not-found). Asegúrate de que el proveedor de inicio de sesión (ej. Google) esté correctamente habilitado y configurado en tu Firebase Console (Authentication -> Sign-in method).';
+         return 'Error de configuración del proveedor de autenticación (auth/configuration-not-found). Asegúrate de que el proveedor de inicio de sesión (ej. Google) esté correctamente habilitado y configurado en tu Firebase Console (Authentication -> Sign-in method -> Google -> Habilitar). Puede que necesites también configurar la pantalla de consentimiento OAuth en Google Cloud Console.';
       case 'auth/unauthorized-domain':
         return `Error de dominio no autorizado (auth/unauthorized-domain). El dominio desde el que intentas autenticar no está en la lista de dominios autorizados en tu Firebase Console. Ve a Firebase Console -> Authentication -> Settings (o Sign-in method -> Authorized domains) y añade tu dominio (ej. 'localhost' para desarrollo).`;
       default:
@@ -141,7 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const saveUserToFirestore = async (user: User) => {
+  const saveUserToFirestore = async (user: User, tierOverride?: UserTier) => {
     if (!firestoreDb) {
         console.warn("Firestore DB instance is not available, cannot save user.");
         return;
@@ -149,14 +158,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const userRef = doc(firestoreDb, "users", user.uid);
     const userSnap = await getDoc(userRef);
 
+    let determinedTier = tierOverride;
+    if (!determinedTier) {
+        if (user.email === ADMIN_EMAIL) {
+            determinedTier = 'admin';
+        } else if (user.email === FREE_USER_EMAIL) {
+            determinedTier = 'free';
+        } else {
+            // Default new users (not admin, not specific free email) to 'pro' for now
+            // Or check existing tier if userSnap exists
+            determinedTier = userSnap.exists() && userSnap.data()?.tier ? userSnap.data()?.tier : 'pro';
+        }
+    }
+
     const userData = {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName || user.email?.split('@')[0] || 'Usuario',
         photoURL: user.photoURL,
         providerData: user.providerData.map(p => ({ providerId: p.providerId, uid: p.uid })),
-        // Initialize tier; a real app would update this based on subscriptions
-        tier: user.email === ADMIN_EMAIL ? 'admin' : (user.email === FREE_USER_EMAIL ? 'free' : 'pro'),
+        tier: determinedTier,
     };
 
     if (!userSnap.exists()) {
@@ -167,7 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             lastLogin: serverTimestamp(),
         });
     } else {
-        // Existing user, update lastLogin and merge other data
+        // Existing user, update lastLogin and merge other data, especially tier
         await setDoc(userRef, {
             ...userData, // ensure latest displayName, photoURL etc. are updated
             lastLogin: serverTimestamp(),
@@ -183,7 +204,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await saveUserToFirestore(userCredential.user);
+      await saveUserToFirestore(userCredential.user); // Tier will be assigned based on email or default to 'pro'
       return userCredential.user;
     } catch (error) {
       setLoading(false);
@@ -274,4 +295,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-

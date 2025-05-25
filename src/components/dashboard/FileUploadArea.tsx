@@ -4,6 +4,7 @@
 import type React from 'react';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,9 +12,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, Building, School, Briefcase, Lock } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, Building, School, Briefcase, Lock, ExternalLink } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
+import { EXAM_CONFIG_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY } from '@/lib/localStorageKeys';
 import type { ExamConfig } from '@/types';
 import { findExternalDocuments, type FindExternalDocumentsOutput } from '@/ai/flows/find-external-documents';
 import { Checkbox } from '../ui/checkbox';
@@ -30,6 +32,7 @@ const DEFAULT_NUM_QUESTIONS = 10;
 const FREE_USER_MAX_QUESTIONS_TO_GENERATE = "5";
 const MAX_TOTAL_SIZE_MB = 5; 
 const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
+const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 interface CommonExam {
   id: string;
@@ -63,7 +66,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [numQuestions, setNumQuestions] = useState<string>(DEFAULT_NUM_QUESTIONS.toString());
   const { toast } = useToast();
-  const { userTier } = useAuth();
+  const { userTier } = useAuth(); // Removed currentUser as it's not directly used for free user check
   const isFreeUser = userTier === 'free';
 
   const [deepSearchTopic, setDeepSearchTopic] = useState("");
@@ -71,6 +74,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   const [selectedDeepSearchDocIds, setSelectedDeepSearchDocIds] = useState<string[]>([]);
   const [isDeepSearching, setIsDeepSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("comunes");
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   const totalSizeInBytes = useMemo(() => {
     return selectedFiles.reduce((acc, file) => acc + file.size, 0);
@@ -204,7 +208,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   };
 
   const toggleDeepSearchDocSelection = (docId: string) => {
-    if (isFreeUser) return; // Prevent selection if free user
+    if (isFreeUser) return; 
     setSelectedDeepSearchDocIds(prevSelected =>
       prevSelected.includes(docId)
         ? prevSelected.filter(id => id !== docId)
@@ -214,6 +218,15 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isFreeUser) {
+      const lastGenerationTime = localStorage.getItem(FREE_USER_LAST_GENERATION_TIMESTAMP_KEY);
+      if (lastGenerationTime && (Date.now() - parseInt(lastGenerationTime, 10) < ONE_DAY_IN_MS)) {
+        setShowUpgradeDialog(true);
+        return;
+      }
+    }
+
     if (selectedFiles.length === 0 && selectedDeepSearchDocIds.length === 0) {
       toast({
         title: "No hay contenido seleccionado",
@@ -276,7 +289,10 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
           variant: "default"
         });
       }
-      onAnalyze(allFilesContent, finalNumQuestions);
+      
+      await onAnalyze(allFilesContent, finalNumQuestions); 
+      // Timestamp update for free users is now handled within onAnalyze in upload/page.tsx after successful processing and before navigation.
+
     } catch (error) {
       console.error("Error processing files:", error);
       toast({
@@ -331,6 +347,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   );
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Columna 1: Subida manual y Biblioteca */}
@@ -567,7 +584,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                 )}
               </SelectContent>
             </Select>
-             {isFreeUser && numQuestions !== FREE_USER_MAX_QUESTIONS_TO_GENERATE && (
+             {isFreeUser && numQuestions !== FREE_USER_MAX_QUESTIONS_TO_GENERATE && parseInt(numQuestions) > parseInt(FREE_USER_MAX_QUESTIONS_TO_GENERATE) && (
                 <p className="text-xs text-amber-600 mt-1">
                     Has seleccionado {numQuestions} preguntas, pero se generarán {FREE_USER_MAX_QUESTIONS_TO_GENERATE} debido a tu plan gratuito.
                 </p>
@@ -590,5 +607,26 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
           </Button>
       </div>
     </form>
+    <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-amber-600">
+                <AlertTriangle className="h-6 w-6" /> Límite Diario Alcanzado
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base text-muted-foreground">
+              Has alcanzado el límite de un examen gratuito por día. Para generar más exámenes y acceder a todas las funcionalidades avanzadas, considera actualizar a nuestro Plan Pro.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogCancel onClick={() => setShowUpgradeDialog(false)}>Cerrar</AlertDialogCancel>
+            <Link href="/#pricing" passHref>
+              <Button className="bg-amber-500 hover:bg-amber-600 text-white" onClick={() => setShowUpgradeDialog(false)}>
+                <ExternalLink className="mr-2 h-4 w-4" /> Ver Planes Pro
+              </Button>
+            </Link>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

@@ -8,19 +8,22 @@ import AIExplanationDialog from '@/components/dashboard/AIExplanationDialog';
 import { generateAIExplanation, type GenerateAIExplanationOutput, type GenerateAIExplanationInput } from '@/ai/flows/generate-ai-explanations';
 import { analyzeDocuments, type AnalyzeDocumentsOutput } from '@/ai/flows/analyze-documents';
 import { predictExamQuestions, type PredictExamQuestionsOutput } from '@/ai/flows/predict-exam-questions';
-import { PREDICTED_DATA_KEY, EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
+import { PREDICTED_DATA_KEY, EXAM_CONFIG_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY } from '@/lib/localStorageKeys';
 import type { PredictedData, AIExplanation, PredictedQuestion, ExamConfig } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw, Microscope, Lock } from 'lucide-react';
+import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw, Microscope, Lock, AlertTriangle, ExternalLink } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 import { UpgradeProAlert } from '@/components/ui/upgrade-pro-alert';
 
 const DEFAULT_NUM_QUESTIONS_REANALYSIS = "10";
 const FREE_USER_QUESTION_LIMIT = 3;
+const FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS = "5";
+const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 export default function DashboardPage() {
   const [predictedData, setPredictedData] = useState<PredictedData | null>(null);
@@ -33,19 +36,26 @@ export default function DashboardPage() {
   const [isExplanationDialogOpen, setIsExplanationDialogOpen] = useState(false);
 
   const [numQuestionsForReanalysis, setNumQuestionsForReanalysis] = useState<string>(DEFAULT_NUM_QUESTIONS_REANALYSIS);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+
 
   const { toast } = useToast();
   const { userTier } = useAuth();
   const isFreeUser = userTier === 'free';
 
   useEffect(() => {
+    let defaultNumQuestions = isFreeUser ? FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS : DEFAULT_NUM_QUESTIONS_REANALYSIS;
     const storedConfig = localStorage.getItem(EXAM_CONFIG_KEY);
-    let defaultNumQuestions = DEFAULT_NUM_QUESTIONS_REANALYSIS;
     if (storedConfig) {
       try {
         const parsedConfig: ExamConfig = JSON.parse(storedConfig);
         if (parsedConfig.defaultNumberOfQuestions) {
-          defaultNumQuestions = parsedConfig.defaultNumberOfQuestions.toString();
+          const configNumStr = parsedConfig.defaultNumberOfQuestions.toString();
+          if (isFreeUser && parseInt(configNumStr, 10) > parseInt(FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS, 10)) {
+            defaultNumQuestions = FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS;
+          } else {
+            defaultNumQuestions = configNumStr;
+          }
         }
       } catch (e) { console.error("Failed to parse exam config for dashboard", e); }
     }
@@ -55,9 +65,17 @@ export default function DashboardPage() {
       try {
         const parsedData: PredictedData = JSON.parse(storedData);
         setPredictedData(parsedData);
-        setNumQuestionsForReanalysis(
-          parsedData.requestedNumberOfQuestions?.toString() || defaultNumQuestions
-        );
+        const requestedNumStr = parsedData.requestedNumberOfQuestions?.toString();
+        if (requestedNumStr) {
+            if (isFreeUser && parseInt(requestedNumStr, 10) > parseInt(FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS, 10)) {
+                setNumQuestionsForReanalysis(FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS);
+            } else {
+                setNumQuestionsForReanalysis(requestedNumStr);
+            }
+        } else {
+            setNumQuestionsForReanalysis(defaultNumQuestions);
+        }
+
       } catch (error) {
         console.error("Failed to parse predicted data from localStorage", error);
         localStorage.removeItem(PREDICTED_DATA_KEY);
@@ -68,7 +86,7 @@ export default function DashboardPage() {
         setNumQuestionsForReanalysis(defaultNumQuestions);
     }
     setIsLoadingInitialData(false);
-  }, []);
+  }, [isFreeUser]);
 
   const handleGetExplanation = useCallback(async (questionText: string, options: string[], correctAnswerIndex: number) => {
     if (isFreeUser) {
@@ -118,21 +136,13 @@ export default function DashboardPage() {
 
   const handleReAnalyze = async () => {
     if (isFreeUser) {
-         toast({
-            title: "Funcionalidad Pro",
-            description: (
-            <div className="flex flex-col gap-2">
-                <span>La función de Re-analizar es parte del Plan Pro.</span>
-                <Link href="/#pricing" passHref>
-                <Button variant="link" className="p-0 h-auto text-primary hover:underline">¡Actualiza tu plan para usarla!</Button>
-                </Link>
-            </div>
-            ),
-            variant: "default",
-            duration: 7000,
-        });
-        return;
+        const lastGenerationTime = localStorage.getItem(FREE_USER_LAST_GENERATION_TIMESTAMP_KEY);
+        if (lastGenerationTime && (Date.now() - parseInt(lastGenerationTime, 10) < ONE_DAY_IN_MS)) {
+            setShowUpgradeDialog(true);
+            return;
+        }
     }
+
     if (!predictedData?.originalDocumentContent) {
       toast({
         title: "Falta contenido",
@@ -144,7 +154,16 @@ export default function DashboardPage() {
     }
 
     setIsReAnalyzing(true);
-    const requestedNum = parseInt(numQuestionsForReanalysis, 10);
+    let requestedNum = parseInt(numQuestionsForReanalysis, 10);
+    if (isFreeUser && requestedNum > parseInt(FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS, 10)) {
+        requestedNum = parseInt(FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS, 10);
+        toast({
+            title: "Límite del Plan Gratuito",
+            description: `Se generarán un máximo de ${FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS} preguntas para usuarios gratuitos.`,
+            variant: "default"
+        });
+    }
+
     try {
       toast({
         title: "Re-procesando Documentos",
@@ -177,6 +196,10 @@ export default function DashboardPage() {
 
       localStorage.setItem(PREDICTED_DATA_KEY, JSON.stringify(newDataToStore));
       setPredictedData(newDataToStore);
+
+      if (isFreeUser) {
+        localStorage.setItem(FREE_USER_LAST_GENERATION_TIMESTAMP_KEY, Date.now().toString());
+      }
 
       toast({
         title: "¡Nuevas Preguntas Listas!",
@@ -261,14 +284,14 @@ export default function DashboardPage() {
           <Select 
             value={numQuestionsForReanalysis} 
             onValueChange={setNumQuestionsForReanalysis}
-            disabled={isReAnalyzing || !predictedData?.originalDocumentContent || isFreeUser}
+            disabled={isReAnalyzing || !predictedData?.originalDocumentContent}
           >
             <SelectTrigger id="num-questions-reanalysis-select" className="w-[150px] sm:w-auto">
               <SelectValue placeholder="Cantidad" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="5">5</SelectItem>
-              {isFreeUser ? null : (
+              {!isFreeUser && (
                 <>
                   <SelectItem value="10">10</SelectItem>
                   <SelectItem value="15">15</SelectItem>
@@ -282,15 +305,13 @@ export default function DashboardPage() {
         </div>
         <Button 
           onClick={handleReAnalyze} 
-          disabled={isReAnalyzing || !predictedData?.originalDocumentContent || isFreeUser}
+          disabled={isReAnalyzing || !predictedData?.originalDocumentContent}
           variant="outline"
           className="shadow-md w-full sm:w-auto"
-          title={isFreeUser ? "Actualiza a Pro para re-analizar documentos" : "Re-analizar y generar nuevo examen"}
+          title={isFreeUser ? "Actualiza a Pro para re-analizar documentos (o espera 24h para otro gratis)" : "Re-analizar y generar nuevo examen"}
         >
           {isReAnalyzing ? (
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          ) : isFreeUser ? (
-            <Lock className="mr-2 h-5 w-5" />
           ) : (
             <RefreshCw className="mr-2 h-5 w-5" />
           )}
@@ -299,9 +320,9 @@ export default function DashboardPage() {
       </div>
       {isFreeUser && (
         <UpgradeProAlert 
-            featureName="la función de re-análisis y la generación de más de 5 preguntas" 
+            featureName="la función de re-análisis ilimitado y la generación de más de 5 preguntas" 
             className="mb-4" 
-            message="Estás viendo un número limitado de preguntas y algunas funciones están restringidas en el plan gratuito."
+            message="Estás viendo un número limitado de preguntas y algunas funciones están restringidas en el plan gratuito. Puedes generar un examen gratis al día."
         />
       )}
 
@@ -332,7 +353,27 @@ export default function DashboardPage() {
         explanation={currentExplanation?.explanation || null}
         isLoading={isExplaining && !currentExplanation}
       />
+
+      <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-amber-600">
+                <AlertTriangle className="h-6 w-6" /> Límite Diario Alcanzado
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base text-muted-foreground">
+              Has alcanzado el límite de un examen gratuito por día. Para generar más exámenes y acceder a todas las funcionalidades avanzadas, considera actualizar a nuestro Plan Pro.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogCancel onClick={() => setShowUpgradeDialog(false)}>Cerrar</AlertDialogCancel>
+            <Link href="/#pricing" passHref>
+              <Button className="bg-amber-500 hover:bg-amber-600 text-white" onClick={() => setShowUpgradeDialog(false)}>
+                <ExternalLink className="mr-2 h-4 w-4" /> Ver Planes Pro
+              </Button>
+            </Link>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
-
