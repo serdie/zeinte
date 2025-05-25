@@ -22,13 +22,13 @@ interface AppLayoutProps {
 }
 
 const getHeaderTitle = (pathname: string): string => {
-  if (pathname === '/') return "Bienvenido a AdivinaExamen";
+  // Modificado: la página de inicio ('/') ya no usará este layout.
   if (pathname.startsWith('/dashboard')) return "Panel de Estudio";
   if (pathname.startsWith('/upload')) return "Subir Documentos";
   if (pathname.startsWith('/configure')) return "Configuración de Examen";
   if (pathname.startsWith('/community')) return "Comunidad de Estudio";
   if (pathname.startsWith('/profile')) return "Mi Perfil";
-  return "AdivinaExamen";
+  return "AdivinaExamen"; // Título por defecto para otras rutas
 };
 
 export default function AppLayout({ children }: AppLayoutProps) {
@@ -75,3 +75,4 @@ export default function AppLayout({ children }: AppLayoutProps) {
     </SidebarProvider>
   );
 }
+

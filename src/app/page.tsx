@@ -3,9 +3,9 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { UploadCloud, BrainCircuit, Lightbulb, Sparkles, BookOpenText, Settings, Users, CheckCircle, ArrowRight } from 'lucide-react';
+import { UploadCloud, BrainCircuit, Lightbulb, Sparkles, BookOpenText, Settings, Users, CheckCircle, ArrowRight, Star, Zap, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
 
 const features = [
@@ -128,6 +128,67 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      
+      {/* Pricing/Subscription Section */}
+      <section className="py-16 container mx-auto px-4 mt-12">
+        <h2 className="text-3xl font-semibold text-center mb-4 text-foreground">Elige tu Plan</h2>
+        <p className="text-lg text-muted-foreground text-center max-w-xl mx-auto mb-10">
+          Comienza gratis o desbloquea todo el potencial de AdivinaExamen con nuestro Plan Pro.
+        </p>
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {/* Free Trial Card */}
+          <Card className="shadow-lg flex flex-col bg-card border-2 border-primary/30 hover:border-primary/70 transition-colors">
+            <CardHeader className="text-center pb-4">
+              <Zap className="h-12 w-12 text-primary mx-auto mb-4" />
+              <CardTitle className="text-2xl text-primary">Prueba Gratuita</CardTitle>
+              <CardDescription className="text-base">Ideal para empezar y conocer la app.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow space-y-3">
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />Análisis de hasta 3 documentos.</li>
+                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />Generación de hasta 10 preguntas por análisis.</li>
+                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />Explicaciones IA básicas.</li>
+                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />Acceso limitado a la Comunidad (simulada).</li>
+              </ul>
+            </CardContent>
+            <CardFooter className="mt-auto">
+              <Link href="/upload" passHref className="w-full">
+                <Button size="lg" variant="outline" className="w-full text-primary border-primary hover:bg-primary/10 hover:text-primary py-3 text-md">
+                  Comenzar Prueba Gratuita
+                </Button>
+              </Link>
+            </CardFooter>
+          </Card>
+
+          {/* Pro Plan Card */}
+          <Card className="shadow-xl flex flex-col bg-card border-2 border-accent hover:border-accent/70 transition-colors relative overflow-hidden">
+            <div className="absolute top-0 right-0 bg-accent text-accent-foreground px-3 py-1 text-xs font-semibold rounded-bl-lg">
+              RECOMENDADO
+            </div>
+            <CardHeader className="text-center pb-4">
+              <Star className="h-12 w-12 text-accent mx-auto mb-4" />
+              <CardTitle className="text-2xl text-accent">Plan Pro</CardTitle>
+              <CardDescription className="text-base">Desbloquea todas las funcionalidades.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow space-y-3">
+               <p className="text-3xl font-bold text-center text-accent mb-3">9,95€<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />Análisis ilimitado de documentos.</li>
+                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />Generación ilimitada de preguntas.</li>
+                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />Explicaciones IA avanzadas y detalladas.</li>
+                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />Acceso completo a la Comunidad (futuro).</li>
+                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />Guardar y gestionar tus exámenes y análisis (futuro).</li>
+                <li className="flex items-center"><TrendingUp className="h-5 w-5 text-green-500 mr-2" />Soporte prioritario (futuro).</li>
+              </ul>
+            </CardContent>
+            <CardFooter className="mt-auto">
+              <Button size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-md" onClick={() => alert('Funcionalidad de suscripción Pro próximamente disponible.')}>
+                Suscribirse al Plan Pro
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </section>
 
       {/* Call to Action Section */}
       <section className="py-20 text-center container mx-auto px-4">
@@ -138,7 +199,7 @@ export default function HomePage() {
         <Link href="/upload" passHref>
           <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-xl px-12 py-7 rounded-lg shadow-lg transition-transform duration-150 ease-in-out active:scale-95">
             <Sparkles className="mr-3 h-7 w-7" />
-            ¡Probar Ahora!
+            ¡Probar Gratis Ahora!
           </Button>
         </Link>
       </section>
@@ -157,6 +218,13 @@ export default function HomePage() {
             />
         </div>
       </section>
+      
+      <footer className="text-center py-8 mt-12 border-t border-border">
+        <p className="text-sm text-muted-foreground">
+          &copy; {new Date().getFullYear()} Search and Make S.L (CIF: B45786787). Todos los derechos reservados.
+        </p>
+      </footer>
     </div>
   );
 }
+
