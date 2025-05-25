@@ -13,8 +13,8 @@ import {
   signOut as firebaseSignOut,
   type AuthError
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
-import { auth, googleProvider, db as firestoreDb, isFirebaseFullyConfigured, app as firebaseApp } from '@/firebase/config';
+import { doc, setDoc, serverTimestamp, getFirestore, type Firestore } from 'firebase/firestore';
+import { auth as firebaseAuthService, googleProvider as firebaseGoogleProvider, db as firestoreDbService, isFirebaseFullyConfigured, app as firebaseAppInstance } from '@/firebase/config'; // Renamed to avoid conflict
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -36,6 +36,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // Memoize these to ensure they are stable across re-renders if config itself doesn't change
+  const auth = useMemo(() => firebaseAuthService, []);
+  const googleProvider = useMemo(() => firebaseGoogleProvider, []);
+  const firestoreDb = useMemo(() => firestoreDbService, []);
   const firebaseConfigStatus = useMemo(() => isFirebaseFullyConfigured, []);
   const [initialConfigWarningShown, setInitialConfigWarningShown] = useState(false);
 
@@ -43,7 +47,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (!firebaseConfigStatus || !auth) {
       if (typeof window !== 'undefined' && !initialConfigWarningShown) {
-        console.warn("AuthContext: Firebase auth is not configured or not available. isFirebaseFullyConfigured:", firebaseConfigStatus, "auth object exists:", !!auth, ". This usually means required environment variables (NEXT_PUBLIC_FIREBASE_...) are missing from .env.local or incorrect. Please check your .env.local file AND your server console logs, then RESTART your development server. Authentication features will be disabled.");
+        // This console warning is for client-side, server-side logs are in firebase/config.ts
+        console.warn("AuthContext: Firebase auth service is not configured or not available. isFirebaseFullyConfigured:", firebaseConfigStatus, "auth object exists:", !!auth, ". This usually means required environment variables (NEXT_PUBLIC_FIREBASE_...) are missing from .env.local or incorrect. Please check your .env.local file AND your server console logs, then RESTART your development server. Authentication features will be disabled.");
         setInitialConfigWarningShown(true);
       }
       setLoading(false);
@@ -61,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => unsubscribe();
-  }, [firebaseConfigStatus, initialConfigWarningShown]);
+  }, [firebaseConfigStatus, auth, initialConfigWarningShown]);
 
   const handleAuthError = (error: AuthError): string => {
     console.error("Firebase Auth Error Code:", error.code, "Message:", error.message);
@@ -92,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       case 'auth/account-exists-with-different-credential':
         return 'Ya existe una cuenta con este correo electrónico pero con un método de inicio de sesión diferente (por ejemplo, Google o contraseña). Intenta iniciar sesión con el método original.';
       case 'auth/configuration-not-found':
-        return 'Error de configuración de autenticación (auth/configuration-not-found). Asegúrate de que el proveedor de inicio de sesión (ej. Google) esté correctamente habilitado y configurado en tu Firebase Console (Authentication -> Sign-in method).';
+        return 'Error de configuración del proveedor de autenticación (auth/configuration-not-found). Asegúrate de que el proveedor de inicio de sesión (ej. Google) esté correctamente habilitado y configurado en tu Firebase Console (Authentication -> Sign-in method).';
       case 'auth/unauthorized-domain':
         return `Error de dominio no autorizado (auth/unauthorized-domain). El dominio desde el que intentas autenticar no está en la lista de dominios autorizados en tu Firebase Console. Ve a Firebase Console -> Authentication -> Settings (o Sign-in method -> Authorized domains) y añade tu dominio (ej. 'localhost' para desarrollo).`;
       default:
@@ -167,10 +172,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (typeof window !== 'undefined') console.warn("Logout attempt failed: Firebase is not configured.");
         setCurrentUser(null);
         setLoading(false);
-        if (router) router.push('/login');
+        if (router) router.push('/login'); // Redirect to login if Firebase is not configured
         return FIREBASE_GENERAL_CONFIG_ERROR_MESSAGE;
     }
     if (!auth) {
+        // This case should ideally be caught by !firebaseConfigStatus, but as a fallback
         if (typeof window !== 'undefined') console.warn("Logout attempt failed: Firebase Auth service is not available.");
         setCurrentUser(null);
         setLoading(false);
@@ -181,8 +187,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       await firebaseSignOut(auth);
-      setCurrentUser(null);
-      if (router) router.push('/login');
+      setCurrentUser(null); // Ensure local state is updated
+      if (router) router.push('/login'); // Redirect after successful logout
     } catch (error) {
       console.error("Error signing out from Firebase: ", error);
       return handleAuthError(error as AuthError);
