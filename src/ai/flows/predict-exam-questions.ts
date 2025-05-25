@@ -14,6 +14,8 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import type { AnalysisDetails } from '@/types';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/firebase/config';
 
 const PredictExamQuestionsInputSchema = z.object({
   analysisSummary: z
@@ -23,7 +25,7 @@ const PredictExamQuestionsInputSchema = z.object({
     .array(z.string())
     .optional()
     .describe('A list of recurring themes identified in the documents. This provides context on the main topics.'),
-  numberOfQuestions: z.number().int().positive().optional().describe('The desired number of questions to generate.'),
+  numberOfQuestions: z.number().int().positive().optional().nullable().describe('The desired number of questions to generate.'), // MODIFIED: Added .nullable()
   identifiedExamPatterns: z
     .string()
     .optional()
@@ -122,8 +124,30 @@ const predictExamQuestionsFlow = ai.defineFlow(
     inputSchema: PredictExamQuestionsInputSchema,
     outputSchema: PredictExamQuestionsOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+  async (input: PredictExamQuestionsInput) => {
+    let effectiveModel = 'googleai/gemini-2.0-flash';
+    let effectiveTemperature: number | undefined = 0.7;
+
+    if (db) {
+      try {
+        const settingsRef = doc(db, "appSettings", "globalConfig");
+        const settingsSnap = await getDoc(settingsRef);
+
+        if (settingsSnap.exists()) {
+          const settingsData = settingsSnap.data();
+          effectiveModel = settingsData.defaultAiModel || effectiveModel;
+          effectiveTemperature = typeof settingsData.defaultTemperature === 'number' 
+            ? settingsData.defaultTemperature 
+            : effectiveTemperature;
+        }
+      } catch (error) {
+        console.warn("predictExamQuestionsFlow: Could not fetch AI settings from Firestore, using defaults. Error:", error);
+      }
+    } else {
+        console.warn("predictExamQuestionsFlow: Firestore db instance is not available, using default AI settings.");
+    }
+    
+    const {output} = await prompt(input, { model: effectiveModel, temperature: effectiveTemperature });
     // Ensure output is not null and conforms to the schema
     if (!output || !Array.isArray(output.questions)) {
         return { questions: [] };
@@ -131,4 +155,3 @@ const predictExamQuestionsFlow = ai.defineFlow(
     return output;
   }
 );
-
