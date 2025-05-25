@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShieldAlert, Loader2, Users, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { ShieldAlert, Loader2, Users, AlertTriangle, ArrowLeft, Settings, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -125,7 +125,8 @@ export default function AdminPage() {
       </div>
       <Card className="w-full shadow-xl bg-card">
         <CardHeader>
-          <CardTitle className="text-2xl">
+          <CardTitle className="text-2xl flex items-center">
+            <Users className="h-6 w-6 mr-2" />
             Gestión de Usuarios
           </CardTitle>
           <CardDescription>
@@ -177,24 +178,32 @@ export default function AdminPage() {
       </Card>
 
       <div className="mt-10 space-y-6">
-        <h2 className="text-2xl font-semibold text-foreground border-b pb-2">Otras Funciones del CMS (Próximamente)</h2>
+        <h2 className="text-2xl font-semibold text-foreground border-b pb-2">Otras Funciones del CMS</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="opacity-60 cursor-not-allowed">
             <CardHeader>
-              <CardTitle className="text-xl">Gestionar Contenido Comunidad</CardTitle>
+              <CardTitle className="text-xl flex items-center">
+                <MessageSquare className="h-5 w-5 mr-2" />
+                Gestionar Contenido Comunidad
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">Moderar temas y mensajes del foro, gestionar categorías, etc.</p>
               <Button variant="outline" size="sm" className="mt-3" disabled>Ir a Gestión de Comunidad (Próximamente)</Button>
             </CardContent>
           </Card>
-            <Card className="opacity-60 cursor-not-allowed">
+            <Card>
             <CardHeader>
-              <CardTitle className="text-xl">Configuración General de la App</CardTitle>
+              <CardTitle className="text-xl flex items-center">
+                <Settings className="h-5 w-5 mr-2" />
+                Configuración General de la App
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">Ajustes globales de la aplicación, parámetros de IA, gestión de planes (futuro), etc.</p>
-               <Button variant="outline" size="sm" className="mt-3" disabled>Ir a Configuración (Próximamente)</Button>
+               <Link href="/admin/app-settings" passHref>
+                 <Button variant="outline" size="sm" className="mt-3">Ir a Configuración</Button>
+               </Link>
             </CardContent>
           </Card>
         </div>
@@ -202,5 +211,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
