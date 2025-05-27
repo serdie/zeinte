@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { mockForumTopics, type MockForumTopic, type MockPost, type MockUser } from '@/lib/mockCommunityData';
-import { Users, MessageSquare, CornerDownRight, ThumbsUp, Eye, Search } from 'lucide-react';
+import { Users, MessageSquare, CornerDownRight, ThumbsUp, Eye, Search, Newspaper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useI18n } from '@/contexts/I18nContext';
 
 // Helper to get a user (can be expanded if users are stored separately)
 const getMockUser = (userId: string): MockUser => {
@@ -27,6 +28,7 @@ const getMockUser = (userId: string): MockUser => {
 export default function CommunityPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
+  const { t } = useI18n();
 
   const filteredTopics = mockForumTopics.filter(topic =>
     topic.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -47,10 +49,10 @@ export default function CommunityPage() {
         <p className="text-sm text-foreground/90 mt-1 whitespace-pre-line">{post.content}</p>
         <div className="mt-2 flex items-center space-x-3">
           <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-primary">
-            <ThumbsUp className="h-3.5 w-3.5 mr-1" /> {post.likes} Me gusta
+            <ThumbsUp className="h-3.5 w-3.5 mr-1" /> {post.likes} {t('communityPage.likes', { count: post.likes})}
           </Button>
           <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-primary">
-            <CornerDownRight className="h-3.5 w-3.5 mr-1" /> Responder
+            <CornerDownRight className="h-3.5 w-3.5 mr-1" /> {t('communityPage.reply')}
           </Button>
         </div>
       </div>
@@ -63,40 +65,46 @@ export default function CommunityPage() {
         <CardHeader className="pb-4">
           <CardTitle className="text-3xl flex items-center gap-3 text-primary">
             <Users className="h-8 w-8" />
-            Comunidad de Estudio
+            {t('communityPage.title')}
           </CardTitle>
           <CardDescription className="text-base">
-            Conecta con otros estudiantes, resuelve dudas, comparte estrategias y encuentra apoyo para tus exámenes.
+            {t('communityPage.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-6 flex gap-2">
-            <Input 
-              type="search" 
-              placeholder="Buscar en foros..." 
+            <Input
+              type="search"
+              placeholder={t('communityPage.searchPlaceholder')}
               className="flex-grow"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
             <Button variant="outline" className="bg-accent text-accent-foreground hover:bg-accent/90">
-              <Search className="h-5 w-5 mr-2" /> Buscar
+              <Search className="h-5 w-5 mr-2" /> {t('communityPage.searchButton')}
             </Button>
             <Button className="bg-primary hover:bg-primary/90">
-              <MessageSquare className="h-5 w-5 mr-2" /> Nuevo Tema
+              <MessageSquare className="h-5 w-5 mr-2" /> {t('communityPage.newTopicButton')}
             </Button>
           </div>
+
+          {/* AdSense Ad Unit Placeholder - Replace with your ad unit code */}
+          <div style={{ width: '100%', minHeight: '90px', backgroundColor: '#f0f0f0', border: '1px dashed #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '20px 0', padding: '10px', textAlign: 'center' }}>
+            <span style={{ color: '#999', fontSize: '0.9rem' }}>{t("adsense.placeholderCommunity")}</span>
+          </div>
+
 
           {filteredTopics.length === 0 && searchTerm && (
             <div className="text-center py-10 text-muted-foreground">
               <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-lg">No se encontraron temas para "{searchTerm}".</p>
-              <p>Intenta con otras palabras clave o revisa la ortografía.</p>
+              <p className="text-lg">{t('communityPage.noTopicsFoundFor', { searchTerm: searchTerm })}</p>
+              <p>{t('communityPage.tryOtherKeywords')}</p>
             </div>
           )}
 
-          <Accordion 
-            type="single" 
-            collapsible 
+          <Accordion
+            type="single"
+            collapsible
             className="w-full space-y-3"
             value={activeTopicId}
             onValueChange={setActiveTopicId}
@@ -115,7 +123,7 @@ export default function CommunityPage() {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="p-4 pt-0 border-t">
-                  <h4 className="text-md font-semibold mb-2 text-foreground">Mensajes en este tema:</h4>
+                  <h4 className="text-md font-semibold mb-2 text-foreground">{t('communityPage.messagesInTopicTitle')}</h4>
                   <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
                     {topic.posts.map((post) => {
                       const user = getMockUser(post.userId);
@@ -123,7 +131,7 @@ export default function CommunityPage() {
                     })}
                   </div>
                   <Button className="mt-4 w-full bg-primary hover:bg-primary/90">
-                     <CornerDownRight className="h-4 w-4 mr-2" /> Responder en este Tema
+                     <CornerDownRight className="h-4 w-4 mr-2" /> {t('communityPage.replyInTopicButton')}
                   </Button>
                 </AccordionContent>
               </AccordionItem>
@@ -132,7 +140,7 @@ export default function CommunityPage() {
         </CardContent>
         <CardFooter className="pt-6">
             <p className="text-xs text-muted-foreground text-center w-full">
-                Recuerda: La creación de temas y respuestas está simulada. ¡En el futuro podrás participar activamente!
+                {t('communityPage.footerDisclaimer')}
             </p>
         </CardFooter>
       </Card>

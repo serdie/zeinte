@@ -63,32 +63,32 @@
     "howItHelpsTitle": "How does Zeinte help you?",
     "simpleFastEffectiveTitle": "Simple, Fast, and Effective",
     "step1Title": "Upload Your Files",
-    "step1Description": "PDFs, DOCXs, TXTs... all your study material is welcome.",
+    "step1Description": "PDFs, DOCXs, TXTs... all your study material is welcome in Zeinte.",
     "step2Title": "AI Analysis",
-    "step2Description": "Let our AI identify crucial information and predict questions.",
+    "step2Description": "Let our AI in Zeinte identify crucial information and predict questions.",
     "step3Title": "Study and Pass",
-    "step3Description": "Practice with multiple-choice questions and detailed explanations.",
-    "choosePlanTitle": "Choose Your Plan",
+    "step3Description": "Practice with multiple-choice questions and detailed explanations in Zeinte.",
+    "choosePlanTitle": "Choose Your Plan in Zeinte",
     "choosePlanSubtitle": "Start for free or unlock the full potential of Zeinte with our Pro Plan.",
     "freeTrialTitle": "Free Trial",
-    "freeTrialDescription": "Ideal for getting started and exploring Zeinte.",
-    "freeTrialFeature1": "Analysis of up to 3 documents.",
-    "freeTrialFeature2": "Generation of up to 5 questions per analysis.",
-    "freeTrialFeature3": "Basic AI explanations.",
-    "freeTrialFeature4": "Limited access to the Community (simulated).",
+    "freeTrialDescription": "Ideal for getting started and exploring Zeinte. During our Beta phase, enjoy more benefits!",
+    "freeTrialFeature1": "Document analysis (generous limit in Beta).",
+    "freeTrialFeature2": "Question generation (generous limit in Beta).",
+    "freeTrialFeature3": "AI explanations (available in Beta).",
+    "freeTrialFeature4": "Community access (simulated for now).",
     "startFreeTrialButton": "Start Free Trial with Zeinte",
-    "proPlanTitle": "Pro Plan",
+    "proPlanTitle": "Pro Plan (Coming Soon)",
     "proPlanDescription": "Unlock all features of Zeinte.",
     "proPlanPrice": "€9.95",
     "proPlanPriceSuffix": "/month",
     "proPlanFeature1": "Unlimited document analysis.",
     "proPlanFeature2": "Unlimited question generation.",
     "proPlanFeature3": "Advanced and detailed AI explanations.",
-    "proPlanFeature4": "Full access to the Community (future).",
+    "proPlanFeature4": "Full community access (future).",
     "proPlanFeature5": "Save and manage your exams and analyses (future).",
     "proPlanFeature6": "Priority support (future).",
-    "subscribeProButton": "Subscribe to Zeinte Pro Plan",
-    "subscribeProAlert": "Pro subscription functionality for Zeinte coming soon.",
+    "subscribeProButton": "Subscribe to Zeinte Pro Plan (Coming Soon)",
+    "subscribeProAlert": "Pro subscription functionality for Zeinte coming soon. Enjoy the Beta in the meantime!",
     "revolutionizeStudyTitle": "Ready to Revolutionize Your Study with Zeinte?",
     "revolutionizeStudySubtitle": "Stop guessing and start preparing with the artificial intelligence of Zeinte (formerly AdivinaExamen).",
     "tryFreeButton": "Try Zeinte for Free Now!",
@@ -140,7 +140,9 @@
     "dailyLimitReachedTitle": "Daily Limit Reached in Zeinte",
     "dailyLimitReachedDescription": "You have reached the limit of one free exam per day in Zeinte. To generate more exams and access all advanced features, consider upgrading to our Pro Plan.",
     "viewProPlansButton": "View Zeinte Pro Plans",
-    "loadingData": "Loading Zeinte data..."
+    "loadingData": "Loading Zeinte data...",
+    "betaAdNoticeTitle": "Zeinte is in Beta!",
+    "betaAdNoticeDescription": "Zeinte is currently in Beta and is 100% free to use. To help us cover server costs during this period, we've included some advertising. We appreciate your understanding and support as we work to improve the platform."
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Multiple-Choice Question",
@@ -280,7 +282,9 @@
     "googleSuccessToastDescription": "Welcome with Google to Zeinte!",
     "loading": "Loading...",
     "redirecting": "Redirecting...",
-    "betaWelcomeMessage": "Welcome to Zeinte Beta! During this phase, all new accounts operate with enhanced Free Plan benefits, allowing you to explore most of our features. The full Pro Plan with all its exclusive advantages and payment gateway will be activated soon."
+    "betaWelcomeMessage": "Welcome to Zeinte Beta! During this phase, all new accounts operate with enhanced Free Plan benefits, allowing you to explore most of our features. The full Pro Plan with all its exclusive advantages and payment gateway will be activated soon.",
+    "betaNoticeTitle": "Zeinte is in Beta!",
+    "betaNoticeDescription": "Zeinte is currently in Beta and is 100% free to use. To help us cover server costs during this period, we've included some advertising. We appreciate your understanding and support as we work to improve the platform."
   },
   "profilePage": {
     "loadingProfile": "Loading Zeinte profile...",
@@ -547,5 +551,9 @@
     "cookiesPolicy": "Cookies Policy",
     "legalNotice": "Legal Notice and Terms of Use",
     "disclaimerText": "Zeinte is an AI-based study aid tool. The results and predictions generated are for guidance purposes and do not guarantee success in any exam. The user is responsible for the use of the information provided. Search and Make S.L. is not responsible for errors, omissions, or interpretations of the generated content. We reserve the right to modify the application and its functionalities at any time. Usage data is collected anonymously to improve the application."
+  },
+  "adsense": {
+    "placeholderDashboard": "Ad Space (e.g., Dashboard Banner)",
+    "placeholderCommunity": "Ad Space (e.g., Community Ad)"
   }
 }

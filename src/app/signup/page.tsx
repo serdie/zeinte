@@ -10,8 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, UserPlus, Mail, AlertTriangle } from 'lucide-react';
+import { Loader2, UserPlus, Mail, AlertTriangle, Info } from 'lucide-react';
+import { useI18n } from '@/contexts/I18nContext';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -22,6 +24,7 @@ export default function SignupPage() {
   const { signUpWithEmail, signInWithGoogle, currentUser, loading: authLoading, isFirebaseConfigured } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!authLoading && currentUser) {
@@ -32,12 +35,12 @@ export default function SignupPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!isFirebaseConfigured) {
-      toast({ title: "Configuración Incompleta", description: "Firebase no está configurado. Revisa las variables de entorno y reinicia el servidor.", variant: "destructive", duration: 7000 });
+      toast({ title: t("configIncompleteToastTitle"), description: t("configIncompleteToastDescription"), variant: "destructive", duration: 7000 });
       return;
     }
     if (password !== confirmPassword) {
-      setAuthError('Las contraseñas no coinciden.');
-      toast({ title: "Error de Registro", description: "Las contraseñas no coinciden.", variant: "destructive" });
+      setAuthError(t("signupPage.passwordsDoNotMatchError"));
+      toast({ title: t("signupPage.signupErrorToastTitle"), description: t("signupPage.passwordsDoNotMatchError"), variant: "destructive" });
       return;
     }
     setIsLoading(true);
@@ -45,17 +48,17 @@ export default function SignupPage() {
     const result = await signUpWithEmail(email, password);
     if (typeof result === 'string') {
       setAuthError(result);
-      toast({ title: "Error de Registro", description: result, variant: "destructive" });
+      toast({ title: t("signupPage.signupErrorToastTitle"), description: result, variant: "destructive" });
     } else {
-      toast({ title: "Registro Exitoso", description: "¡Bienvenido! Ya puedes iniciar sesión.", variant: "default" });
-      router.push('/login'); 
+      toast({ title: t("signupPage.signupSuccessToastTitle"), description: t("signupPage.signupSuccessToastDescription"), variant: "default" });
+      router.push('/login');
     }
     setIsLoading(false);
   };
 
   const handleGoogleSignIn = async () => {
      if (!isFirebaseConfigured) {
-      toast({ title: "Configuración Incompleta", description: "Firebase no está configurado. Revisa las variables de entorno y reinicia el servidor.", variant: "destructive", duration: 7000 });
+      toast({ title: t("configIncompleteToastTitle"), description: t("configIncompleteToastDescription"), variant: "destructive", duration: 7000 });
       return;
     }
     setIsLoading(true);
@@ -63,9 +66,9 @@ export default function SignupPage() {
     const result = await signInWithGoogle();
     if (typeof result === 'string') {
       setAuthError(result);
-       toast({ title: "Error con Google", description: result, variant: "destructive" });
+       toast({ title: t("signupPage.googleErrorToastTitle"), description: result, variant: "destructive" });
     } else {
-      toast({ title: "Registro Exitoso", description: "¡Bienvenido con Google!", variant: "default" });
+      toast({ title: t("signupPage.signupSuccessToastTitle"), description: t("signupPage.googleSuccessToastDescription"), variant: "default" });
       router.push('/dashboard');
     }
     setIsLoading(false);
@@ -76,7 +79,7 @@ export default function SignupPage() {
   }
 
   if (!authLoading && currentUser) {
-     return <div className="flex items-center justify-center min-h-screen"><p>Redirigiendo...</p><Loader2 className="ml-2 h-5 w-5 animate-spin text-primary" /></div>;
+     return <div className="flex items-center justify-center min-h-screen"><p>{t("signupPage.redirecting")}</p><Loader2 className="ml-2 h-5 w-5 animate-spin text-primary" /></div>;
   }
 
   return (
@@ -85,25 +88,32 @@ export default function SignupPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-primary flex items-center justify-center gap-2">
             <UserPlus className="h-8 w-8" />
-            Crear Cuenta
+            {t("signupPage.title")}
           </CardTitle>
-          <CardDescription>Únete para empezar a usar AdivinaExamen.</CardDescription>
+          <CardDescription>{t("signupPage.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          <Alert variant="default" className="bg-primary/10 border-primary/50 text-primary">
+            <Info className="h-5 w-5" />
+            <AlertTitle>{t("signupPage.betaNoticeTitle")}</AlertTitle>
+            <AlertDescription>
+              {t("signupPage.betaNoticeDescription")}
+            </AlertDescription>
+          </Alert>
           {!isFirebaseConfigured && (
             <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-              <span>Firebase no está configurado correctamente. Por favor, revisa las variables de entorno en `.env.local` y reinicia el servidor. La autenticación no funcionará.</span>
+              <span>{t("signupPage.firebaseNotConfiguredWarning")}</span>
             </div>
           )}
           {authError && <p className="text-sm text-destructive bg-destructive/10 p-3 rounded-md text-center">{authError}</p>}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Correo Electrónico</Label>
+              <Label htmlFor="email">{t("signupPage.emailLabel")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="tu@email.com"
+                placeholder={t("signupPage.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -112,11 +122,11 @@ export default function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">{t("signupPage.passwordLabel")}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Crea una contraseña (mín. 6 caracteres)"
+                placeholder={t("signupPage.passwordPlaceholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -125,11 +135,11 @@ export default function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
+              <Label htmlFor="confirm-password">{t("signupPage.confirmPasswordLabel")}</Label>
               <Input
                 id="confirm-password"
                 type="password"
-                placeholder="Repite la contraseña"
+                placeholder={t("signupPage.confirmPasswordPlaceholder")}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -139,7 +149,7 @@ export default function SignupPage() {
             </div>
             <Button type="submit" className="w-full text-lg py-3 bg-primary hover:bg-primary/90" disabled={isLoading || !isFirebaseConfigured}>
               {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <UserPlus className="mr-2 h-5 w-5" />}
-              Registrarse
+              {t("signupPage.signupButton")}
             </Button>
           </form>
           <div className="relative">
@@ -148,20 +158,20 @@ export default function SignupPage() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-card px-2 text-muted-foreground">
-                O regístrate con
+                {t("signupPage.signupWith")}
               </span>
             </div>
           </div>
           <Button variant="outline" className="w-full text-md py-3" onClick={handleGoogleSignIn} disabled={isLoading || !isFirebaseConfigured}>
              {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <svg className="mr-2 h-5 w-5" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Google</title><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.02 1.08-2.58 2.03-4.66 2.03-3.86 0-6.99-3.11-6.99-7.11s3.13-7.11 6.99-7.11c1.73 0 3.25.59 4.52 1.78l2.48-2.48C17.46.89 15.21 0 12.48 0 5.88 0 0 5.56 0 12.48s5.88 12.48 12.48 12.48c7.02 0 12.24-4.82 12.24-12.72 0-.79-.08-1.54-.2-2.32H12.48z" fill="currentColor"/></svg> }
-            Google
+            {t("signupPage.googleButton")}
           </Button>
         </CardContent>
         <CardFooter className="text-center block">
           <p className="text-sm text-muted-foreground">
-            ¿Ya tienes una cuenta?{' '}
+            {t("signupPage.hasAccount")}{' '}
             <Link href="/login" className="font-semibold text-primary hover:underline">
-              Inicia sesión aquí
+              {t("signupPage.loginHere")}
             </Link>
           </p>
         </CardFooter>

@@ -57,27 +57,27 @@
     "adminCommunityManagementTitle": "Gestión de Comunidad - Zeinte"
   },
   "homePage": {
-    "mainTitle": "Zeinte: Tu Aliado Inteligente para Aprobar",
+    "mainTitle": "Zeinte: Tu Aliado Inteligente para Aprobar Exámenes",
     "subtitle": "Transforma tus apuntes y exámenes pasados en una poderosa herramienta de estudio. Sube tus documentos, y nuestra IA en Zeinte (antes AdivinaExamen) analizará el contenido, predecirá preguntas clave y te ayudará a prepararte como nunca antes.",
     "startNowButton": "Empezar Ahora con Zeinte",
     "howItHelpsTitle": "¿Cómo te ayuda Zeinte?",
     "simpleFastEffectiveTitle": "Simple, Rápido y Efectivo",
     "step1Title": "Sube tus Archivos",
-    "step1Description": "PDFs, DOCXs, TXTs... todo tu material de estudio es bienvenido.",
+    "step1Description": "PDFs, DOCXs, TXTs... todo tu material de estudio es bienvenido en Zeinte.",
     "step2Title": "Análisis IA",
-    "step2Description": "Dejamos que nuestra IA identifique lo crucial y prediga preguntas.",
+    "step2Description": "Dejamos que nuestra IA en Zeinte identifique lo crucial y prediga preguntas.",
     "step3Title": "Estudia y Aprueba",
-    "step3Description": "Practica con preguntas tipo test y explicaciones detalladas.",
-    "choosePlanTitle": "Elige tu Plan",
+    "step3Description": "Practica con preguntas tipo test y explicaciones detalladas en Zeinte.",
+    "choosePlanTitle": "Elige tu Plan en Zeinte",
     "choosePlanSubtitle": "Comienza gratis o desbloquea todo el potencial de Zeinte con nuestro Plan Pro.",
     "freeTrialTitle": "Prueba Gratuita",
-    "freeTrialDescription": "Ideal para empezar y conocer Zeinte.",
-    "freeTrialFeature1": "Análisis de hasta 3 documentos.",
-    "freeTrialFeature2": "Generación de hasta 5 preguntas por análisis.",
-    "freeTrialFeature3": "Explicaciones IA básicas.",
-    "freeTrialFeature4": "Acceso limitado a la Comunidad (simulada).",
+    "freeTrialDescription": "Ideal para empezar y conocer Zeinte. Durante nuestra fase Beta, ¡disfruta de más beneficios!",
+    "freeTrialFeature1": "Análisis de documentos (límite generoso en Beta).",
+    "freeTrialFeature2": "Generación de preguntas (límite generoso en Beta).",
+    "freeTrialFeature3": "Explicaciones IA (disponible en Beta).",
+    "freeTrialFeature4": "Acceso a la Comunidad (simulada por ahora).",
     "startFreeTrialButton": "Comenzar Prueba Gratuita con Zeinte",
-    "proPlanTitle": "Plan Pro",
+    "proPlanTitle": "Plan Pro (Próximamente)",
     "proPlanDescription": "Desbloquea todas las funcionalidades de Zeinte.",
     "proPlanPrice": "9,95€",
     "proPlanPriceSuffix": "/mes",
@@ -87,8 +87,8 @@
     "proPlanFeature4": "Acceso completo a la Comunidad (futuro).",
     "proPlanFeature5": "Guardar y gestionar tus exámenes y análisis (futuro).",
     "proPlanFeature6": "Soporte prioritario (futuro).",
-    "subscribeProButton": "Suscribirse al Plan Pro de Zeinte",
-    "subscribeProAlert": "Funcionalidad de suscripción Pro para Zeinte próximamente disponible.",
+    "subscribeProButton": "Suscribirse al Plan Pro de Zeinte (Próximamente)",
+    "subscribeProAlert": "Funcionalidad de suscripción Pro para Zeinte próximamente disponible. ¡Disfruta de la Beta mientras tanto!",
     "revolutionizeStudyTitle": "¿Listo para Revolucionar tu Estudio con Zeinte?",
     "revolutionizeStudySubtitle": "Deja de adivinar y empieza a prepararte con la inteligencia artificial de Zeinte (antes AdivinaExamen).",
     "tryFreeButton": "¡Probar Zeinte Gratis Ahora!",
@@ -140,7 +140,9 @@
     "dailyLimitReachedTitle": "Límite Diario Alcanzado en Zeinte",
     "dailyLimitReachedDescription": "Has alcanzado el límite de un examen gratuito por día en Zeinte. Para generar más exámenes y acceder a todas las funcionalidades avanzadas, considera actualizar a nuestro Plan Pro.",
     "viewProPlansButton": "Ver Planes Pro de Zeinte",
-    "loadingData": "Cargando datos de Zeinte..."
+    "loadingData": "Cargando datos de Zeinte...",
+    "betaAdNoticeTitle": "¡Zeinte está en Beta!",
+    "betaAdNoticeDescription": "Durante esta fase, Zeinte es 100% gratuito. Para ayudarnos a cubrir los costes de servidor, hemos incluido algo de publicidad. ¡Gracias por tu comprensión!"
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Pregunta Tipo Test",
@@ -280,7 +282,9 @@
     "googleSuccessToastDescription": "¡Bienvenido con Google a Zeinte!",
     "loading": "Cargando...",
     "redirecting": "Redirigiendo...",
-    "betaWelcomeMessage": "¡Bienvenido/a a la Beta de Zeinte! Durante esta fase, todas las cuentas nuevas operan con los beneficios del Plan Gratuito mejorado, permitiéndote explorar la mayoría de nuestras funcionalidades. El Plan Pro completo con todas sus ventajas exclusivas y la pasarela de pago se activarán pronto."
+    "betaWelcomeMessage": "¡Bienvenido/a a la Beta de Zeinte! Durante esta fase, todas las cuentas nuevas operan con los beneficios del Plan Gratuito mejorado, permitiéndote explorar la mayoría de nuestras funcionalidades. El Plan Pro completo con todas sus ventajas exclusivas y la pasarela de pago se activarán pronto.",
+    "betaNoticeTitle": "¡Zeinte está en Beta!",
+    "betaNoticeDescription": "Actualmente Zeinte se encuentra en fase Beta y es 100% gratuita. Para ayudarnos a cubrir los costes de servidor durante este periodo, hemos incluido algo de publicidad. Agradecemos tu comprensión y apoyo mientras trabajamos para mejorar la plataforma."
   },
   "profilePage": {
     "loadingProfile": "Cargando perfil de Zeinte...",
@@ -547,5 +551,9 @@
     "cookiesPolicy": "Política de Cookies",
     "legalNotice": "Aviso Legal y Condiciones de Uso",
     "disclaimerText": "Zeinte es una herramienta de ayuda al estudio basada en inteligencia artificial. Los resultados y predicciones generados son para fines orientativos y no garantizan el éxito en ningún examen. El usuario es responsable del uso de la información proporcionada. Search and Make S.L. no se hace responsable de errores, omisiones o interpretaciones del contenido generado. Nos reservamos el derecho de modificar la aplicación y sus funcionalidades en cualquier momento. Los datos de uso se recopilan de forma anónima para mejorar la aplicación."
+  },
+  "adsense": {
+    "placeholderDashboard": "Espacio para anuncio (Ej. Banner Dashboard)",
+    "placeholderCommunity": "Espacio para anuncio (Ej. Anuncio en Comunidad)"
   }
 }

@@ -15,11 +15,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw, Microscope, Lock, AlertTriangle, ExternalLink } from 'lucide-react';
+import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw, Microscope, Lock, AlertTriangle, ExternalLink, Newspaper } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 import { UpgradeProAlert } from '@/components/ui/upgrade-pro-alert';
-import { useI18n } from '@/contexts/I18nContext'; // Import useI18n
+import { useI18n } from '@/contexts/I18nContext';
 
 const DEFAULT_NUM_QUESTIONS_REANALYSIS = "10";
 const FREE_USER_QUESTION_LIMIT = 3;
@@ -27,11 +27,11 @@ const FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS = "5";
 const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 export default function DashboardPage() {
-  const { t } = useI18n(); // Get translation function
+  const { t } = useI18n();
   const [predictedData, setPredictedData] = useState<PredictedData | null>(null);
   const [isLoadingInitialData, setIsLoadingInitialData] = useState(true);
   const [isReAnalyzing, setIsReAnalyzing] = useState(false);
-  
+
   const [currentExplanation, setCurrentExplanation] = useState<AIExplanation | null>(null);
   const [isExplaining, setIsExplaining] = useState(false);
   const [selectedQuestionForExplanation, setSelectedQuestionForExplanation] = useState<Omit<GenerateAIExplanationInput, 'topic'> | null>(null);
@@ -61,7 +61,7 @@ export default function DashboardPage() {
         }
       } catch (e) { console.error("Failed to parse exam config for dashboard", e); }
     }
-    
+
     const storedData = localStorage.getItem(PREDICTED_DATA_KEY);
     if (storedData) {
       try {
@@ -112,22 +112,22 @@ export default function DashboardPage() {
     setSelectedQuestionForExplanation(questionContext);
     setIsExplaining(true);
     setIsExplanationDialogOpen(true);
-    setCurrentExplanation(null); 
+    setCurrentExplanation(null);
 
     try {
-      const topic = predictedData?.recurringThemes?.[0] || predictedData?.potentialFocusAreas?.[0] || "General Topic"; // Consider translating "General Topic"
-      
+      const topic = predictedData?.recurringThemes?.[0] || predictedData?.potentialFocusAreas?.[0] || "General Topic";
+
       const result: GenerateAIExplanationOutput = await generateAIExplanation({ ...questionContext, topic });
       if (result && result.explanation) {
         setCurrentExplanation({ question: questionText, explanation: result.explanation, topic });
       } else {
-        throw new Error(t('aiExplanationDialog.noExplanation')); // Or a more specific error
+        throw new Error(t('aiExplanationDialog.noExplanation'));
       }
     } catch (error) {
       console.error("Error generating AI explanation:", error);
-      setCurrentExplanation(null); 
+      setCurrentExplanation(null);
       toast({
-        title: t('common.error'), // Generic error title
+        title: t('common.error'),
         description: (error instanceof Error ? error.message : t('aiExplanationDialog.noExplanation')) + " " + t('common.tryAgain'),
         variant: "destructive",
       });
@@ -148,7 +148,7 @@ export default function DashboardPage() {
     if (!predictedData?.originalDocumentContent) {
       toast({
         title: t('fileUploadArea.toastEmptyContentTitle'),
-        description: t('fileUploadArea.toastEmptyContentDescription'), // Or more specific message for re-analysis
+        description: t('fileUploadArea.toastEmptyContentDescription'),
         variant: "destructive",
         duration: 7000,
       });
@@ -172,12 +172,12 @@ export default function DashboardPage() {
         description: t('uploadPage.processingDocumentToastDescription'),
       });
       const analysisResult: AnalyzeDocumentsOutput = await analyzeDocuments({ documentContent: predictedData.originalDocumentContent });
-      
+
       toast({
         title: t('uploadPage.analysisCompleteToastTitle'),
         description: t('uploadPage.analysisCompleteToastDescription'),
       });
-      const predictionResult: PredictExamQuestionsOutput = await predictExamQuestions({ 
+      const predictionResult: PredictExamQuestionsOutput = await predictExamQuestions({
         analysisSummary: analysisResult.summary,
         recurringThemes: analysisResult.recurringThemes,
         numberOfQuestions: requestedNum,
@@ -205,10 +205,10 @@ export default function DashboardPage() {
 
       toast({
         title: t('uploadPage.successToastTitle'),
-        description: t('dashboardPage.questionsReadyTitle'), // Re-using a similar title
+        description: t('dashboardPage.questionsReadyTitle'),
         variant: "default",
       });
-      
+
     } catch (error) {
       console.error("Error during AI re-processing:", error);
       toast({
@@ -248,12 +248,26 @@ export default function DashboardPage() {
     );
   }
 
-  const questionsToDisplay = isFreeUser 
-    ? predictedData.questions.slice(0, FREE_USER_QUESTION_LIMIT) 
+  const questionsToDisplay = isFreeUser
+    ? predictedData.questions.slice(0, FREE_USER_QUESTION_LIMIT)
     : predictedData.questions;
-  
+
   return (
     <div className="space-y-8">
+      <Alert variant="default" className="bg-blue-500/10 border-blue-500/50 text-blue-700 dark:bg-blue-700/20 dark:text-blue-400 dark:border-blue-600">
+        <Newspaper className="h-5 w-5" />
+        <AlertTitle>{t("dashboardPage.betaAdNoticeTitle")}</AlertTitle>
+        <AlertDescription>
+          {t("dashboardPage.betaAdNoticeDescription")}
+        </AlertDescription>
+      </Alert>
+
+      {/* AdSense Ad Unit Placeholder - Replace with your ad unit code */}
+      <div style={{ width: '100%', minHeight: '90px', backgroundColor: '#f0f0f0', border: '1px dashed #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '20px 0', padding: '10px', textAlign: 'center' }}>
+        <span style={{ color: '#999', fontSize: '0.9rem' }}>{t("adsense.placeholderDashboard")}</span>
+      </div>
+
+
       <Alert className="border-primary bg-primary/10">
         <Info className="h-5 w-5 text-primary" />
         <AlertTitle className="font-semibold text-primary">{t('dashboardPage.questionsReadyTitle')}</AlertTitle>
@@ -282,8 +296,8 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mb-4">
         <div className="flex items-center gap-2">
           <Label htmlFor="num-questions-reanalysis-select" className="text-sm font-medium">{t('dashboardPage.numQuestionsLabel')}</Label>
-          <Select 
-            value={numQuestionsForReanalysis} 
+          <Select
+            value={numQuestionsForReanalysis}
             onValueChange={setNumQuestionsForReanalysis}
             disabled={isReAnalyzing || !predictedData?.originalDocumentContent}
           >
@@ -304,8 +318,8 @@ export default function DashboardPage() {
             </SelectContent>
           </Select>
         </div>
-        <Button 
-          onClick={handleReAnalyze} 
+        <Button
+          onClick={handleReAnalyze}
           disabled={isReAnalyzing || !predictedData?.originalDocumentContent}
           variant="outline"
           className="shadow-md w-full sm:w-auto"
@@ -320,9 +334,9 @@ export default function DashboardPage() {
         </Button>
       </div>
       {isFreeUser && (
-        <UpgradeProAlert 
+        <UpgradeProAlert
             featureName={t('dashboardPage.upgradeProAlertReanalysis')}
-            className="mb-4" 
+            className="mb-4"
             message={t('dashboardPage.upgradeProAlertReanalysisMessage')}
         />
       )}
@@ -340,7 +354,7 @@ export default function DashboardPage() {
         ))}
       </div>
       {isFreeUser && predictedData.questions.length > FREE_USER_QUESTION_LIMIT && (
-         <UpgradeProAlert 
+         <UpgradeProAlert
             featureName={t('dashboardPage.upgradeProAlertViewAll')}
             className="mt-6"
             message={t('dashboardPage.upgradeProAlertViewAllMessage', { count: FREE_USER_QUESTION_LIMIT, total: predictedData.questions.length })}
