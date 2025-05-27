@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, UploadCloud, Settings, User, Users, Home, LogIn, LogOut, UserPlus, ShieldCheck } from 'lucide-react';
+import { BookOpenText, UploadCloud, Settings, User, Users, Home, LogIn, LogOut, UserPlus, ShieldCheck, Lightbulb } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -12,13 +12,13 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useI18n } from '@/contexts/I18nContext'; // Import useI18n
+import { useI18n } from '@/contexts/I18nContext'; 
 
 export default function SidebarNav() {
   const pathname = usePathname();
   const { currentUser, logout, loading, isFirebaseConfigured, isAdmin } = useAuth();
   const { toast } = useToast();
-  const { t } = useI18n(); // Get translation function
+  const { t } = useI18n(); 
 
   const navItems = [
     { href: '/', labelKey: 'sidebar.home', icon: Home, public: true },
@@ -26,6 +26,7 @@ export default function SidebarNav() {
     { href: '/upload', labelKey: 'sidebar.upload', icon: UploadCloud, protected: true },
     { href: '/configure', labelKey: 'sidebar.configureExam', icon: Settings, protected: true },
     { href: '/community', labelKey: 'sidebar.community', icon: Users, protected: true },
+    { href: '/custom-courses/create', labelKey: 'sidebar.createCourse', icon: Lightbulb, protected: true, adminOnly: true },
     { href: '/profile', labelKey: 'sidebar.profile', icon: User, protected: true },
   ];
 
@@ -39,9 +40,9 @@ export default function SidebarNav() {
 
   const handleLogout = async () => {
     const result = await logout();
-    if (typeof result === 'string') { // Error message returned
+    if (typeof result === 'string') { 
       toast({ title: t('authContext.logoutErrorToastTitle'), description: result, variant: "destructive" });
-    } else { // Success
+    } else { 
       toast({ title: t('authContext.logoutSuccessToastTitle'), description: t('authContext.logoutSuccessToastDescription'), variant: "default" });
       // Router will redirect via ConditionalLayout or AuthContext effect
     }
@@ -52,6 +53,7 @@ export default function SidebarNav() {
       <div className="space-y-1">
         {navItems.map((item) => {
           if (item.protected && isFirebaseConfigured && !currentUser) return null;
+          if (item.adminOnly && !isAdmin) return null; 
           
           const label = t(item.labelKey);
           return (
@@ -59,11 +61,11 @@ export default function SidebarNav() {
               <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === item.href}
+                  isActive={pathname === item.href || (item.href === '/custom-courses/create' && pathname.startsWith('/custom-courses'))}
                   tooltip={label}
                   className={cn(
                     "justify-start w-full",
-                    pathname === item.href 
+                    (pathname === item.href || (item.href === '/custom-courses/create' && pathname.startsWith('/custom-courses')))
                       ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90" 
                       : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
@@ -84,11 +86,11 @@ export default function SidebarNav() {
             <Link href={adminNavItem.href} passHref legacyBehavior>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === adminNavItem.href}
+                isActive={pathname.startsWith(adminNavItem.href)}
                 tooltip={t(adminNavItem.labelKey)}
                 className={cn(
                   "justify-start w-full",
-                  pathname === adminNavItem.href 
+                  pathname.startsWith(adminNavItem.href) 
                     ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90" 
                     : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 )}

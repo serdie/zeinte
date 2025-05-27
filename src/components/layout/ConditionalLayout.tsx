@@ -13,7 +13,9 @@ interface ConditionalLayoutProps {
 }
 
 const PUBLIC_PATHS = ['/', '/login', '/signup'];
-const ADMIN_PATH = '/admin';
+const ADMIN_PATH_PREFIX = '/admin';
+const CUSTOM_COURSES_PATH_PREFIX = '/custom-courses';
+
 
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
@@ -21,38 +23,28 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   const { currentUser, loading, isFirebaseConfigured, isAdmin } = useAuth();
 
   useEffect(() => {
-    if (loading) return; // Wait until auth state is resolved
+    if (loading) return; 
 
-    if (!isFirebaseConfigured && !PUBLIC_PATHS.includes(pathname) && pathname !== ADMIN_PATH) {
-      // If Firebase isn't configured, allow access to public paths and admin (admin will show its own config error).
-      // Otherwise, redirect to login which will show the config error.
-      // This logic primarily prevents redirect loops if login/signup also try to use Firebase.
-      if (!PUBLIC_PATHS.includes(pathname)) {
-         // router.push('/login'); // Commented out to let login/signup pages handle their own Firebase status display
-      }
+    if (!isFirebaseConfigured && !PUBLIC_PATHS.includes(pathname) && !pathname.startsWith(ADMIN_PATH_PREFIX) && !pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX)) {
+      // No redirect here if firebase not configured to avoid loops on login/signup pages
       return;
     }
 
-    // Handle admin route
-    if (pathname.startsWith(ADMIN_PATH)) {
+    if (pathname.startsWith(ADMIN_PATH_PREFIX) || pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX)) {
       if (!currentUser) {
-        router.push('/login'); // Must be logged in to check for admin
+        router.push('/login');
         return;
       }
       if (!isAdmin) {
-        router.push('/dashboard'); // Not an admin, redirect to dashboard
+        router.push('/dashboard'); 
         return;
       }
-      // If admin, let them proceed to the admin page
     }
-    // Handle public routes and general protected routes
-    else if (!PUBLIC_PATHS.includes(pathname)) { // Path is not public, so it's protected
+    else if (!PUBLIC_PATHS.includes(pathname)) { 
       if (!currentUser) {
-        router.push('/login'); // Not logged in, redirect to login
+        router.push('/login');
       }
-      // If user is logged in, they can access the protected route
     } else if (currentUser && (pathname === '/login' || pathname === '/signup')) {
-       // If logged in and trying to access login/signup, redirect to dashboard
       router.push('/dashboard');
     }
 
@@ -65,23 +57,52 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
       </div>
     );
   }
+  
+  const isAppRoute = !PUBLIC_PATHS.includes(pathname) || (currentUser && (pathname === '/login' || pathname === '/signup'));
 
-  // If it's a public path or admin path (which has its own auth check + layout), render children directly
-  if (PUBLIC_PATHS.includes(pathname) || (pathname.startsWith(ADMIN_PATH) && isAdmin)) {
+  if (isAppRoute && !currentUser && !loading) {
+     // If still loading or already redirected, this avoids flicker.
+     // If not loading and no user for a protected route, show loading/redirect message.
+     if (!PUBLIC_PATHS.includes(pathname)) {
+        return (
+         <div className="flex items-center justify-center min-h-screen bg-background">
+           <p>Redirigiendo...</p>
+          <Loader2 className="ml-2 h-5 w-5 animate-spin text-primary" />
+        </div>
+      );
+     }
+  }
+
+
+  if (PUBLIC_PATHS.includes(pathname) && !currentUser) {
     return <>{children}</>;
   }
+
+  if (currentUser) {
+    if (pathname.startsWith(ADMIN_PATH_PREFIX) || pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX)) {
+      if (isAdmin) {
+        return <AppLayout>{children}</AppLayout>; 
+      } else {
+         // This case should be handled by the redirect effect,
+         // but as a fallback render nothing or a minimal access denied.
+         // For now, rely on redirect.
+         return null;
+      }
+    }
+    // For other authenticated routes
+    return <AppLayout>{children}</AppLayout>;
+  }
   
-  // If user is not current and path is protected, they should have been redirected.
-  // This is a fallback or for when loading is done but redirect hasn't occurred yet.
-  if (!currentUser && !PUBLIC_PATHS.includes(pathname)) {
-     return (
+  // Fallback for non-logged in users trying to access a route that isn't explicitly public
+  // but somehow slipped through other checks (should ideally be caught by redirects).
+  if (!PUBLIC_PATHS.includes(pathname)) {
+    return (
        <div className="flex items-center justify-center min-h-screen bg-background">
-         <p>Redirigiendo...</p>
+         <p>Cargando...</p>
         <Loader2 className="ml-2 h-5 w-5 animate-spin text-primary" />
       </div>
     );
   }
 
-  // For all other authenticated routes that are not admin
-  return <AppLayout>{children}</AppLayout>;
+  return <>{children}</>;
 }
