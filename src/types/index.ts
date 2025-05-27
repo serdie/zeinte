@@ -1,12 +1,12 @@
 
-export type ExamType = "test" | "written" | "oral";
+export type ExamType = "test"; // Simplified to only "test" for now
 
 export interface PredictedQuestion {
   questionText: string;
-  options?: string[]; // Optional for written/oral
-  correctAnswerIndex?: number; // Optional for written/oral
+  options: string[]; // No longer optional
+  correctAnswerIndex: number; // No longer optional
   explanation?: string;
-  questionType: ExamType; // To know how to render it
+  // questionType: ExamType; // Removed
 }
 
 export interface AnalysisDetails {
@@ -21,7 +21,7 @@ export interface PredictedData extends AnalysisDetails {
   timestamp: number;
   originalDocumentContent?: string;
   requestedNumberOfQuestions?: number;
-  examType: ExamType; // Added to know what type of exam was generated
+  // examType: ExamType; // Removed
 }
 
 export interface AIExplanation {
@@ -32,5 +32,5 @@ export interface AIExplanation {
 
 export interface ExamConfig {
   defaultNumberOfQuestions: number;
-  defaultExamType: ExamType;
+  // defaultExamType: ExamType; // Removed
 }

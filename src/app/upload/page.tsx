@@ -8,7 +8,7 @@ import { analyzeDocuments, type AnalyzeDocumentsOutput } from '@/ai/flows/analyz
 import { predictExamQuestions, type PredictExamQuestionsOutput } from '@/ai/flows/predict-exam-questions';
 import { useToast } from "@/hooks/use-toast";
 import { PREDICTED_DATA_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY } from '@/lib/localStorageKeys';
-import type { PredictedData, ExamType } from '@/types'; // Import ExamType
+import type { PredictedData } from '@/types'; // Removed ExamType import
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 
@@ -21,7 +21,7 @@ export default function UploadPage() {
   const isFreeUser = userTier === 'free';
   const { t } = useI18n();
 
-  const handleAnalyze = async (content: string, numQuestions: number, examType: ExamType) => {
+  const handleAnalyze = async (content: string, numQuestions: number) => { // Removed examType parameter
     setIsLoading(true);
     try {
       toast({
@@ -34,26 +34,27 @@ export default function UploadPage() {
         title: t('uploadPage.analysisCompleteToastTitle'),
         description: t('uploadPage.analysisCompleteToastDescription'),
       });
+      // Call predictExamQuestions without examType, as it's removed from the flow's input
       const predictionResult: PredictExamQuestionsOutput = await predictExamQuestions({ 
         analysisSummary: analysisResult.summary,
         recurringThemes: analysisResult.recurringThemes,
         numberOfQuestions: numQuestions,
-        examType: examType, // Pass examType here
+        // examType: "test", // Removed, flow defaults to test
         identifiedExamPatterns: analysisResult.identifiedExamPatterns,
         potentialFocusAreas: analysisResult.potentialFocusAreas,
       });
 
       const dataToStore: PredictedData = {
-        questions: predictionResult.questions.map(q => ({ // Ensure questionType is set
-            ...q, 
-            questionType: q.questionType || examType // Default to examType if not set by AI
+        questions: predictionResult.questions.map(q => ({
+            ...q,
+            // questionType: "test" // Removed, type will reflect all questions are test
         })),
         analysisSummary: analysisResult.summary,
         recurringThemes: analysisResult.recurringThemes,
         timestamp: Date.now(),
         originalDocumentContent: content,
         requestedNumberOfQuestions: numQuestions,
-        examType: examType, // Store examType
+        // examType: "test", // Removed
         identifiedExamPatterns: analysisResult.identifiedExamPatterns,
         potentialFocusAreas: analysisResult.potentialFocusAreas,
       };

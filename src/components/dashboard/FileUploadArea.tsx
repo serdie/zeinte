@@ -13,10 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, Building, School, Briefcase, Lock, ExternalLink, FileType, PencilLine } from 'lucide-react';
+import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, Building, School, Briefcase, Lock, ExternalLink, FileType } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { EXAM_CONFIG_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY } from '@/lib/localStorageKeys';
-import type { ExamConfig, ExamType } from '@/types';
+import type { ExamConfig } from '@/types'; // Removed ExamType as it's not used here directly
 import { findExternalDocuments, type FindExternalDocumentsOutput } from '@/ai/flows/find-external-documents';
 import { Checkbox } from '../ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,7 +26,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useI18n } from '@/contexts/I18nContext';
 
 interface FileUploadAreaProps {
-  onAnalyze: (content: string, numQuestions: number, examType: ExamType) => Promise<void>;
+  onAnalyze: (content: string, numQuestions: number) => Promise<void>; // Removed examType from onAnalyze
   isLoading: boolean;
 }
 
@@ -68,7 +68,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   const { t } = useI18n();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [numQuestions, setNumQuestions] = useState<string>(FREE_USER_MAX_QUESTIONS_TO_GENERATE);
-  const [examType, setExamType] = useState<ExamType>("test");
+  // const [examType, setExamType] = useState<ExamType>("test"); // Removed examType state
   const { toast } = useToast();
   const { userTier, isFirebaseConfigured } = useAuth();
   const isFreeUser = userTier === 'free';
@@ -121,7 +121,6 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   useEffect(() => {
     const storedConfig = localStorage.getItem(EXAM_CONFIG_KEY);
     let initialNumQuestions = isFreeUser ? FREE_USER_MAX_QUESTIONS_TO_GENERATE : "10";
-    let initialExamType: ExamType = "test";
 
     if (storedConfig) {
       try {
@@ -134,15 +133,13 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                 initialNumQuestions = configNum;
             }
         }
-        if (parsedConfig.defaultExamType) {
-            initialExamType = parsedConfig.defaultExamType;
-        }
+        // Removed defaultExamType logic
       } catch (error) {
         console.error("Error parsing exam config for FileUploadArea:", error);
       }
     }
     setNumQuestions(initialNumQuestions);
-    setExamType(initialExamType);
+    // setExamType("test"); // Default to test, no selector
   }, [isFreeUser]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -334,7 +331,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
         });
       }
       
-      await onAnalyze(allFilesContent, finalNumQuestions, examType); 
+      await onAnalyze(allFilesContent, finalNumQuestions); // Removed examType from onAnalyze call
 
     } catch (error) {
       console.error("Error processing files:", error);
@@ -612,25 +609,8 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
 
       <div className="lg:col-span-2 space-y-6 p-6 border rounded-lg shadow-xl bg-card">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-            <div className="space-y-2">
-                <Label htmlFor="exam-type-select" className="text-md font-medium">{t('fileUploadArea.examTypeLabel')}</Label>
-                <Select value={examType} onValueChange={(value) => setExamType(value as ExamType)} disabled={isLoading || isDeepSearching || isLoadingAppSettings}>
-                <SelectTrigger id="exam-type-select" className="w-full text-base py-3">
-                    <SelectValue placeholder={t('common.selectOption')} />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="test">{t('configurePage.examTypeTest')}</SelectItem>
-                    <SelectItem value="written">{t('configurePage.examTypeWritten')}</SelectItem>
-                    <SelectItem value="oral" disabled>{t('configurePage.examTypeOral')} ({t('common.soon')})</SelectItem>
-                </SelectContent>
-                </Select>
-                {examType !== 'test' && (
-                    <p className="text-xs text-primary mt-1 flex items-center gap-1">
-                        <PencilLine className="h-3 w-3"/> {t('fileUploadArea.writtenExamBetaNote')}
-                    </p>
-                )}
-            </div>
-            <div className="space-y-2">
+            {/* Removed Exam Type Selector */}
+            <div className="space-y-2 md:col-span-2"> {/* Make num questions full width on md+ */}
                 <Label htmlFor="num-questions-select" className="text-md font-medium">{t('dashboardPage.numQuestionsLabel')}</Label>
                 <Select value={numQuestions} onValueChange={setNumQuestions} disabled={isLoading || isDeepSearching || isLoadingAppSettings}>
                 <SelectTrigger id="num-questions-select" className="w-full text-base py-3">

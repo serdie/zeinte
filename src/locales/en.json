@@ -105,7 +105,7 @@
     "deepAnalysisShort": "Zeinte's AI identifies key themes and patterns from past exams.",
     "deepAnalysisLong": "Our artificial intelligence in Zeinte examines the content of your documents, identifying recurring themes, frequently asked questions, and the overall course structure. If it detects past exams, it analyzes their methodology and the relative importance of topics.",
     "smartPredictionTitle": "Intelligent Question Prediction",
-    "smartPredictionShort": "Zeinte generates questions that might appear on your exam, adapted to the exam type (test, written, oral).",
+    "smartPredictionShort": "Zeinte generates multiple-choice questions that might appear on your exam.",
     "smartPredictionLong": "Based on exhaustive analysis, Zeinte predicts possible exam questions. These questions are designed to mimic the style, difficulty, and format of real tests, giving you a unique advantage.",
     "clearExplanationsTitle": "Clear and Detailed Explanations",
     "clearExplanationsShort": "Understand each answer with professor-like explanations thanks to Zeinte (for multiple-choice questions).",
@@ -115,7 +115,7 @@
     "interactiveStudyLong": "Study efficiently with an interface designed for learning in Zeinte. Answer questions, check your correct and incorrect answers, and access detailed explanations to reinforce your knowledge.",
     "customConfigTitle": "Custom Configuration",
     "customConfigShort": "Tailor exam generation in Zeinte to your needs.",
-    "customConfigLong": "Adjust the default number of questions and the exam type (test, written, oral) you want generated in Zeinte. These values will be used unless you change them at the time of generation.",
+    "customConfigLong": "Adjust the default number of questions you want generated in Zeinte. These values will be used unless you change them at the time of generation.",
     "studyCommunityTitle": "Zeinte Study Community (Simulated)",
     "studyCommunityShort": "Explore forums and learn from others in the Zeinte community (current simulation).",
     "studyCommunityLong": "Access our Zeinte community section where you'll find simulated discussion forums with relevant topics for various competitive exams and studies. In the future, you'll be able to interact and share your own experiences.",
@@ -127,23 +127,12 @@
     "emptySubtitle": "It seems you haven't analyzed any documents yet in Zeinte. Upload your notes, syllabi, or exams to start studying intelligently!",
     "uploadDocsButton": "Upload Documents Now to Zeinte",
     "questionsReadyTitle": "Questions Ready for Study in Zeinte!",
-    "questionsReadyDescription": "We've analyzed your documents, and these are the questions we believe might appear on your exam. Good luck!",
-    "examTypeTitle": {
-      "test": "Multiple-Choice Questions Ready for Study!",
-      "written": "Written Questions Ready for Practice!",
-      "oral": "Oral Exam Topics Ready!"
-    },
-    "examTypeDescription": {
-      "test": "We've analyzed your documents, and these are the multiple-choice questions we believe might appear on your exam. Select an option to see if it's correct and ask Zeinte's AI for a detailed explanation.",
-      "written": "Based on your documents, we have prepared these open-ended questions for you to practice your written answers.",
-      "oral": "These are the topics and key points the AI suggests preparing for a possible oral presentation or exam, based on your documents."
-    },
+    "questionsReadyDescription": "We've analyzed your documents, and these are the multiple-choice questions we believe might appear on your exam. Select an option to see if it's correct and ask Zeinte's AI for a detailed explanation.",
     "analysisSummaryLabel": "Analysis summary:",
     "mainThemesLabel": "Main themes:",
     "focusAreasLabel": "Detected focus areas:",
     "examPatternsIdentifiedTitle": "Identified Exam Patterns",
     "numQuestionsLabel": "Number of questions:",
-    "examTypeLabel": "Exam Type:",
     "proOnlyOption": "Pro",
     "reanalyzeButton": "Re-analyze and Generate New Exam",
     "reanalyzeButtonProTooltip": "Upgrade to Pro to re-analyze documents in Zeinte (or wait 24h for another free one)",
@@ -156,10 +145,7 @@
     "viewProPlansButton": "View Zeinte Pro Plans",
     "loadingData": "Loading Zeinte data...",
     "betaAdNoticeTitle": "Zeinte is in Beta!",
-    "betaAdNoticeDescription": "Zeinte is currently in Beta and is 100% free to use. To help us cover server costs during this period, we've included some advertising. We appreciate your understanding and support as we work to improve the platform.",
-    "oralExamModeTitle": "Oral Exam Mode: Key Points",
-    "oralExamModeDescription": "The AI has generated the following broad topics or questions for your oral preparation. Use the 'hints' as a guide for points you should cover.",
-    "oralExamHint": "AI Hint"
+    "betaAdNoticeDescription": "Zeinte is currently in Beta and is 100% free to use. To help us cover server costs during this period, we've included some advertising. We appreciate your understanding and support as we work to improve the platform."
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Multiple-Choice Question",
@@ -169,20 +155,6 @@
     "getAIDetailsButtonLoading": "Getting AI...",
     "getAIDetailsButtonPro": "Detailed Explanation (Pro)",
     "getAIDetailsButtonProTooltip": "Upgrade to Pro for detailed explanations"
-  },
-  "writtenQuestionCard": {
-    "cardTitle": "Written Question",
-    "cardDescription": "Develop your answer to the following question.",
-    "yourAnswerLabel": "Your Answer:",
-    "answerPlaceholder": "Write your answer here...",
-    "uploadImageLabel": "Or upload an image of your handwritten answer",
-    "optionalLabel": "optional",
-    "removeImageButton": "Remove Image",
-    "selectedFileLabel": "Selected file",
-    "submitForAnalysisButton": "Submit for AI Analysis",
-    "analysisSoonTitle": "AI Analysis Coming Soon",
-    "analysisSoonDescription": "The feature to analyze written answers (text and images) and provide feedback will be available soon. Thank you for your patience!",
-    "idealAnswerHintTitle": "Hint for Ideal Answer (AI)"
   },
   "aiExplanationDialog": {
     "title": "AI Explanation - Zeinte",
@@ -234,10 +206,8 @@
     "aiSuggestionsListTitle": "AI Suggestions ({{count}}):",
     "selectAISuggestionLabel": "Select {{title}}",
     "finalAnalysisConfigTitle": "Final Analysis Configuration in Zeinte:",
-    "finalAnalysisConfigDescription": "Define how many questions you want to generate from all documents (uploaded manually and/or selected from AI suggestions).{{freeUserMax}}",
+    "finalAnalysisConfigDescription": "Define how many multiple-choice questions you want to generate from all documents.{{freeUserMax}}",
     "finalAnalysisConfigFreeUserMaxText": " (Maximum {{maxQuestions}} for free users).",
-    "examTypeLabel": "Exam Type to Generate:",
-    "writtenExamBetaNote": "Written question generation is experimental. Quality may vary.",
     "questionsSuffix": "questions",
     "selectedQuestionsFreeUserWarning": "You have selected {{selectedCount}} questions, but {{maxCount}} will be generated due to your free plan in Zeinte.",
     "analyzeAndPredictButton": "Analyze and Predict Questions",
@@ -363,15 +333,9 @@
   "configurePage": {
     "loadingConfig": "Loading Zeinte configuration...",
     "title": "Configure Your Exam in Zeinte",
-    "description": "Adjust default options for exam generation in Zeinte. These values will be used unless you change them when uploading files or re-analyzing.",
+    "description": "Adjust default options for multiple-choice exam generation in Zeinte. These values will be used unless you change them when uploading files or re-analyzing.",
     "defaultNumQuestionsLabel": "Default Number of Questions:",
     "defaultNumQuestionsPlaceholder": "Select quantity",
-    "defaultExamTypeLabel": "Default Exam Type:",
-    "examTypeTest": "Multiple Choice",
-    "examTypeWritten": "Written Questions",
-    "examTypeOral": "Oral Exam Guide",
-    "examTypeNotImplementedTestTitle": "Feature in Development in Zeinte",
-    "examTypeNotImplementedDescription": "Generation for 'Written' questions is now active, and 'Oral' exam questions will appear as discussion topics. AI analysis of these answer types is pending full implementation.",
     "saveConfigButton": "Save Configuration",
     "configSavedToastTitle": "Configuration Saved in Zeinte",
     "configSavedToastDescription": "Your exam generation preferences have been updated.",
@@ -603,7 +567,7 @@
     "privacyPolicy": "Privacy Policy",
     "cookiesPolicy": "Cookies Policy",
     "legalNotice": "Legal Notice and Terms of Use",
-    "disclaimerText": "Zeinte is an AI-based study aid tool. The results and predictions generated are for guidance purposes and do not guarantee success in any exam. The user is responsible for the use of the information provided. Search and Make S.L. is not responsible for errors, omissions, or interpretations of the generated content. We reserve the right to modify the application and its functionalities at any time. Usage data is collected anonymously to improve the application."
+    "disclaimerText": "Zeinte es una herramienta de ayuda al estudio basada en inteligencia artificial. Los resultados y predicciones generados son para fines orientativos y no garantizan el éxito en ningún examen. El usuario es responsable del uso de la información proporcionada. Search and Make S.L. no se hace responsable de errores, omisiones o interpretaciones del contenido generado. Nos reservamos el derecho de modificar la aplicación y sus funcionalidades en cualquier momento. Los datos de uso se recopilan de forma anónima para mejorar la aplicación."
   },
   "adsense": {
     "placeholderDashboard": "Ad Space (e.g., Dashboard Banner)",
