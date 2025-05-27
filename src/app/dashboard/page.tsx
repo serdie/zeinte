@@ -4,24 +4,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import PredictedQuestionCard from '@/components/dashboard/PredictedQuestionCard';
+import WrittenQuestionCard from '@/components/dashboard/WrittenQuestionCard'; // Import WrittenQuestionCard
 import AIExplanationDialog from '@/components/dashboard/AIExplanationDialog';
 import { generateAIExplanation, type GenerateAIExplanationOutput, type GenerateAIExplanationInput } from '@/ai/flows/generate-ai-explanations';
 import { analyzeDocuments, type AnalyzeDocumentsOutput } from '@/ai/flows/analyze-documents';
 import { predictExamQuestions, type PredictExamQuestionsOutput } from '@/ai/flows/predict-exam-questions';
 import { PREDICTED_DATA_KEY, EXAM_CONFIG_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY } from '@/lib/localStorageKeys';
-import type { PredictedData, AIExplanation, PredictedQuestion, ExamConfig } from '@/types';
+import type { PredictedData, AIExplanation, PredictedQuestion, ExamConfig, ExamType } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw, Microscope, Lock, AlertTriangle, ExternalLink, Newspaper } from 'lucide-react';
+import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw, Microscope, Lock, AlertTriangle, ExternalLink, Newspaper, FileType, PencilLine } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 import { UpgradeProAlert } from '@/components/ui/upgrade-pro-alert';
 import { useI18n } from '@/contexts/I18nContext';
 
 const DEFAULT_NUM_QUESTIONS_REANALYSIS = "10";
+const DEFAULT_EXAM_TYPE_REANALYSIS: ExamType = "test";
 const FREE_USER_QUESTION_LIMIT = 3;
 const FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS = "5";
 const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
@@ -38,6 +40,7 @@ export default function DashboardPage() {
   const [isExplanationDialogOpen, setIsExplanationDialogOpen] = useState(false);
 
   const [numQuestionsForReanalysis, setNumQuestionsForReanalysis] = useState<string>(DEFAULT_NUM_QUESTIONS_REANALYSIS);
+  const [examTypeForReanalysis, setExamTypeForReanalysis] = useState<ExamType>(DEFAULT_EXAM_TYPE_REANALYSIS);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
 
@@ -47,6 +50,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     let defaultNumQuestions = isFreeUser ? FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS : DEFAULT_NUM_QUESTIONS_REANALYSIS;
+    let defaultExamType: ExamType = DEFAULT_EXAM_TYPE_REANALYSIS;
+
     const storedConfig = localStorage.getItem(EXAM_CONFIG_KEY);
     if (storedConfig) {
       try {
@@ -58,6 +63,9 @@ export default function DashboardPage() {
           } else {
             defaultNumQuestions = configNumStr;
           }
+        }
+        if (parsedConfig.defaultExamType) {
+            defaultExamType = parsedConfig.defaultExamType;
         }
       } catch (e) { console.error("Failed to parse exam config for dashboard", e); }
     }
@@ -77,15 +85,18 @@ export default function DashboardPage() {
         } else {
             setNumQuestionsForReanalysis(defaultNumQuestions);
         }
+        setExamTypeForReanalysis(parsedData.examType || defaultExamType);
 
       } catch (error) {
         console.error("Failed to parse predicted data from localStorage", error);
         localStorage.removeItem(PREDICTED_DATA_KEY);
         setPredictedData(null);
         setNumQuestionsForReanalysis(defaultNumQuestions);
+        setExamTypeForReanalysis(defaultExamType);
       }
     } else {
         setNumQuestionsForReanalysis(defaultNumQuestions);
+        setExamTypeForReanalysis(defaultExamType);
     }
     setIsLoadingInitialData(false);
   }, [isFreeUser]);
@@ -181,17 +192,22 @@ export default function DashboardPage() {
         analysisSummary: analysisResult.summary,
         recurringThemes: analysisResult.recurringThemes,
         numberOfQuestions: requestedNum,
+        examType: examTypeForReanalysis, // Use selected exam type for reanalysis
         identifiedExamPatterns: analysisResult.identifiedExamPatterns,
         potentialFocusAreas: analysisResult.potentialFocusAreas,
       });
 
       const newDataToStore: PredictedData = {
-        questions: predictionResult.questions,
+        questions: predictionResult.questions.map(q => ({
+            ...q,
+            questionType: q.questionType || examTypeForReanalysis
+        })),
         analysisSummary: analysisResult.summary,
         recurringThemes: analysisResult.recurringThemes,
         timestamp: Date.now(),
         originalDocumentContent: predictedData.originalDocumentContent,
         requestedNumberOfQuestions: requestedNum,
+        examType: examTypeForReanalysis, // Store the used exam type
         identifiedExamPatterns: analysisResult.identifiedExamPatterns,
         potentialFocusAreas: analysisResult.potentialFocusAreas,
       };
@@ -251,6 +267,8 @@ export default function DashboardPage() {
   const questionsToDisplay = isFreeUser
     ? predictedData.questions.slice(0, FREE_USER_QUESTION_LIMIT)
     : predictedData.questions;
+  
+  const currentExamType = predictedData.examType || "test";
 
   return (
     <div className="space-y-8">
@@ -262,7 +280,6 @@ export default function DashboardPage() {
         </AlertDescription>
       </Alert>
 
-      {/* AdSense Ad Unit Placeholder - Replace with your ad unit code */}
       <div style={{ width: '100%', minHeight: '90px', backgroundColor: '#f0f0f0', border: '1px dashed #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '20px 0', padding: '10px', textAlign: 'center' }}>
         <span style={{ color: '#999', fontSize: '0.9rem' }}>{t("adsense.placeholderDashboard")}</span>
       </div>
@@ -270,9 +287,9 @@ export default function DashboardPage() {
 
       <Alert className="border-primary bg-primary/10">
         <Info className="h-5 w-5 text-primary" />
-        <AlertTitle className="font-semibold text-primary">{t('dashboardPage.questionsReadyTitle')}</AlertTitle>
+        <AlertTitle className="font-semibold text-primary">{t(`dashboardPage.examTypeTitle.${currentExamType}` as any, {defaultValue: t('dashboardPage.questionsReadyTitle')})}</AlertTitle>
         <AlertDescription className="text-primary/80">
-          {t('dashboardPage.questionsReadyDescription')}
+          {t(`dashboardPage.examTypeDescription.${currentExamType}` as any, {defaultValue: t('dashboardPage.questionsReadyDescription')})}
           <br />
           <span className="font-medium">{t('dashboardPage.analysisSummaryLabel')}</span> {predictedData.analysisSummary.substring(0,150)}...
           {predictedData.recurringThemes && predictedData.recurringThemes.length > 0 && (
@@ -295,6 +312,23 @@ export default function DashboardPage() {
 
       <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mb-4">
         <div className="flex items-center gap-2">
+            <Label htmlFor="exam-type-reanalysis-select" className="text-sm font-medium">{t('dashboardPage.examTypeLabel')}</Label>
+            <Select
+                value={examTypeForReanalysis}
+                onValueChange={(value) => setExamTypeForReanalysis(value as ExamType)}
+                disabled={isReAnalyzing || !predictedData?.originalDocumentContent}
+            >
+                <SelectTrigger id="exam-type-reanalysis-select" className="w-[180px] sm:w-auto">
+                    <SelectValue placeholder={t('common.selectOption')} />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="test">{t('configurePage.examTypeTest')}</SelectItem>
+                    <SelectItem value="written">{t('configurePage.examTypeWritten')}</SelectItem>
+                    <SelectItem value="oral" disabled>{t('configurePage.examTypeOral')} ({t('common.soon')})</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+        <div className="flex items-center gap-2">
           <Label htmlFor="num-questions-reanalysis-select" className="text-sm font-medium">{t('dashboardPage.numQuestionsLabel')}</Label>
           <Select
             value={numQuestionsForReanalysis}
@@ -315,6 +349,9 @@ export default function DashboardPage() {
                   <SelectItem value="30">30</SelectItem>
                 </>
               )}
+               {isFreeUser && parseInt(numQuestionsForReanalysis) > parseInt(FREE_USER_MAX_QUESTIONS_TO_GENERATE_REANALYSIS) && (
+                 <SelectItem value={numQuestionsForReanalysis}>{numQuestionsForReanalysis} ({t('dashboardPage.proOnlyOption')})</SelectItem>
+               )}
             </SelectContent>
           </Select>
         </div>
@@ -341,18 +378,42 @@ export default function DashboardPage() {
         />
       )}
 
+      {currentExamType === "test" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {questionsToDisplay.map((q: PredictedQuestion, index) => (
+            <PredictedQuestionCard
+                key={index}
+                question={q}
+                onGetExplanation={handleGetExplanation}
+                isExplainingCurrent={isExplaining && selectedQuestionForExplanation?.questionText === q.questionText}
+                isExplanationDisabled={isFreeUser}
+            />
+            ))}
+        </div>
+      )}
+      {currentExamType === "written" && (
+         <div className="space-y-6">
+            {questionsToDisplay.map((q: PredictedQuestion, index) => (
+                <WrittenQuestionCard key={index} question={q} />
+            ))}
+        </div>
+      )}
+       {currentExamType === "oral" && (
+         <Alert variant="default" className="bg-blue-100 dark:bg-blue-900 border-blue-300 dark:border-blue-700">
+            <PencilLine className="h-5 w-5 text-blue-600 dark:text-blue-400"/>
+            <AlertTitle className="text-blue-700 dark:text-blue-300">{t('dashboardPage.oralExamModeTitle')}</AlertTitle>
+            <AlertDescription className="text-blue-600 dark:text-blue-400">
+                {t('dashboardPage.oralExamModeDescription')}
+                <ul className="list-disc pl-5 mt-2 space-y-1">
+                {questionsToDisplay.map((q, index) => (
+                    <li key={index}>{q.questionText} {q.explanation && <span className="text-xs italic">({t('dashboardPage.oralExamHint')}: {q.explanation})</span>}</li>
+                ))}
+                </ul>
+            </AlertDescription>
+        </Alert>
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {questionsToDisplay.map((q: PredictedQuestion, index) => (
-          <PredictedQuestionCard
-            key={index}
-            question={q}
-            onGetExplanation={handleGetExplanation}
-            isExplainingCurrent={isExplaining && selectedQuestionForExplanation?.questionText === q.questionText}
-            isExplanationDisabled={isFreeUser}
-          />
-        ))}
-      </div>
+
       {isFreeUser && predictedData.questions.length > FREE_USER_QUESTION_LIMIT && (
          <UpgradeProAlert
             featureName={t('dashboardPage.upgradeProAlertViewAll')}

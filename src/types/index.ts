@@ -1,14 +1,17 @@
 
+export type ExamType = "test" | "written" | "oral";
+
 export interface PredictedQuestion {
   questionText: string;
-  options: string[];
-  correctAnswerIndex: number;
+  options?: string[]; // Optional for written/oral
+  correctAnswerIndex?: number; // Optional for written/oral
   explanation?: string;
+  questionType: ExamType; // To know how to render it
 }
 
 export interface AnalysisDetails {
-  identifiedExamPatterns?: string; // Descripción de patrones de exámenes pasados, si se encuentran
-  potentialFocusAreas?: string[]; // Áreas de enfoque deducidas, con énfasis en exámenes pasados
+  identifiedExamPatterns?: string;
+  potentialFocusAreas?: string[];
 }
 
 export interface PredictedData extends AnalysisDetails {
@@ -18,6 +21,7 @@ export interface PredictedData extends AnalysisDetails {
   timestamp: number;
   originalDocumentContent?: string;
   requestedNumberOfQuestions?: number;
+  examType: ExamType; // Added to know what type of exam was generated
 }
 
 export interface AIExplanation {
@@ -25,8 +29,6 @@ export interface AIExplanation {
   explanation: string;
   topic: string;
 }
-
-export type ExamType = "test" | "written" | "oral";
 
 export interface ExamConfig {
   defaultNumberOfQuestions: number;
