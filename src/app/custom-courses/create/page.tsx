@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress'; // Added import
 import { Loader2, Lightbulb, CheckCircle, RefreshCw, Edit3, BookCopy, Clock, UsersIcon, BarChart3, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/contexts/I18nContext';
@@ -254,3 +255,4 @@ export default function CreateCustomCoursePage() {
     </div>
   );
 }
+
