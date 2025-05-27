@@ -6,9 +6,9 @@ import { collection, doc, writeBatch, Timestamp, getDocs, query, limit } from 'f
 // --- IMPORTANT: REPLACE THESE PLACEHOLDERS WITH ACTUAL UIDs ---
 // You can get these UIDs after your test users have logged in at least once,
 // or by looking them up in the Firebase Console (Authentication -> Users tab).
-const ADMIN_UID_PLACEHOLDER = 'REPLACE_WITH_ADMIN_UID'; // For serdiegm@gmail.com
-const FREE_USER_UID_PLACEHOLDER = 'REPLACE_WITH_FREE_USER_UID'; // For dginteligenciaartificial@gmail.com
-const PRO_USER_UID_PLACEHOLDER = 'REPLACE_WITH_PRO_USER_UID'; // For prueba@prueba.com
+const ADMIN_UID_PLACEHOLDER = 'NidzDymkvMS1OGJIvLVnCkCUAPA3'; // For serdiegm@gmail.com
+const FREE_USER_UID_PLACEHOLDER = 'nBLucmABJ3RpUsdROuiASLowkXF2'; // For dginteligenciaartificial@gmail.com
+const PRO_USER_UID_PLACEHOLDER = 'vNZkFqc4TqU7bqhz7q57RMtNLcx1'; // For prueba@prueba.com
 // --- END OF UID PLACEHOLDERS ---
 
 interface SeedUserUids {

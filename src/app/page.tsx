@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { UploadCloud, BrainCircuit, Lightbulb, Sparkles, BookOpenText, Settings, Users, CheckCircle, ArrowRight, Star, Zap, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
-import { useI18n } from '@/contexts/I18nContext'; // Import useI18n
+import { useI18n } from '@/contexts/I18nContext'; 
 
 const featureKeys = [
   "uploadDocs",
@@ -140,7 +140,7 @@ export default function HomePage() {
               </ul>
             </CardContent>
             <CardFooter className="mt-auto">
-              <Link href="/upload" passHref className="w-full">
+              <Link href="/signup" passHref className="w-full"> {/* Changed from /upload to /signup */}
                 <Button size="lg" variant="outline" className="w-full text-primary border-primary hover:bg-primary/10 hover:text-primary py-3 text-md">
                   {t('homePage.startFreeTrialButton')}
                 </Button>
@@ -184,7 +184,7 @@ export default function HomePage() {
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
           {t('homePage.revolutionizeStudySubtitle')}
         </p>
-        <Link href="/upload" passHref>
+        <Link href="/signup" passHref> {/* Changed from /upload to /signup */}
           <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-xl px-12 py-7 rounded-lg shadow-lg transition-transform duration-150 ease-in-out active:scale-95">
             <Sparkles className="mr-3 h-7 w-7" />
             {t('homePage.tryFreeButton')}
@@ -209,7 +209,17 @@ export default function HomePage() {
       
       <footer className="text-center py-8 mt-12 border-t border-border">
         <p className="text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} Search and Make S.L (CIF: B45786787). {t('homePage.footerRights')}
+          &copy; {new Date().getFullYear()} Search and Make S.L (CIF: B45786787) - Zeinte. {t('homePage.footerRights')}
+        </p>
+         <div className="mt-2 space-x-4 text-xs text-muted-foreground">
+          <Link href="#legal-privacy" className="hover:text-primary">{t('legal.privacyPolicy')}</Link>
+          <span>|</span>
+          <Link href="#legal-cookies" className="hover:text-primary">{t('legal.cookiesPolicy')}</Link>
+          <span>|</span>
+          <Link href="#legal-terms" className="hover:text-primary">{t('legal.legalNotice')}</Link>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground/80 max-w-3xl mx-auto px-4">
+          {t('legal.disclaimerText')}
         </p>
       </footer>
     </div>

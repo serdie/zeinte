@@ -101,9 +101,9 @@ export default function AdminCommunityManagementPage() {
   // --- IMPORTANT: REPLACE THESE WITH ACTUAL UIDs OF YOUR TEST USERS ---
   // These should match the UIDs of users created in your Firebase Authentication
   const seedUserUids = {
-    admin: 'REPLACE_WITH_ACTUAL_ADMIN_UID', // UID for serdiegm@gmail.com
-    free: 'REPLACE_WITH_ACTUAL_FREE_USER_UID',   // UID for dginteligenciaartificial@gmail.com
-    pro: 'REPLACE_WITH_ACTUAL_PRO_USER_UID'     // UID for prueba@prueba.com
+    admin: 'NidzDymkvMS1OGJIvLVnCkCUAPA3', // UID for serdiegm@gmail.com
+    free: 'nBLucmABJ3RpUsdROuiASLowkXF2',   // UID for dginteligenciaartificial@gmail.com
+    pro: 'vNZkFqc4TqU7bqhz7q57RMtNLcx1'     // UID for prueba@prueba.com
   };
   // --- END OF UID REPLACEMENT ---
 

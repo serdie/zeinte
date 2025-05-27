@@ -16,15 +16,12 @@ import SidebarNav from './SidebarNav';
 import { Brain } from 'lucide-react';
 import Link from 'next/link';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useI18n } from '@/contexts/I18nContext'; // Import useI18n
-import LanguageSwitcher from './LanguageSwitcher'; // Import LanguageSwitcher
+import { useI18n } from '@/contexts/I18nContext'; 
+import LanguageSwitcher from './LanguageSwitcher'; 
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
-
-// No need for getHeaderTitle function here, as it's handled by SidebarNav for active state
-// and titles are managed by each page or a more robust i18n routing solution for metadata.
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const isMobile = useIsMobile();
@@ -40,7 +37,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     if (currentPathname.startsWith('/admin/app-settings')) return t("appLayout.adminAppSettingsTitle");
     if (currentPathname.startsWith('/admin/community-management')) return t("appLayout.adminCommunityManagementTitle");
     if (currentPathname.startsWith('/admin')) return t("appLayout.adminTitle");
-    return t("appLayout.defaultTitle");
+    return t("appLayout.defaultTitle"); // Should be "Zeinte"
   };
   
   const headerTitle = getDynamicHeaderTitle(pathname);
@@ -53,7 +50,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <Link href="/" className="flex items-center gap-2 text-sidebar-primary hover:text-sidebar-primary/90 transition-colors">
             <Brain className="h-8 w-8" />
             <h1 className="text-xl font-semibold group-data-[collapsible=icon]:hidden">
-              AdivinaExamen
+              Zeinte
             </h1>
           </Link>
         </SidebarHeader>
@@ -62,8 +59,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </SidebarContent>
         <SidebarFooter className="p-4 group-data-[collapsible=icon]:hidden">
           <p className="text-xs text-sidebar-foreground/70">
-            © {new Date().getFullYear()} Search and Make S.L (CIF: B45786787)
+            &copy; {new Date().getFullYear()} Search and Make S.L (CIF: B45786787) - Zeinte.
           </p>
+           <div className="mt-1 space-x-2 text-xs text-sidebar-foreground/60">
+            <Link href="#legal-privacy" className="hover:text-sidebar-primary">{t('legal.privacyPolicy')}</Link>
+            <span>|</span>
+            <Link href="#legal-cookies" className="hover:text-sidebar-primary">{t('legal.cookiesPolicy')}</Link>
+            <span>|</span>
+            <Link href="#legal-terms" className="hover:text-sidebar-primary">{t('legal.legalNotice')}</Link>
+          </div>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
@@ -76,7 +80,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               {headerTitle}
             </h2>
           </div>
-          <LanguageSwitcher /> {/* Add LanguageSwitcher to the header */}
+          <LanguageSwitcher /> 
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
           {children}

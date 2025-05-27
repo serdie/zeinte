@@ -5,7 +5,7 @@ import './globals.css';
 import ConditionalLayout from '@/components/layout/ConditionalLayout';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/contexts/AuthContext';
-import { I18nProvider } from '@/contexts/I18nContext'; // Import I18nProvider
+import { I18nProvider } from '@/contexts/I18nContext'; 
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -17,11 +17,9 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-// La exportación de metadata sigue siendo válida aunque el componente sea "use client"
-// Next.js maneja la extracción de metadata de forma separada.
 export const metadata: Metadata = {
-  title: 'AdivinaExamen', // Este título puede ser genérico, o podrías internacionalizarlo si usas i18n routing
-  description: 'Analiza documentos y predice preguntas de examen con IA.',
+  title: 'Zeinte - Tu Aliado Inteligente para Exámenes', 
+  description: 'Con Zeinte (antes AdivinaExamen), analiza documentos y predice preguntas de examen con IA.',
 };
 
 export default function RootLayout({
@@ -32,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <I18nProvider> {/* Wrap AuthProvider (and thus everything else) with I18nProvider */}
+        <I18nProvider>
           <AuthProvider>
             <ConditionalLayout>
               {children}
