@@ -26,7 +26,7 @@ export default function SidebarNav() {
     { href: '/upload', labelKey: 'sidebar.upload', icon: UploadCloud, protected: true },
     { href: '/configure', labelKey: 'sidebar.configureExam', icon: Settings, protected: true },
     { href: '/community', labelKey: 'sidebar.community', icon: Users, protected: true },
-    { href: '/custom-courses/create', labelKey: 'sidebar.createCourse', icon: Lightbulb, protected: true, adminOnly: true },
+    { href: '/custom-courses/create', labelKey: 'sidebar.createCourse', icon: Lightbulb, protected: true }, // Removed adminOnly: true
     { href: '/profile', labelKey: 'sidebar.profile', icon: User, protected: true },
   ];
 
@@ -53,7 +53,7 @@ export default function SidebarNav() {
       <div className="space-y-1">
         {navItems.map((item) => {
           if (item.protected && isFirebaseConfigured && !currentUser) return null;
-          if (item.adminOnly && !isAdmin) return null; 
+          // Removed item.adminOnly check for custom courses
           
           const label = t(item.labelKey);
           return (

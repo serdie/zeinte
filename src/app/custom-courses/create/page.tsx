@@ -109,14 +109,12 @@ export default function CreateCustomCoursePage() {
       estimatedDuration: generatedSyllabus.estimatedDuration,
       modules: initialModules,
     };
-    setDetailedCourseData(courseDataToBuild); // Set initial structure
+    setDetailedCourseData(courseDataToBuild); 
 
-    // Sequentially generate content for each module
     const updatedModules: CourseModule[] = [];
     for (let i = 0; i < initialModules.length; i++) {
       const module = initialModules[i];
       
-      // Update UI to show current module being generated
       setDetailedCourseData(prev => ({
         ...prev!,
         modules: prev!.modules.map((m, idx) => idx === i ? { ...m, status: 'generating' } : m),
@@ -141,16 +139,12 @@ export default function CreateCustomCoursePage() {
         });
       }
       setGenerationProgress(((i + 1) / initialModules.length) * 100);
-       // Update detailedCourseData with the processed module immediately for UI feedback
       setDetailedCourseData(prev => ({
         ...prev!,
         modules: prev!.modules.map((m, idx) => idx === i ? updatedModules[updatedModules.length-1] : m),
       }));
     }
-    
-    // Final update after all modules are processed (this might be redundant if above map is perfect)
-    // setDetailedCourseData(prev => ({ ...prev!, modules: updatedModules }));
-    
+        
     setIsPreparingCourse(false);
     setCurrentModuleIndex(0);
     setStage("course_view");
@@ -193,18 +187,17 @@ export default function CreateCustomCoursePage() {
       <Card className="w-full shadow-xl">
         <CardHeader>
           <CardTitle className="text-3xl flex items-center gap-3 text-primary">
-            <Wand2 className="h-8 w-8" /> {/* Changed Icon */}
+            <Wand2 className="h-8 w-8" /> 
             {t('customCourses.createPage.title')}
           </CardTitle>
           <CardDescription className="text-base">
-            {t('customCourses.createPage.description')}
+            {t('customCourses.createPage.descriptionForAllUsers')} 
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
           {stage === "define" && (
             <form onSubmit={handleGenerateSyllabus} className="space-y-6">
-              {/* ... form inputs as before ... */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="courseTopic" className="text-lg">{t('customCourses.createPage.topicLabel')}</Label>
@@ -263,7 +256,6 @@ export default function CreateCustomCoursePage() {
 
           {stage === "review_syllabus" && generatedSyllabus && (
             <div className="space-y-6">
-              {/* ... Alert and CardHeader as before ... */}
               <Alert variant="default" className="bg-green-500/10 border-green-500/50">
                 <CheckCircle className="h-5 w-5 text-green-600" />
                 <AlertTitle className="text-green-700">{t('customCourses.createPage.syllabusProposalTitle')}</AlertTitle>
@@ -300,7 +292,7 @@ export default function CreateCustomCoursePage() {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Button onClick={handleAcceptAndPrepareCourse} className="w-full sm:w-auto text-md py-3 px-6 bg-primary hover:bg-primary/90" disabled={isPreparingCourse}>
-                  {isPreparingCourse ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <PackageCheck className="mr-2 h-5 w-5" />} {/* Changed Icon */}
+                  {isPreparingCourse ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <PackageCheck className="mr-2 h-5 w-5" />}
                   {t('customCourses.createPage.acceptAndPrepareButton')}
                 </Button>
                 <Button variant="outline" onClick={() => handleGenerateSyllabus()} className="w-full sm:w-auto text-md py-3 px-6" disabled={isPreparingCourse || isLoading}>
