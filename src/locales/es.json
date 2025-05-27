@@ -279,12 +279,13 @@
     "passwordsDoNotMatchError": "Las contraseñas no coinciden.",
     "signupErrorToastTitle": "Error de Registro en Zeinte",
     "signupSuccessToastTitle": "Registro Exitoso en Zeinte",
+    "signupSuccessEmailVerificationToastDescription": "¡Bienvenido/a! Se ha enviado un correo de verificación a {{email}}. Por favor, revisa tu bandeja de entrada (y spam) y haz clic en el enlace para activar tu cuenta.",
     "signupSuccessToastDescription": "¡Bienvenido! Ya puedes iniciar sesión.",
     "googleErrorToastTitle": "Error con Google en Zeinte",
     "googleSuccessToastDescription": "¡Bienvenido con Google a Zeinte!",
     "loading": "Cargando...",
     "redirecting": "Redirigiendo...",
-    "betaWelcomeMessage": "¡Bienvenido/a a la Beta de Zeinte! Durante esta fase, todas las cuentas nuevas operan con los beneficios del Plan Gratuito mejorado, permitiéndote explorar la mayoría de nuestras funcionalidades. El Plan Pro completo con todas sus ventajas exclusivas y la pasarela de pago se activarán pronto.",
+    "betaWelcomeMessage": "¡Bienvenido/a a la Beta de Zeinte! Durante esta fase, todas las cuentas nuevas operan con beneficios ampliados del Plan Gratuito, permitiéndote explorar la mayoría de nuestras funcionalidades. El Plan Pro completo con todas sus ventajas exclusivas y la pasarela de pago se activarán pronto.",
     "betaNoticeTitle": "¡Zeinte está en Beta!",
     "betaNoticeDescription": "Zeinte se encuentra actualmente en fase Beta y su uso es 100% gratuito. Para ayudarnos a cubrir los costes de servidor durante este periodo, hemos incluido algo de publicidad. Agradecemos tu comprensión y apoyo mientras trabajamos para mejorar la plataforma."
   },
@@ -392,7 +393,7 @@
     "notAvailable": "N/A",
     "invalidDate": "Fecha inválida",
     "deleteUserDisclaimerTitle": "Nota Importante sobre Eliminación de Usuarios",
-    "deleteUserDisclaimerDescription": "La función \"Eliminar Usuario\" en este panel solo borra el registro del usuario de la base de datos Firestore (colección 'users'). **No elimina la cuenta del sistema de autenticación de Firebase.** Para una eliminación completa, necesitarías usar el SDK de Admin de Firebase en un entorno de backend seguro.",
+    "deleteUserDisclaimerDescription": "La función \"Eliminar Usuario\" en este panel solo borra el registro del usuario de la base de datos Firestore ('users' collection). **No elimina la cuenta del sistema de autenticación de Firebase.** Para una eliminación completa, necesitarías usar el SDK de Admin de Firebase en un entorno de backend seguro.",
     "editUserDialogTitle": "Editar Usuario: {{email}}",
     "editUserDialogDescription": "Modifica el nombre a mostrar y el plan (tier) del usuario.",
     "displayNameLabel": "Nombre a Mostrar",
@@ -502,13 +503,13 @@
     "maxFilesUploadDescription": "Define cuántos archivos puede subir un usuario a la vez en Zeinte.",
     "maxTotalSizeMBLabel": "Tamaño total máximo sugerido (MB):",
     "maxTotalSizeMBDescription": "Límite de tamaño total (sugerido) para la subida de archivos en Zeinte. Esto afecta la capacidad de \"Re-analizar\".",
-    "aiConfigLegend": "Configuración de IA",
+    "aiConfigLegend": "Configuración de IA (Afecta la predicción de preguntas)",
     "defaultAiModelLabel": "Modelo de IA por defecto:",
     "defaultAiModelDescription": "Para análisis y predicción en Zeinte. Afecta el flujo de predicción de preguntas.",
     "defaultTemperatureLabel": "Temperatura/Creatividad IA:",
     "defaultTemperatureDescription": "Valor entre 0 y 1. Afecta el flujo de predicción de preguntas.",
     "importantNoteTitle": "Nota Importante sobre Zeinte",
-    "importantNoteDescription": "Actualmente, solo los \"Límites de Subida de Archivos\" y la \"Configuración de IA\" para el flujo de predicción de preguntas son funcionales en Zeinte. Otras opciones avanzadas y la gestión de planes de suscripción se implementarán en futuras versiones y se gestionan conceptualmente por ahora.",
+    "importantNoteDescription": "Actualmente, los \"Límites de Subida de Archivos\" y la \"Configuración de IA\" para el flujo de predicción de preguntas son funcionales. Otras opciones avanzadas y la gestión de planes de suscripción se implementarán en futuras versiones y se gestionan conceptualmente por ahora.",
     "saveConfigButton": "Guardar Configuración",
     "configSavedToastTitle": "Configuración Guardada en Zeinte",
     "configSavedToastDescriptionFileUploadLimits": "Los límites de subida de archivos han sido actualizados.",
@@ -547,7 +548,12 @@
     "logoutSuccessToastTitle": "Sesión Cerrada",
     "logoutSuccessToastDescription": "Has cerrado sesión exitosamente.",
     "errorSavingUserToFirestore": "Error guardando usuario en Firestore:",
-    "firestoreUnavailableSaveUser": "AuthContext: Instancia de Firestore DB no disponible, no se puede guardar el usuario."
+    "firestoreUnavailableSaveUser": "AuthContext: Instancia de Firestore DB no disponible, no se puede guardar el usuario.",
+    "tooManyRequestsError": "Demasiados intentos fallidos de inicio de sesión. Por favor, inténtalo de nuevo más tarde o restablece tu contraseña.",
+    "resendVerificationNotLoggedIn": "Debes iniciar sesión para reenviar el correo de verificación.",
+    "resendVerificationAlreadyVerified": "Tu correo electrónico ya ha sido verificado.",
+    "resendVerificationGoogleUser": "Los usuarios de Google no necesitan verificación por correo electrónico por este método.",
+    "resendVerificationSuccess": "Correo de verificación reenviado a {{email}}."
   },
   "upgradeProAlert": {
     "title": "¡Desbloquea Funcionalidad Pro en Zeinte!",
@@ -568,7 +574,7 @@
   "customCourses": {
     "createPage": {
       "title": "Crear Curso a Medida con IA",
-      "description": "Define las características principales de tu curso ideal y deja que nuestra IA te proponga un temario inicial. Por ahora, esta sección es accesible solo para administradores.",
+      "description": "Define las características principales de tu ideal curso y deja que nuestra IA te proponga un temario inicial. Por ahora, esta sección es accesible solo para administradores.",
       "topicLabel": "Tema Principal del Curso:",
       "topicPlaceholder": "Ej: Física Cuántica para Principiantes, Marketing Digital Avanzado",
       "levelLabel": "Nivel del Curso:",
@@ -617,5 +623,21 @@
       "moduleContentLoading": "Cargando contenido del módulo...",
       "coursePreparationPatience": "Este proceso puede tardar unos minutos. Por favor, ten paciencia."
     }
+  },
+  "verifyEmailPage": {
+    "title": "Verifica tu Correo Electrónico",
+    "description": "Hemos enviado un enlace de verificación a {{email}}. Por favor, revisa tu bandeja de entrada y haz clic en el enlace para activar tu cuenta.",
+    "yourEmail": "tu correo electrónico",
+    "spamWarning": "Si no ves el correo, revisa tu carpeta de spam o correo no deseado.",
+    "resendButton": "Reenviar Correo de Verificación",
+    "resendSuccessTitle": "Correo Reenviado",
+    "resendErrorTitle": "Error al Reenviar",
+    "loginAfterVerification": "Una vez verificado, puedes cerrar esta página e iniciar sesión o continuar.",
+    "backToDashboardAttempt": "Intentar ir al Panel de Estudio",
+    "checkVerificationButton": "Ya lo he verificado / Comprobar estado",
+    "verificationConfirmedTitle": "¡Correo Verificado!",
+    "redirectingToDashboard": "Redirigiendo al panel de estudio...",
+    "notYetVerifiedTitle": "Aún no verificado",
+    "notYetVerifiedDescription": "Parece que tu correo aún no ha sido verificado. Por favor, haz clic en el enlace del correo que te enviamos."
   }
 }

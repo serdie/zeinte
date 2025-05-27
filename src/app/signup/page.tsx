@@ -1,4 +1,3 @@
-
 // src/app/signup/page.tsx
 "use client";
 
@@ -28,7 +27,12 @@ export default function SignupPage() {
 
   useEffect(() => {
     if (!authLoading && currentUser) {
-      router.push('/dashboard');
+      // Si el usuario ya está verificado, va al dashboard, sino a verify-email
+      if (currentUser.emailVerified || currentUser.providerData.some(p => p.providerId === 'google.com')) {
+        router.push('/dashboard');
+      } else {
+        router.push('/verify-email');
+      }
     }
   }, [currentUser, authLoading, router]);
 
@@ -50,8 +54,10 @@ export default function SignupPage() {
       setAuthError(result);
       toast({ title: t("signupPage.signupErrorToastTitle"), description: result, variant: "destructive" });
     } else {
-      toast({ title: t("signupPage.signupSuccessToastTitle"), description: t("signupPage.signupSuccessToastDescription"), variant: "default" });
-      router.push('/login');
+      // El usuario (result) ha sido creado, y sendEmailVerification fue llamado.
+      // El estado de currentUser en useAuth se actualizará por onAuthStateChanged.
+      toast({ title: t("signupPage.signupSuccessToastTitle"), description: t("signupPage.signupSuccessEmailVerificationToastDescription", { email: email }), variant: "default", duration: 7000 });
+      router.push('/verify-email'); // Redirigir a la página de verificación
     }
     setIsLoading(false);
   };
@@ -68,8 +74,10 @@ export default function SignupPage() {
       setAuthError(result);
        toast({ title: t("signupPage.googleErrorToastTitle"), description: result, variant: "destructive" });
     } else {
-      toast({ title: t("signupPage.signupSuccessToastTitle"), description: t("signupPage.googleSuccessToastDescription"), variant: "default" });
-      router.push('/dashboard');
+      // onAuthStateChanged manejará la redirección o el estado del usuario.
+      // No es necesario mostrar un toast aquí ya que onAuthStateChanged podría redirigir antes.
+      // La lógica de redirección en useEffect se encargará.
+      // router.push('/dashboard'); // No es necesario, useEffect lo hará
     }
     setIsLoading(false);
   };
@@ -78,9 +86,10 @@ export default function SignupPage() {
     return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
 
-  if (!authLoading && currentUser) {
-     return <div className="flex items-center justify-center min-h-screen"><p>{t("signupPage.redirecting")}</p><Loader2 className="ml-2 h-5 w-5 animate-spin text-primary" /></div>;
-  }
+  // No redirigir desde aquí si currentUser existe, dejar que useEffect maneje la lógica.
+  // if (!authLoading && currentUser) {
+  //    return <div className="flex items-center justify-center min-h-screen"><p>{t("signupPage.redirecting")}</p><Loader2 className="ml-2 h-5 w-5 animate-spin text-primary" /></div>;
+  // }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background to-muted/30 p-4">
@@ -97,7 +106,7 @@ export default function SignupPage() {
             <Info className="h-5 w-5" />
             <AlertTitle>{t("signupPage.betaNoticeTitle")}</AlertTitle>
             <AlertDescription>
-              {t("signupPage.betaNoticeDescription")}
+              {t("signupPage.betaWelcomeMessage")}
             </AlertDescription>
           </Alert>
           {!isFirebaseConfigured && (

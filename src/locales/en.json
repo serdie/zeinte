@@ -279,6 +279,7 @@
     "passwordsDoNotMatchError": "Passwords do not match.",
     "signupErrorToastTitle": "Signup Error - Zeinte",
     "signupSuccessToastTitle": "Signup Successful - Zeinte",
+    "signupSuccessEmailVerificationToastDescription": "Welcome! A verification email has been sent to {{email}}. Please check your inbox (and spam folder) and click the link to activate your account.",
     "signupSuccessToastDescription": "Welcome! You can now log in.",
     "googleErrorToastTitle": "Google Sign-Up Error - Zeinte",
     "googleSuccessToastDescription": "Welcome with Google to Zeinte!",
@@ -502,7 +503,7 @@
     "maxFilesUploadDescription": "Define how many files a user can upload at once in Zeinte.",
     "maxTotalSizeMBLabel": "Maximum suggested total size (MB):",
     "maxTotalSizeMBDescription": "Suggested total size limit for file uploads in Zeinte. This affects the \"Re-analyze\" capability.",
-    "aiConfigLegend": "AI Configuration",
+    "aiConfigLegend": "AI Configuration (Affects question prediction)",
     "defaultAiModelLabel": "Default AI Model:",
     "defaultAiModelDescription": "For analysis and prediction in Zeinte. Affects the question prediction flow.",
     "defaultTemperatureLabel": "AI Temperature/Creativity:",
@@ -547,7 +548,12 @@
     "logoutSuccessToastTitle": "Logged Out",
     "logoutSuccessToastDescription": "You have successfully logged out.",
     "errorSavingUserToFirestore": "Error saving user to Firestore:",
-    "firestoreUnavailableSaveUser": "AuthContext: Firestore DB instance is not available, cannot save user."
+    "firestoreUnavailableSaveUser": "AuthContext: Firestore DB instance is not available, cannot save user.",
+    "tooManyRequestsError": "Too many failed login attempts. Please try again later or reset your password.",
+    "resendVerificationNotLoggedIn": "You must be logged in to resend the verification email.",
+    "resendVerificationAlreadyVerified": "Your email is already verified.",
+    "resendVerificationGoogleUser": "Google users do not require email verification through this method.",
+    "resendVerificationSuccess": "Verification email resent to {{email}}."
   },
   "upgradeProAlert": {
     "title": "Unlock Pro Features in Zeinte!",
@@ -617,5 +623,21 @@
       "moduleContentLoading": "Loading module content...",
       "coursePreparationPatience": "This process may take a few minutes. Please be patient."
     }
+  },
+  "verifyEmailPage": {
+    "title": "Verify Your Email",
+    "description": "We've sent a verification link to {{email}}. Please check your inbox and click the link to activate your account.",
+    "yourEmail": "your email",
+    "spamWarning": "If you don't see the email, please check your spam or junk folder.",
+    "resendButton": "Resend Verification Email",
+    "resendSuccessTitle": "Email Resent",
+    "resendErrorTitle": "Error Resending Email",
+    "loginAfterVerification": "Once verified, you can close this page and log in or continue.",
+    "backToDashboardAttempt": "Try going to Study Dashboard",
+    "checkVerificationButton": "I've verified / Check Status",
+    "verificationConfirmedTitle": "Email Verified!",
+    "redirectingToDashboard": "Redirecting to study dashboard...",
+    "notYetVerifiedTitle": "Not Yet Verified",
+    "notYetVerifiedDescription": "It seems your email hasn't been verified yet. Please click the link in the email we sent."
   }
 }
