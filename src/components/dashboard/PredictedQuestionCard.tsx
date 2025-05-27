@@ -14,16 +14,15 @@ interface PredictedQuestionCardProps {
   question: PredictedQuestion;
   onGetExplanation: (questionText: string, options: string[], correctAnswerIndex: number) => void;
   isExplainingCurrent: boolean;
-  isExplanationDisabled?: boolean;
+  isExplanationDisabled?: boolean; // This prop can now be removed or always passed as false
 }
 
-export default function PredictedQuestionCard({ question, onGetExplanation, isExplainingCurrent, isExplanationDisabled }: PredictedQuestionCardProps) {
+export default function PredictedQuestionCard({ question, onGetExplanation, isExplainingCurrent }: PredictedQuestionCardProps) {
   const { t } = useI18n();
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
   const [answerRevealed, setAnswerRevealed] = useState(false);
 
   const handleOptionSelect = (index: number, event: MouseEvent<HTMLDivElement>) => {
-    // Prevent accordion from toggling if the click is on an option
     event.stopPropagation();
     if (!answerRevealed) {
       setSelectedOptionIndex(index);
@@ -37,7 +36,6 @@ export default function PredictedQuestionCard({ question, onGetExplanation, isEx
     setAnswerRevealed(false);
   }
 
-  // Defensive check: if for some reason a "test" question doesn't have options, don't crash.
   if (!question.options || !Array.isArray(question.options) || question.options.length === 0) {
     return (
       <Card className="shadow-md hover:shadow-lg transition-shadow duration-200 flex flex-col border-destructive">
@@ -54,6 +52,8 @@ export default function PredictedQuestionCard({ question, onGetExplanation, isEx
       </Card>
     );
   }
+
+  const isExplanationButtonDisabled = isExplainingCurrent || typeof question.correctAnswerIndex !== 'number';
 
   return (
     <Card className="shadow-md hover:shadow-lg transition-shadow duration-200 flex flex-col">
@@ -129,14 +129,14 @@ export default function PredictedQuestionCard({ question, onGetExplanation, isEx
         )}
         <Button
           onClick={(e) => {
-            e.stopPropagation(); // Prevent accordion toggle if card content is wrapped in one
-            if (question.options && typeof question.correctAnswerIndex === 'number') { // Ensure options and correctAnswerIndex are valid before calling
+            e.stopPropagation(); 
+            if (question.options && typeof question.correctAnswerIndex === 'number') { 
                  onGetExplanation(question.questionText, question.options, question.correctAnswerIndex);
             }
           }}
-          disabled={isExplainingCurrent || isExplanationDisabled || typeof question.correctAnswerIndex !== 'number'}
+          disabled={isExplanationButtonDisabled}
           variant="outline"
-          title={isExplanationDisabled ? t('predictedQuestionCard.getAIDetailsButtonProTooltip') : t('predictedQuestionCard.getAIDetailsButton')}
+          title={t('predictedQuestionCard.getAIDetailsButton')}
           className={cn(
             "bg-accent hover:bg-accent/90 text-accent-foreground border-accent hover:border-accent/90 flex-1",
             !answerRevealed && "sm:col-span-2 w-full"
@@ -146,11 +146,6 @@ export default function PredictedQuestionCard({ question, onGetExplanation, isEx
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               {t('predictedQuestionCard.getAIDetailsButtonLoading')}
-            </>
-          ) : isExplanationDisabled ? (
-            <>
-              <Lock className="mr-2 h-4 w-4" />
-              {t('predictedQuestionCard.getAIDetailsButtonPro')}
             </>
           ) : (
             <>

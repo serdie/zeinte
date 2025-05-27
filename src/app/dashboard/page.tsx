@@ -102,22 +102,23 @@ export default function DashboardPage() {
   }, [isFreeUser]);
 
   const handleGetExplanation = useCallback(async (questionText: string, options: string[], correctAnswerIndex: number) => {
-    if (isFreeUser) {
-      toast({
-        title: t('upgradeProAlert.title'),
-        description: (
-          <div className="flex flex-col gap-2">
-            <span>{t('predictedQuestionCard.getAIDetailsButtonProTooltip')}</span>
-            <Link href="/#pricing" passHref>
-              <Button variant="link" className="p-0 h-auto text-primary hover:underline">{t('upgradeProAlert.updateNow')}</Button>
-            </Link>
-          </div>
-        ),
-        variant: "default",
-        duration: 7000,
-      });
-      return;
-    }
+    // Removed isFreeUser check for explanation access
+    // if (isFreeUser) {
+    //   toast({
+    //     title: t('upgradeProAlert.title'),
+    //     description: (
+    //       <div className="flex flex-col gap-2">
+    //         <span>{t('predictedQuestionCard.getAIDetailsButtonProTooltip')}</span>
+    //         <Link href="/#pricing" passHref>
+    //           <Button variant="link" className="p-0 h-auto text-primary hover:underline">{t('upgradeProAlert.updateNow')}</Button>
+    //         </Link>
+    //       </div>
+    //     ),
+    //     variant: "default",
+    //     duration: 7000,
+    //   });
+    //   return;
+    // }
 
     const questionContext = { questionText, options, correctAnswerIndex };
     setSelectedQuestionForExplanation(questionContext);
@@ -145,7 +146,7 @@ export default function DashboardPage() {
     } finally {
       setIsExplaining(false);
     }
-  }, [predictedData, toast, isFreeUser, t]);
+  }, [predictedData, toast, t]); // Removed isFreeUser from dependencies
 
   const handleReAnalyze = async () => {
     if (isFreeUser) {
@@ -386,7 +387,7 @@ export default function DashboardPage() {
                 question={q}
                 onGetExplanation={handleGetExplanation}
                 isExplainingCurrent={isExplaining && selectedQuestionForExplanation?.questionText === q.questionText}
-                isExplanationDisabled={isFreeUser}
+                isExplanationDisabled={false} // AI Explanation is now enabled for all users
             />
             ))}
         </div>
