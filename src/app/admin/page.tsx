@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ShieldAlert, Loader2, Users, AlertTriangle, ArrowLeft, Settings, MessageSquare, Edit3, Trash2, Save } from 'lucide-react';
+import { ShieldAlert, Loader2, Users, AlertTriangle, ArrowLeft, Settings, MessageSquare, Edit3, Trash2, Save, ArrowDownUp, ArrowDown, ArrowUp, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -20,11 +20,12 @@ import { useToast } from '@/hooks/use-toast';
 import type { UserTier } from '@/contexts/AuthContext';
 
 interface AppUser extends DocumentData {
-  id: string;
-  uid: string;
+  id: string; // document ID from Firestore snapshot
+  uid: string; // Firebase Auth UID, usually same as document ID for 'users' collection
   email?: string;
   displayName?: string;
-  provider?: string;
+  provider?: string; // Fallback if providerData is not available
+  providerData?: { providerId: string; uid: string }[]; // From Firebase Auth User object
   createdAt?: Timestamp | { seconds: number, nanoseconds: number } | null;
   tier?: UserTier;
   preferences?: string[];
@@ -36,13 +37,17 @@ const formatFirebaseTimestamp = (timestamp: Timestamp | { seconds: number, nanos
   let date: Date;
   if (timestamp instanceof Timestamp) {
     date = timestamp.toDate();
-  } else if (timestamp && typeof timestamp.seconds === 'number') {
-    date = new Date(timestamp.seconds * 1000);
+  } else if (timestamp && typeof (timestamp as {seconds: number}).seconds === 'number') {
+    // Handle Firestore Timestamp-like objects that might not be actual Timestamp instances
+    // (e.g., after serialization/deserialization or from certain Firestore SDK versions/contexts)
+    date = new Date((timestamp as {seconds: number}).seconds * 1000);
   } else {
     return 'Fecha inválida';
   }
   return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
 };
+
+type SortOrder = 'asc' | 'desc' | 'none';
 
 export default function AdminPage() {
   const { currentUser, isAdmin, loading: authLoading, isFirebaseConfigured } = useAuth();
@@ -60,6 +65,8 @@ export default function AdminPage() {
   const [userToDelete, setUserToDelete] = useState<AppUser | null>(null);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc'); // Default: newest first
 
   const fetchUsers = async () => {
     if (!isAdmin || !isFirebaseConfigured || !db) {
@@ -76,7 +83,7 @@ export default function AdminPage() {
       const querySnapshot = await getDocs(usersCollectionRef);
       const usersList = querySnapshot.docs.map(docSnapshot => ({ 
         id: docSnapshot.id, 
-        uid: docSnapshot.data().uid || docSnapshot.id, 
+        uid: docSnapshot.data().uid || docSnapshot.id, // Ensure uid is populated, fallback to doc.id if necessary
         ...docSnapshot.data()
       } as AppUser));
       setUsers(usersList);
@@ -96,8 +103,50 @@ export default function AdminPage() {
     if (isAdmin && isFirebaseConfigured && db) {
       fetchUsers();
     }
-  }, [isAdmin, isFirebaseConfigured, db]);
+  }, [isAdmin, isFirebaseConfigured]); // Removed db from dependency array as it's memoized in AuthContext
 
+  const filteredAndSortedUsers = useMemo(() => {
+    let processedUsers = [...users];
+
+    if (searchTerm.trim()) {
+      processedUsers = processedUsers.filter(user =>
+        (user.email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (user.displayName?.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    if (sortOrder !== 'none') {
+      processedUsers.sort((a, b) => {
+        const timeA = a.createdAt
+          ? (a.createdAt instanceof Timestamp ? a.createdAt.toMillis() : (a.createdAt.seconds * 1000 + Math.floor((a.createdAt.nanoseconds || 0) / 1000000)))
+          : 0;
+        const timeB = b.createdAt
+          ? (b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : (b.createdAt.seconds * 1000 + Math.floor((b.createdAt.nanoseconds || 0) / 1000000)))
+          : 0;
+
+        if (sortOrder === 'asc') {
+          return timeA - timeB;
+        } else { // desc
+          return timeB - timeA;
+        }
+      });
+    }
+    return processedUsers;
+  }, [users, searchTerm, sortOrder]);
+
+  const toggleSortOrder = () => {
+    setSortOrder(prevOrder => {
+      if (prevOrder === 'desc') return 'asc';
+      if (prevOrder === 'asc') return 'none';
+      return 'desc'; // 'none' goes to 'desc'
+    });
+  };
+
+  const getSortIcon = () => {
+    if (sortOrder === 'desc') return <ArrowDown className="h-4 w-4" />;
+    if (sortOrder === 'asc') return <ArrowUp className="h-4 w-4" />;
+    return <ArrowDownUp className="h-4 w-4" />;
+  };
 
   const handleOpenEditDialog = (user: AppUser) => {
     setEditingUser(user);
@@ -146,7 +195,6 @@ export default function AdminPage() {
       setIsDeletingUser(false);
     }
   };
-
 
   if (authLoading) {
     return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /> <span className="ml-3 text-lg">Cargando panel de administración...</span></div>;
@@ -205,15 +253,37 @@ export default function AdminPage() {
 
       <Card className="w-full shadow-xl bg-card">
         <CardHeader>
-          <CardTitle className="text-2xl flex items-center">
-            <Users className="h-6 w-6 mr-2" />
-            Gestión de Usuarios
+          <CardTitle className="text-2xl flex items-center justify-between">
+            <div className="flex items-center">
+              <Users className="h-6 w-6 mr-2" />
+              Gestión de Usuarios
+            </div>
+            <span className="text-sm font-normal text-muted-foreground">Total: {users.length}</span>
           </CardTitle>
           <CardDescription>
-            Bienvenido, {currentUser.email}. Aquí puedes visualizar y gestionar los usuarios registrados en AdivinaExamen.
+            Bienvenido, {currentUser.email}. Aquí puedes visualizar y gestionar los usuarios registrados en Zeinte.
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-6 flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Buscar por email o nombre..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-full"
+              />
+            </div>
+            <Button onClick={toggleSortOrder} variant="outline" className="w-full sm:w-auto">
+              {getSortIcon()}
+              <span className="ml-2">
+                Ordenar por Fecha: {sortOrder === 'desc' ? 'Nuevos Primero' : sortOrder === 'asc' ? 'Antiguos Primero' : 'Sin Orden'}
+              </span>
+            </Button>
+          </div>
+
           {isLoadingUsers ? (
             <div className="flex items-center justify-center py-10">
               <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" /> Cargando usuarios...
@@ -224,8 +294,10 @@ export default function AdminPage() {
               <AlertTitle>Error al Cargar Usuarios</AlertTitle>
               <AlertDescription>{fetchError}</AlertDescription>
             </Alert>
-          ) : users.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No hay usuarios registrados todavía.</p>
+          ) : filteredAndSortedUsers.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">
+              {users.length === 0 ? "No hay usuarios registrados todavía." : "No se encontraron usuarios que coincidan con la búsqueda."}
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -241,7 +313,7 @@ export default function AdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user) => (
+                  {filteredAndSortedUsers.map((user) => (
                     <TableRow key={user.uid}>
                       <TableCell className="font-mono text-xs truncate max-w-[100px]" title={user.uid}>{user.uid}</TableCell>
                       <TableCell className="font-medium">{user.email || 'N/A'}</TableCell>
@@ -261,7 +333,6 @@ export default function AdminPage() {
                         <Button variant="outline" size="sm" onClick={() => handleOpenEditDialog(user)} title="Editar Usuario">
                             <Edit3 className="h-4 w-4" />
                         </Button>
-                        {/* Corrected: Removed AlertDialogTrigger wrapper, using simple Button */}
                         <Button variant="destructive" size="sm" onClick={() => setUserToDelete(user)} title="Eliminar Usuario (Firestore)">
                             <Trash2 className="h-4 w-4" />
                         </Button>
@@ -275,7 +346,6 @@ export default function AdminPage() {
         </CardContent>
       </Card>
 
-      {/* Edit User Dialog */}
       {editingUser && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-md">
@@ -322,7 +392,6 @@ export default function AdminPage() {
         </Dialog>
       )}
       
-      {/* Delete User Confirmation Dialog */}
       {userToDelete && (
           <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
             <AlertDialogContent>
@@ -345,7 +414,6 @@ export default function AdminPage() {
         </AlertDialog>
       )}
 
-
       <div className="mt-10 space-y-6">
         <h2 className="text-2xl font-semibold text-foreground border-b pb-2">Otras Funciones del CMS</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -357,7 +425,7 @@ export default function AdminPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">Moderar temas y mensajes del foro, gestionar categorías, etc. (Próximamente)</p>
+              <p className="text-sm text-muted-foreground">Moderar temas y mensajes del foro, gestionar categorías, etc.</p>
               <Link href="/admin/community-management" passHref>
                  <Button variant="outline" size="sm" className="mt-3">Ir a Gestión de Comunidad</Button>
               </Link>
@@ -382,5 +450,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
