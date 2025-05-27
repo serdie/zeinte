@@ -32,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es"> {/* Consider making lang dynamic with i18n if using i18n routing in the future */}
+    <html lang="es">
       <head>
         {/*
           IMPORTANTE: Reemplaza "ca-pub-YOUR_ADSENSE_PUBLISHER_ID" con tu ID de editor de AdSense real.
