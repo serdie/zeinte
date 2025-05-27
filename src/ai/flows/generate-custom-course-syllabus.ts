@@ -11,7 +11,8 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const GenerateCustomCourseSyllabusInputSchema = z.object({
+// NOT EXPORTED ANYMORE
+const GenerateCustomCourseSyllabusInputSchema = z.object({
   courseTopic: z.string().describe('The main topic or subject of the course. Example: "Química para 1º de Bachillerato", "Introducción a la Programación con Python".'),
   courseLevel: z.enum(['Principiante', 'Intermedio', 'Avanzado']).describe('The intended level of the course.'),
   courseGoals: z.string().optional().describe('Optional. Main learning objectives or goals for the students taking this course. Example: "Entender los principios básicos de la termodinámica y ser capaz de resolver problemas estequiométricos."'),
@@ -19,7 +20,8 @@ export const GenerateCustomCourseSyllabusInputSchema = z.object({
 });
 export type GenerateCustomCourseSyllabusInput = z.infer<typeof GenerateCustomCourseSyllabusInputSchema>;
 
-export const GenerateCustomCourseSyllabusOutputSchema = z.object({
+// NOT EXPORTED ANYMORE
+const GenerateCustomCourseSyllabusOutputSchema = z.object({
   syllabusItems: z.array(z.string()).describe('A list of main topics or modules for the course syllabus. Each item should be a concise title for a section or unit.'),
   estimatedDuration: z.string().describe('An estimated duration for the course. Example: "Aproximadamente 4-6 semanas, dedicando 5 horas por semana".'),
   courseTitleSuggestion: z.string().describe('A catchy and descriptive title suggestion for the course.'),
@@ -74,3 +76,4 @@ const generateCustomCourseSyllabusFlow = ai.defineFlow(
     return output;
   }
 );
+
