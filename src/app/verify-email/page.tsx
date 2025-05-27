@@ -16,6 +16,8 @@ export default function VerifyEmailPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useI18n();
+  const [isCheckingVerification, setIsCheckingVerification] = useState(false);
+
 
   useEffect(() => {
     if (loading || !isFirebaseConfigured) return;
@@ -24,14 +26,15 @@ export default function VerifyEmailPage() {
       router.push('/login');
       return;
     }
+    // If user is from Google or email is verified, redirect to dashboard
     if (currentUser.emailVerified || currentUser.providerData.some(p => p.providerId === 'google.com')) {
       router.push('/dashboard');
     }
+    // Otherwise, they should stay on this page if they are an email user and not verified.
   }, [currentUser, loading, router, isFirebaseConfigured]);
 
   const handleResendEmail = async () => {
     const result = await resendVerificationEmail();
-    // Comprobamos si el mensaje de éxito contiene el email del usuario o una subcadena clave del mensaje de éxito traducido
     if (typeof result === 'string' && (result.includes(currentUser?.email || ' unlikely_string_to_match ') || result.startsWith(t("authContext.resendVerificationSuccess").substring(0,10))  ) ) {
       toast({ title: t("verifyEmailPage.resendSuccessTitle"), description: result, variant: "default", duration: 7000 });
     } else if (typeof result === 'string') {
@@ -46,24 +49,31 @@ export default function VerifyEmailPage() {
   
   const handleCheckVerification = async () => {
     if (currentUser && !currentUser.emailVerified) {
-      await currentUser.reload(); 
-      // Forzar re-renderizado o una forma de que el useEffect se re-evalue
-      // Esto es un poco un hack, idealmente onAuthStateChanged lo capturaría,
-      // pero el reload es asíncrono y el estado de currentUser puede no actualizarse inmediatamente para este render.
-      // La redirección en useEffect debería funcionar después del reload si el estado se propaga.
-      if (auth.currentUser?.emailVerified) { // Comprobar el estado más reciente de Firebase Auth
-         toast({ title: t("verifyEmailPage.verificationConfirmedTitle"), description: t("verifyEmailPage.redirectingToDashboard"), variant: "default" });
-         router.push('/dashboard'); // Redirigir inmediatamente
-      } else {
-         toast({ title: t("verifyEmailPage.notYetVerifiedTitle"), description: t("verifyEmailPage.notYetVerifiedDescription"), variant: "default" });
+      setIsCheckingVerification(true);
+      try {
+        await currentUser.reload(); // This updates the currentUser object in place
+        // The useEffect above should catch the change in currentUser.emailVerified and redirect.
+        // For more immediate feedback, we can check here:
+        if (currentUser.emailVerified) {
+           toast({ title: t("verifyEmailPage.verificationConfirmedTitle"), description: t("verifyEmailPage.redirectingToDashboard"), variant: "default" });
+           router.push('/dashboard'); // Redirect immediately
+        } else {
+           toast({ title: t("verifyEmailPage.notYetVerifiedTitle"), description: t("verifyEmailPage.notYetVerifiedDescription"), variant: "default" });
+        }
+      } catch (error) {
+        console.error("Error during manual verification check:", error);
+        toast({ title: t("common.error"), description: "Error checking verification status.", variant: "destructive"});
+      } finally {
+        setIsCheckingVerification(false);
       }
     } else if (currentUser?.emailVerified) {
+        // This case handles if the component renders and currentUser is already verified
+        // or if the button is clicked after verification through other means (e.g. another tab)
         router.push('/dashboard');
     }
   };
 
-  const auth = useAuth().currentUser ? firebaseAuthService : null; // Para acceder a auth.currentUser dentro de handleCheckVerification
-
+  // Removed problematic line: const auth = useAuth().currentUser ? firebaseAuthService : null;
 
   if (loading || !isFirebaseConfigured || (!currentUser && !loading) || (currentUser && (currentUser.emailVerified || currentUser.providerData.some(p => p.providerId === 'google.com'))) ) {
     return (
@@ -73,10 +83,7 @@ export default function VerifyEmailPage() {
     );
   }
   
-  // Si currentUser existe pero emailVerified es false y no es de Google
   if (!currentUser || currentUser.providerData.some(p => p.providerId === 'google.com')) {
-    // Este caso no debería ocurrir si la lógica de useEffect es correcta,
-    // pero es un fallback para evitar renderizar la página si el usuario no debería estar aquí.
      return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <p>{t("common.loading")}</p>
@@ -107,9 +114,9 @@ export default function VerifyEmailPage() {
           <Button 
             onClick={handleCheckVerification} 
             className="w-full text-md py-3 bg-accent hover:bg-accent/90 text-accent-foreground"
-            disabled={isResendingEmail || loading}
+            disabled={isResendingEmail || loading || isCheckingVerification}
           >
-            <CheckCircle className="mr-2 h-5 w-5" />
+            {isCheckingVerification ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <CheckCircle className="mr-2 h-5 w-5" /> }
             {t("verifyEmailPage.checkVerificationButton")}
           </Button>
 
@@ -117,7 +124,7 @@ export default function VerifyEmailPage() {
             onClick={handleResendEmail} 
             variant="outline" 
             className="w-full text-md py-3"
-            disabled={isResendingEmail || loading}
+            disabled={isResendingEmail || loading || isCheckingVerification}
           >
             {isResendingEmail ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Send className="mr-2 h-5 w-5" />}
             {t("verifyEmailPage.resendButton")}
