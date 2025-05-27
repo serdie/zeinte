@@ -12,11 +12,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/contexts/I18nContext';
 
 export default function VerifyEmailPage() {
-  const { currentUser, loading, logout, resendVerificationEmail, isFirebaseConfigured } = useAuth();
+  const { currentUser, loading, logout, resendVerificationEmail, isFirebaseConfigured, isResendingEmail } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useI18n();
-  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     if (loading || !isFirebaseConfigured) return;
@@ -25,21 +24,19 @@ export default function VerifyEmailPage() {
       router.push('/login');
       return;
     }
-    // Si el usuario es de Google o ya está verificado, redirigir al dashboard
     if (currentUser.emailVerified || currentUser.providerData.some(p => p.providerId === 'google.com')) {
       router.push('/dashboard');
     }
   }, [currentUser, loading, router, isFirebaseConfigured]);
 
   const handleResendEmail = async () => {
-    setIsResending(true);
     const result = await resendVerificationEmail();
-    if (typeof result === 'string' && result.startsWith(t("authContext.resendVerificationSuccess").substring(0,10))) { // Comprobación simple
-      toast({ title: t("verifyEmailPage.resendSuccessTitle"), description: result, variant: "default" });
+    // Comprobamos si el mensaje de éxito contiene el email del usuario o una subcadena clave del mensaje de éxito traducido
+    if (typeof result === 'string' && (result.includes(currentUser?.email || ' unlikely_string_to_match ') || result.startsWith(t("authContext.resendVerificationSuccess").substring(0,10))  ) ) {
+      toast({ title: t("verifyEmailPage.resendSuccessTitle"), description: result, variant: "default", duration: 7000 });
     } else if (typeof result === 'string') {
       toast({ title: t("verifyEmailPage.resendErrorTitle"), description: result, variant: "destructive" });
     }
-    setIsResending(false);
   };
 
   const handleLogout = async () => {
@@ -47,31 +44,47 @@ export default function VerifyEmailPage() {
     router.push('/login');
   };
   
-  // Chequeo adicional por si el usuario verifica en otra pestaña y vuelve.
-  // Firebase onAuthStateChanged debería eventualmente actualizarlo, pero esto puede forzar una recarga.
   const handleCheckVerification = async () => {
-    if (currentUser) {
-      await currentUser.reload(); // Recarga el estado del usuario desde Firebase
-      // El useEffect se encargará de redirigir si emailVerified es true
-      // Forzar una re-evaluación del estado del usuario
-      if (currentUser.emailVerified) {
-        toast({ title: t("verifyEmailPage.verificationConfirmedTitle"), description: t("verifyEmailPage.redirectingToDashboard"), variant: "default" });
-        router.push('/dashboard');
+    if (currentUser && !currentUser.emailVerified) {
+      await currentUser.reload(); 
+      // Forzar re-renderizado o una forma de que el useEffect se re-evalue
+      // Esto es un poco un hack, idealmente onAuthStateChanged lo capturaría,
+      // pero el reload es asíncrono y el estado de currentUser puede no actualizarse inmediatamente para este render.
+      // La redirección en useEffect debería funcionar después del reload si el estado se propaga.
+      if (auth.currentUser?.emailVerified) { // Comprobar el estado más reciente de Firebase Auth
+         toast({ title: t("verifyEmailPage.verificationConfirmedTitle"), description: t("verifyEmailPage.redirectingToDashboard"), variant: "default" });
+         router.push('/dashboard'); // Redirigir inmediatamente
       } else {
-        toast({ title: t("verifyEmailPage.notYetVerifiedTitle"), description: t("verifyEmailPage.notYetVerifiedDescription"), variant: "default" });
+         toast({ title: t("verifyEmailPage.notYetVerifiedTitle"), description: t("verifyEmailPage.notYetVerifiedDescription"), variant: "default" });
       }
+    } else if (currentUser?.emailVerified) {
+        router.push('/dashboard');
     }
   };
 
+  const auth = useAuth().currentUser ? firebaseAuthService : null; // Para acceder a auth.currentUser dentro de handleCheckVerification
 
-  if (loading || !currentUser || !isFirebaseConfigured || currentUser.emailVerified || currentUser.providerData.some(p => p.providerId === 'google.com')) {
-    // Muestra un loader mientras se redirige o si el estado aún no es el esperado
+
+  if (loading || !isFirebaseConfigured || (!currentUser && !loading) || (currentUser && (currentUser.emailVerified || currentUser.providerData.some(p => p.providerId === 'google.com'))) ) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
+  
+  // Si currentUser existe pero emailVerified es false y no es de Google
+  if (!currentUser || currentUser.providerData.some(p => p.providerId === 'google.com')) {
+    // Este caso no debería ocurrir si la lógica de useEffect es correcta,
+    // pero es un fallback para evitar renderizar la página si el usuario no debería estar aquí.
+     return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <p>{t("common.loading")}</p>
+        <Loader2 className="ml-2 h-5 w-5 animate-spin text-primary" />
+      </div>
+    );
+  }
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background to-muted/30 p-4">
@@ -94,7 +107,7 @@ export default function VerifyEmailPage() {
           <Button 
             onClick={handleCheckVerification} 
             className="w-full text-md py-3 bg-accent hover:bg-accent/90 text-accent-foreground"
-            disabled={isResending}
+            disabled={isResendingEmail || loading}
           >
             <CheckCircle className="mr-2 h-5 w-5" />
             {t("verifyEmailPage.checkVerificationButton")}
@@ -104,9 +117,9 @@ export default function VerifyEmailPage() {
             onClick={handleResendEmail} 
             variant="outline" 
             className="w-full text-md py-3"
-            disabled={isResending}
+            disabled={isResendingEmail || loading}
           >
-            {isResending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Send className="mr-2 h-5 w-5" />}
+            {isResendingEmail ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Send className="mr-2 h-5 w-5" />}
             {t("verifyEmailPage.resendButton")}
           </Button>
           

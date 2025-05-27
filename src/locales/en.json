@@ -279,7 +279,7 @@
     "passwordsDoNotMatchError": "Passwords do not match.",
     "signupErrorToastTitle": "Signup Error - Zeinte",
     "signupSuccessToastTitle": "Signup Successful - Zeinte",
-    "signupSuccessEmailVerificationToastDescription": "Welcome! A verification email has been sent to {{email}}. Please check your inbox (and spam folder) and click the link to activate your account.",
+    "signupSuccessEmailVerificationToastDescription": "Welcome! A verification email has been sent to {{email}}. Please check your inbox (and spam folder) and click the link to activate your account. It might take a few minutes to arrive.",
     "signupSuccessToastDescription": "Welcome! You can now log in.",
     "googleErrorToastTitle": "Google Sign-Up Error - Zeinte",
     "googleSuccessToastDescription": "Welcome with Google to Zeinte!",
@@ -287,7 +287,8 @@
     "redirecting": "Redirecting...",
     "betaWelcomeMessage": "Welcome to Zeinte Beta! During this phase, all new accounts operate with enhanced Free Plan benefits, allowing you to explore most of our features. The full Pro Plan with all its exclusive advantages and payment gateway will be activated soon.",
     "betaNoticeTitle": "Zeinte is in Beta!",
-    "betaNoticeDescription": "Zeinte is currently in Beta and is 100% free to use. To help us cover server costs during this period, we've included some advertising. We appreciate your understanding and support as we work to improve the platform."
+    "betaAdNoticeTitle": "Zeinte is in Beta and Free!",
+    "betaAdNoticeDescription": "Zeinte is currently 100% free during our Beta phase. To help us cover server costs, we've included some advertising. We appreciate your understanding and support!"
   },
   "profilePage": {
     "loadingProfile": "Loading Zeinte profile...",
@@ -545,15 +546,18 @@
     "accountExistsWithDifferentCredentialError": "An account already exists with this email but with a different sign-in method (e.g., Google or password). Try signing in with the original method.",
     "unexpectedError": "An unexpected error occurred ({{errorCode}}). Please try again. If the problem persists, check Firebase configuration.",
     "logoutErrorToastTitle": "Logout Error",
+    "logoutAttemptFailedConfigOrAuth": "AuthContext: Logout attempt failed because Firebase is not configured or auth service is unavailable.",
+    "logoutErrorFirebase": "Error logging out from Firebase:",
     "logoutSuccessToastTitle": "Logged Out",
     "logoutSuccessToastDescription": "You have successfully logged out.",
     "errorSavingUserToFirestore": "Error saving user to Firestore:",
     "firestoreUnavailableSaveUser": "AuthContext: Firestore DB instance is not available, cannot save user.",
     "tooManyRequestsError": "Too many failed login attempts. Please try again later or reset your password.",
+    "tooManyRequestsResendEmailError": "You have tried to resend the verification email too many times. Please wait a moment before trying again.",
     "resendVerificationNotLoggedIn": "You must be logged in to resend the verification email.",
     "resendVerificationAlreadyVerified": "Your email is already verified.",
     "resendVerificationGoogleUser": "Google users do not require email verification through this method.",
-    "resendVerificationSuccess": "Verification email resent to {{email}}."
+    "resendVerificationSuccess": "Verification email resent to {{email}}. Please check your inbox and spam folder."
   },
   "upgradeProAlert": {
     "title": "Unlock Pro Features in Zeinte!",
@@ -627,8 +631,8 @@
   "verifyEmailPage": {
     "title": "Verify Your Email",
     "description": "We've sent a verification link to {{email}}. Please check your inbox and click the link to activate your account.",
-    "yourEmail": "your email",
-    "spamWarning": "If you don't see the email, please check your spam or junk folder.",
+    "yourEmail": "your email address",
+    "spamWarning": "If you don't see the email, please check your spam or junk folder. It might take a few minutes to arrive.",
     "resendButton": "Resend Verification Email",
     "resendSuccessTitle": "Email Resent",
     "resendErrorTitle": "Error Resending Email",
