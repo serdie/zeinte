@@ -21,9 +21,7 @@ import { auth as firebaseAuthService, googleProvider as firebaseGoogleProvider, 
 import { useI18n } from './I18nContext';
 
 export const ADMIN_EMAIL = "serdiegm@gmail.com";
-export const FREE_USER_EMAIL = "dginteligenciaartificial@gmail.com";
-
-// Mensaje de error de configuración general de Firebase
+export const FREE_USER_EMAIL = "dginteligenciaartificial@gmail.com"; // This user will be 'pro'
 const FIREBASE_GENERAL_CONFIG_ERROR_MESSAGE_KEY = "authContext.firebaseGeneralConfigError";
 
 
@@ -46,7 +44,7 @@ interface AppUserFirestoreData extends DocumentData {
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
-  isFirebaseConfigured: boolean; // Renamed from firebaseConfigStatus
+  isFirebaseConfigured: boolean;
   isAdmin: boolean;
   userTier: UserTier;
   signUpWithEmail: (email: string, password: string) => Promise<User | string>;
@@ -62,28 +60,27 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [firebaseConfigStatus, setFirebaseConfigStatus] = useState(false); // Internal state for config
+  const [firebaseConfigStatus, setFirebaseConfigStatus] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userTier, setUserTier] = useState<UserTier>(null);
   const [isResendingEmail, setIsResendingEmail] = useState(false);
 
   const { t } = useI18n();
 
-  // Memoize Firebase services to prevent re-initialization on re-renders
   const auth: Auth | undefined = useMemo(() => firebaseAuthService, []);
   const googleProvider = useMemo(() => firebaseGoogleProvider, []);
   const firestoreDb: Firestore | undefined = useMemo(() => firestoreDbService, []);
 
   useEffect(() => {
-    setFirebaseConfigStatus(isFirebaseFullyConfigured()); // Update state based on the imported check
-    if (!isFirebaseFullyConfigured()) {
+    setFirebaseConfigStatus(isFirebaseFullyConfigured); // Update state based on the imported check
+    if (!isFirebaseFullyConfigured) {
       console.warn(t(FIREBASE_GENERAL_CONFIG_ERROR_MESSAGE_KEY));
       setLoading(false);
       return;
     }
     
     if (!auth || !firestoreDb) {
-        console.error("AuthContext: Critical error - Firebase auth or firestore service instance is undefined. Authentication will not work properly.");
+        console.error(t("authContext.firebaseAuthOrDbError"));
         setLoading(false);
         return;
     }
@@ -101,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (userEmailLower === ADMIN_EMAIL.toLowerCase()) {
             determinedTier = 'admin';
         } else if (userEmailLower === FREE_USER_EMAIL.toLowerCase()) {
-            determinedTier = 'pro'; // dginteligenciaartificial@gmail.com ahora es PRO
+            determinedTier = 'pro'; 
             specialDisplayName = 'dginteligenciaartificial';
         } else {
             if (userDocSnap.exists() && userDocSnap.data()?.tier) {
@@ -157,7 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       case 'auth/user-not-found':
       case 'auth/invalid-credential': 
         return t("authContext.userNotFoundError");
-      case 'auth/wrong-password': // This might also be covered by invalid-credential
+      case 'auth/wrong-password': 
         return t("authContext.wrongPasswordError");
       case 'auth/popup-closed-by-user':
         return t("authContext.popupClosedByUserError");
@@ -175,14 +172,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const saveUserToFirestore = async (user: User, tierToSave: UserTier, forcedDisplayName?: string, emailVerifiedParam?: boolean) => {
     if (!firestoreDb) {
-        console.warn("AuthContext: Firestore DB instance is not available, cannot save user.");
+        console.warn(t("authContext.firestoreUnavailableSaveUser"));
         return;
     }
     const userRef = doc(firestoreDb, "users", user.uid);
     const userSnap = await getDoc(userRef);
 
     let displayName = forcedDisplayName;
-    if (!displayName) { // Only try to determine default displayName if not forced
+    if (!displayName) { 
         displayName = user.displayName ||
                       (userSnap.exists() && userSnap.data()?.displayName) ||
                       user.email?.split('@')[0] ||
@@ -196,7 +193,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: user.email,
         displayName: displayName,
         photoURL: user.photoURL,
-        providerData: user.providerData.map(p => ({ providerId: p.providerId, uid: p.uid })), // Store provider data
+        providerData: user.providerData.map(p => ({ providerId: p.providerId, uid: p.uid })),
         tier: tierToSave,
         lastLogin: serverTimestamp(),
         emailVerified: effectiveEmailVerified,
@@ -207,13 +204,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await setDoc(userRef, {
               ...userDataToSet,
               createdAt: serverTimestamp(),
-              preferences: [], // Initialize preferences for new users
+              preferences: [], 
           });
       } else {
-          // If user exists, merge new data, ensuring special display name is forced if applicable
           const updateData: Partial<AppUserFirestoreData> = { ...userDataToSet };
           if (user.email?.toLowerCase() === FREE_USER_EMAIL.toLowerCase() && tierToSave === 'pro' && forcedDisplayName === 'dginteligenciaartificial') {
-             updateData.displayName = 'dginteligenciaartificial'; // Ensure this specific name is set for this user
+             updateData.displayName = 'dginteligenciaartificial'; 
           }
           await setDoc(userRef, updateData, { merge: true });
       }
@@ -225,8 +221,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const generateActionCodeSettings = (): ActionCodeSettings | undefined => {
     if (typeof window !== 'undefined') {
       return {
-        url: `${window.location.origin}/dashboard`, // Redirect to dashboard after verification
-        handleCodeInApp: false, // Firebase handles the code on its own page
+        url: `${window.location.origin}/dashboard`, 
+        handleCodeInApp: false, 
       };
     }
     console.warn("AuthContext: ActionCodeSettings could not be generated because window is undefined (likely SSR). Verification email might use default Firebase redirect.");
@@ -247,12 +243,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (settings) {
         await sendEmailVerification(user, settings);
       } else {
-        // Fallback if settings can't be generated (e.g. window undefined, though unlikely here if signup is client-side)
         await sendEmailVerification(user);
       }
       
-      // Determine tier based on email
-      let initialTier: UserTier = 'free'; // Default
+      let initialTier: UserTier;
       let forcedName: string | undefined = undefined;
       const emailLower = email.toLowerCase();
 
@@ -261,9 +255,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else if (emailLower === FREE_USER_EMAIL.toLowerCase()) {
         initialTier = 'pro'; 
         forcedName = 'dginteligenciaartificial';
+      } else {
+        initialTier = 'free';
       }
       
-      await saveUserToFirestore(user, initialTier, forcedName, false); // emailVerified is false initially
+      await saveUserToFirestore(user, initialTier, forcedName, false); 
       return user;
     } catch (error) {
       return handleAuthError(error as AuthError);
@@ -279,7 +275,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // onAuthStateChanged will handle calling saveUserToFirestore to update lastLogin and ensure tier is correct
       return userCredential.user;
     } catch (error) {
       return handleAuthError(error as AuthError);
@@ -295,7 +290,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      // onAuthStateChanged will handle calling saveUserToFirestore
       return result.user;
     } catch (error) {
       return handleAuthError(error as AuthError);
@@ -306,42 +300,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async (): Promise<void | string> => {
     if (!firebaseConfigStatus || !auth) {
-        // Even if Firebase isn't fully configured, try to clear local state if auth object exists
         if (auth) {
           try {
             await firebaseSignOut(auth);
-          } catch (e) { /* ignore if auth itself is the problem */ }
+          } catch (e) { /* ignore */ }
         }
         setCurrentUser(null);
         setIsAdmin(false);
         setUserTier(null);
-        setLoading(false); // Ensure loading is set to false
-        return t(FIREBASE_GENERAL_CONFIG_ERROR_MESSAGE_KEY); // Return the config error message
+        setLoading(false); 
+        return t(FIREBASE_GENERAL_CONFIG_ERROR_MESSAGE_KEY);
     }
 
-    setLoading(true); // Set loading true before sign out attempt
+    setLoading(true);
     try {
       await firebaseSignOut(auth);
-      // onAuthStateChanged will clear currentUser, isAdmin, userTier, and set loading to false.
-      // Explicitly setting them here might be redundant but ensures a clean state on explicit logout call.
       setCurrentUser(null);
       setIsAdmin(false);
       setUserTier(null);
+      // onAuthStateChanged will set loading to false.
     } catch (error) {
       console.error(t("authContext.logoutErrorFirebase"), error);
-      // Don't set loading to false here if signout fails, onAuthStateChanged might still trigger
-      return handleAuthError(error as AuthError);
-    } finally {
-      // setLoading(false) will be handled by onAuthStateChanged in most success cases,
-      // but if signout fails before onAuthStateChanged triggers, we ensure it's false.
-      // However, to avoid race conditions, it's often better to let onAuthStateChanged manage it.
-      // For an explicit logout action, if it fails and doesn't trigger onAuthStateChanged, 
-      // we might want to ensure loading is false.
-      // A simple approach for now:
-       if (auth.currentUser) { // If user is still somehow current after a failed signout
-           setLoading(false); // Update loading state
+       if (auth.currentUser) { 
+           setLoading(false); 
        }
-       // If signout was successful, onAuthStateChanged will set loading to false.
+      return handleAuthError(error as AuthError);
     }
   };
   
@@ -379,7 +362,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     currentUser,
     loading,
-    isFirebaseConfigured: firebaseConfigStatus, // Use the state variable
+    isFirebaseConfigured: firebaseConfigStatus,
     isAdmin,
     userTier,
     signUpWithEmail,
