@@ -1,4 +1,3 @@
-
 // "use client"; // Eliminado para permitir la exportación de metadata
 
 import type { Metadata } from 'next';
@@ -26,27 +25,50 @@ export const metadata: Metadata = {
   description: 'Con Zeinte (antes AdivinaExamen), analiza documentos y predice preguntas de examen con IA.',
 };
 
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    <html lang="es"> {/* Consider making lang dynamic with i18n if using i18n routing in the future */}
       <head>
-        {/*
-          IMPORTANTE: Reemplaza "ca-pub-YOUR_ADSENSE_PUBLISHER_ID" con tu ID de editor de AdSense real.
-          Este script inicializa AdSense. Debes tener una cuenta de AdSense aprobada.
-        */}
+        {/* Google AdSense Script - Reemplaza con tu ID de editor */}
         <Script
           async
           src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_ADSENSE_PUBLISHER_ID`}
           strategy="afterInteractive"
           crossOrigin="anonymous"
         />
+
+        {/* Google Analytics Scripts - Reemplaza NEXT_PUBLIC_GA_MEASUREMENT_ID en .env.local */}
+        {GA_MEASUREMENT_ID && (
+          <>
+            <Script
+              strategy="afterInteractive"
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+            />
+            <Script
+              id="google-analytics"
+              strategy="afterInteractive"
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${GA_MEASUREMENT_ID}', {
+                    page_path: window.location.pathname,
+                  });
+                `,
+              }}
+            />
+          </>
+        )}
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <I18nProvider>
+        <I18nProvider> {/* Envuelve AuthProvider (y por tanto todo lo demás) con I18nProvider */}
           <AuthProvider>
             <ConditionalLayout>
               {children}
