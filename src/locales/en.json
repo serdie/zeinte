@@ -1,3 +1,4 @@
+
 {
   "common": {
     "loading": "Loading...",
@@ -126,7 +127,7 @@
     "emptySubtitle": "It seems you haven't analyzed any documents yet in Zeinte. Upload your notes, syllabi, or exams to start studying intelligently!",
     "uploadDocsButton": "Upload Documents Now to Zeinte",
     "questionsReadyTitle": "Questions Ready for Study in Zeinte!",
-    "questionsReadyDescription": "We've analyzed your documents, and these are the multiple-choice questions we believe might appear on your exam.",
+    "questionsReadyDescription": "We've analyzed your documents, and these are the questions we believe might appear on your exam.",
     "analysisSummaryLabel": "Analysis summary:",
     "mainThemesLabel": "Main themes:",
     "focusAreasLabel": "Detected focus areas:",
@@ -185,7 +186,7 @@
     "tabCommunityExams": "Community",
     "tabPersonalExams": "Personal",
     "tabRecommendedExams": "Recommended",
-    "commonExamsDescription": "Select a common exam type. This will populate the topic in the \"AI Suggestions\" section and search for related documents (simulated).{{proFeature}}",
+    "commonExamsDescription": "Select a common exam type. This will populate the topic in the \"AI Suggestions\" section and search for related documents (simulated).",
     "commonExamsDescriptionNoPro": "Select a common exam type. This will populate the topic in the \"AI Suggestions\" section and search for related documents (simulated).",
     "commonExamsProFeatureText": " (Pro Feature)",
     "universitiesSectionTitle": "Universities",
@@ -203,7 +204,7 @@
     "comingSoonRecommendedExamsDescription": "Based on your activity and study topics, Zeinte's AI will suggest exams and documents that might be useful to you.",
     "aiDocSuggestionsTitle": "AI Document Suggestions in Zeinte",
     "aiDocSuggestionsProLockTooltip": " (Pro Feature)",
-    "aiDocSuggestionsDescription": "Enter a topic, and Zeinte's AI will suggest titles and summaries of relevant documents. You can add their simulated content to the analysis.{{proFeature}}",
+    "aiDocSuggestionsDescription": "Enter a topic, and Zeinte's AI will suggest titles and summaries of relevant documents. You can add their simulated content to the analysis.",
     "aiDocSuggestionsDescriptionNoPro": "Enter a topic, and Zeinte's AI will suggest titles and summaries of relevant documents. You can add their simulated content to the analysis.",
     "searchTopicLabel": "Search Topic:",
     "searchTopicPlaceholder": "E.g., Forest ranger exam, 20th Century Spanish History",
@@ -590,7 +591,6 @@
   "customCourses": {
     "createPage": {
       "title": "Create Custom Course with AI",
-      "description": "Define the main characteristics of your ideal course and let our AI propose an initial syllabus. Por ahora, esta sección es accesible solo para administradores.",
       "descriptionForAllUsers": "Define the main characteristics of your ideal course and let our AI propose an initial syllabus. Explore this feature!",
       "topicLabel": "Main Course Topic:",
       "topicPlaceholder": "E.g., Quantum Physics for Beginners, Advanced Digital Marketing",
