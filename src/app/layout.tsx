@@ -33,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es"> {/* Consider making lang dynamic with i18n if using i18n routing in the future */}
+    <html lang="es">
       <head>
         {/* Google AdSense Script - Reemplaza con tu ID de editor */}
         <Script
