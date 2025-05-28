@@ -11,24 +11,28 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, Building, School, Briefcase, FileType } from 'lucide-react';
+import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, FileType } from 'lucide-react'; // Removed unused Building, School, Briefcase
 import { useToast } from "@/hooks/use-toast";
-import { EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
+import { EXAM_CONFIG_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY } from '@/lib/localStorageKeys';
 import type { ExamConfig } from '@/types';
 import { findExternalDocuments, type FindExternalDocumentsOutput } from '@/ai/flows/find-external-documents';
 import { Checkbox } from '../ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+// import { UpgradeProAlert } from '@/components/ui/upgrade-pro-alert'; // Commented out as restrictions are currently lifted
 import { useI18n } from '@/contexts/I18nContext';
 
 interface FileUploadAreaProps {
-  onAnalyze: (content: string, numQuestions: number) => Promise<void>;
+  onAnalyze: (content: string, numQuestions: number) => Promise<void>; // examType removed
   isLoading: boolean;
 }
 
 const DEFAULT_MAX_FILES_UPLOAD = 30;
-const DEFAULT_MAX_TOTAL_SIZE_MB = 5; 
+const DEFAULT_MAX_TOTAL_SIZE_MB = 5;
+const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
+const FREE_USER_MAX_QUESTIONS = 5;
 
 interface CommonExam {
   id: string;
@@ -41,12 +45,12 @@ interface CommonExam {
 }
 
 const commonExams: CommonExam[] = [
-  { id: 'ucm', name: 'Universidad Complutense', category: 'Universidad', logoPlaceholder: 'https://placehold.co/80x40.png', logoHint: 'university campus', keywords: 'exámenes Universidad Complutense Madrid', icon: School },
-  { id: 'uab', name: 'Universitat Autònoma BCN', category: 'Universidad', logoPlaceholder: 'https://placehold.co/80x40.png', logoHint: 'modern university', keywords: 'exámenes Universitat Autònoma Barcelona', icon: School },
-  { id: 'us', name: 'Universidad de Sevilla', category: 'Universidad', logoPlaceholder: 'https://placehold.co/80x40.png', logoHint: 'historic university', keywords: 'exámenes Universidad de Sevilla', icon: School },
-  { id: 'admin_estado', name: 'Administrativo del Estado', category: 'Oposición', logoPlaceholder: 'https://placehold.co/60x60.png', logoHint: 'government building', keywords: 'oposición Administrativo del Estado', icon: Briefcase },
-  { id: 'hacienda', name: 'Agente de Hacienda', category: 'Oposición', logoPlaceholder: 'https://placehold.co/60x60.png', logoHint: 'tax office', keywords: 'oposición Agente Hacienda Pública', icon: Briefcase },
-  { id: 'agente_forestal', name: 'Agente Forestal', category: 'Oposición', logoPlaceholder: 'https://placehold.co/60x60.png', logoHint: 'forest ranger', keywords: 'oposición Agente Forestal', icon: Briefcase },
+  { id: 'ucm', name: 'Universidad Complutense', category: 'Universidad', logoPlaceholder: 'https://placehold.co/80x40.png', logoHint: 'university campus', keywords: 'exámenes Universidad Complutense Madrid', icon: LibraryBig },
+  { id: 'uab', name: 'Universitat Autònoma BCN', category: 'Universidad', logoPlaceholder: 'https://placehold.co/80x40.png', logoHint: 'modern university', keywords: 'exámenes Universitat Autònoma Barcelona', icon: LibraryBig },
+  { id: 'us', name: 'Universidad de Sevilla', category: 'Universidad', logoPlaceholder: 'https://placehold.co/80x40.png', logoHint: 'historic university', keywords: 'exámenes Universidad de Sevilla', icon: LibraryBig },
+  { id: 'admin_estado', name: 'Administrativo del Estado', category: 'Oposición', logoPlaceholder: 'https://placehold.co/60x60.png', logoHint: 'government building', keywords: 'oposición Administrativo del Estado', icon: LibraryBig },
+  { id: 'hacienda', name: 'Agente de Hacienda', category: 'Oposición', logoPlaceholder: 'https://placehold.co/60x60.png', logoHint: 'tax office', keywords: 'oposición Agente Hacienda Pública', icon: LibraryBig },
+  { id: 'agente_forestal', name: 'Agente Forestal', category: 'Oposición', logoPlaceholder: 'https://placehold.co/60x60.png', logoHint: 'forest ranger', keywords: 'oposición Agente Forestal', icon: LibraryBig },
 ];
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -62,8 +66,10 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   const { t } = useI18n();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [numQuestions, setNumQuestions] = useState<string>("10");
+  // const [examType, setExamType] = useState<ExamType>("test"); // examType logic removed for now
   const { toast } = useToast();
-  const { isFirebaseConfigured } = useAuth();
+  const { isFirebaseConfigured, currentUser, userTier } = useAuth(); // Added userTier
+  const isFreeUser = userTier === 'free';
 
   const [appUploadLimits, setAppUploadLimits] = useState({
     maxFiles: DEFAULT_MAX_FILES_UPLOAD,
@@ -76,6 +82,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   const [selectedDeepSearchDocIds, setSelectedDeepSearchDocIds] = useState<string[]>([]);
   const [isDeepSearching, setIsDeepSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("comunes");
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   useEffect(() => {
     const fetchAppSettings = async () => {
@@ -102,7 +109,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     };
     fetchAppSettings();
   }, [isFirebaseConfigured]);
-  
+
   const MAX_TOTAL_SIZE_BYTES = useMemo(() => appUploadLimits.maxSizeMB * 1024 * 1024, [appUploadLimits.maxSizeMB]);
 
   const totalSizeInBytes = useMemo(() => {
@@ -112,6 +119,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   useEffect(() => {
     const storedConfig = localStorage.getItem(EXAM_CONFIG_KEY);
     let initialNumQuestions = "10";
+    // let initialExamType: ExamType = "test"; // examType logic removed
 
     if (storedConfig) {
       try {
@@ -119,11 +127,15 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
         if (parsedConfig.defaultNumberOfQuestions) {
             initialNumQuestions = parsedConfig.defaultNumberOfQuestions.toString();
         }
+        // if (parsedConfig.defaultExamType) { // examType logic removed
+        //     initialExamType = parsedConfig.defaultExamType;
+        // }
       } catch (error) {
         console.error("Error parsing exam config for FileUploadArea:", error);
       }
     }
     setNumQuestions(initialNumQuestions);
+    // setExamType(initialExamType); // examType logic removed
   }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,10 +144,10 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
       if (selectedFiles.length + newFiles.length > appUploadLimits.maxFiles) {
         toast({
           title: t('fileUploadArea.toastFileLimitExceededTitle'),
-          description: t('fileUploadArea.toastFileLimitExceededDescription', { maxFiles: appUploadLimits.maxFiles }),
+          description: t('fileUploadArea.toastFileLimitExceededDescription', { maxFiles: appUploadLimits.maxFiles.toString() }),
           variant: "destructive",
         });
-        event.target.value = ""; 
+        event.target.value = "";
         return;
       }
       setSelectedFiles(prevFiles => [...prevFiles, ...newFiles].slice(0, appUploadLimits.maxFiles));
@@ -155,7 +167,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     setIsDeepSearching(true);
     setDeepSearchResults(null);
     setSelectedDeepSearchDocIds([]);
-    if(!searchTopic) { 
+    if(!searchTopic) {
         toast({
             title: t('fileUploadArea.aiSearchingToastTitle'),
             description: t('fileUploadArea.aiSearchingToastDescription'),
@@ -174,7 +186,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
       } else if (results.results.length > 0 && !searchTopic) {
          toast({
             title: t('fileUploadArea.aiSuggestionsReadyToastTitle'),
-            description: t('fileUploadArea.aiSuggestionsReadyToastDescription', { count: results.results.length }),
+            description: t('fileUploadArea.aiSuggestionsReadyToastDescription', { count: results.results.length.toString() }),
             variant: "default",
         });
       }
@@ -191,7 +203,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
 
   const handleCommonExamClick = (exam: CommonExam) => {
     setDeepSearchTopic(exam.keywords);
-    handleDeepSearch(exam.keywords); 
+    handleDeepSearch(exam.keywords);
     toast({
         title: t('fileUploadArea.searchingCommonExamToastTitle', { examName: exam.name }),
         description: t('fileUploadArea.searchingCommonExamToastDescription'),
@@ -210,6 +222,15 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Restrictions removed for PAU special
+    // if (isFreeUser) {
+    //   const lastGenerationTime = localStorage.getItem(FREE_USER_LAST_GENERATION_TIMESTAMP_KEY);
+    //   if (lastGenerationTime && (Date.now() - parseInt(lastGenerationTime, 10) < ONE_DAY_IN_MS)) {
+    //     setShowUpgradeDialog(true);
+    //     return;
+    //   }
+    // }
+
     if (selectedFiles.length === 0 && selectedDeepSearchDocIds.length === 0) {
       toast({
         title: t('fileUploadArea.toastNoContentSelectedTitle'),
@@ -222,7 +243,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     if (totalSizeInBytes > MAX_TOTAL_SIZE_BYTES) {
         toast({
             title: t('fileUploadArea.toastSizeExceedsLimitTitle'),
-            description: t('fileUploadArea.toastSizeExceedsLimitDescription', { totalSize: formatBytes(totalSizeInBytes), maxSizeMB: appUploadLimits.maxSizeMB }),
+            description: t('fileUploadArea.toastSizeExceedsLimitDescription', { totalSize: formatBytes(totalSizeInBytes), maxSizeMB: appUploadLimits.maxSizeMB.toString() }),
             variant: "destructive",
             duration: 10000,
         });
@@ -252,7 +273,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
         .filter(doc => selectedDeepSearchDocIds.includes(doc.id))
         .map(doc => `Contenido del documento (sugerido por IA): ${doc.title}\n\n${doc.simulatedTextContent}\n\n---\n\n`)
         .join('') || "";
-      
+
       allFilesContent += deepSearchDocsContent;
 
       if (!allFilesContent.trim()) {
@@ -264,8 +285,19 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
         return;
       }
       let finalNumQuestions = parseInt(numQuestions, 10);
+
+      // Restrictions removed for PAU special
+      // if (isFreeUser && finalNumQuestions > FREE_USER_MAX_QUESTIONS) {
+      //   toast({
+      //     title: t('fileUploadArea.toastFreeUserLimitTitle'),
+      //     description: t('fileUploadArea.toastFreeUserLimitDescription', {maxQuestions: FREE_USER_MAX_QUESTIONS.toString()}),
+      //     variant: "default",
+      //     duration: 7000,
+      //   });
+      //   finalNumQuestions = FREE_USER_MAX_QUESTIONS;
+      // }
       
-      await onAnalyze(allFilesContent, finalNumQuestions);
+      await onAnalyze(allFilesContent, finalNumQuestions); // examType removed
 
     } catch (error) {
       console.error("Error processing files:", error);
@@ -289,14 +321,14 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
           variant="outline"
           className="h-auto p-4 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md"
           onClick={() => handleCommonExamClick(exam)}
-          disabled={isLoading || isDeepSearching}
+          disabled={isLoading || isDeepSearching } // Removed isFreeUser check
           title={exam.name}
         >
-          <Image 
-            src={exam.logoPlaceholder} 
-            alt={`Logo ${exam.name}`} 
-            width={category === 'Universidad' ? 60 : 40} 
-            height={category === 'Universidad' ? 30 : 40} 
+          <Image
+            src={exam.logoPlaceholder}
+            alt={`Logo ${exam.name}`}
+            width={category === 'Universidad' ? 60 : 40}
+            height={category === 'Universidad' ? 30 : 40}
             className="mb-2 rounded"
             data-ai-hint={exam.logoHint}
           />
@@ -305,7 +337,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
       ))}
     </div>
   );
-  
+
   const renderComingSoon = (titleKey: string, descriptionKey: string, hint: string) => (
     <div className="text-center py-10 px-4">
         <div className="flex justify-center items-center mb-4">
@@ -335,6 +367,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     <>
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* First column on lg screens */}
         <div className="space-y-8">
           <Card className="w-full shadow-lg">
             <CardHeader>
@@ -374,13 +407,13 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                     </div>
                     <Progress value={filesProgress} id="files-progress" className="w-full h-2" />
                   </div>
-                  
+
                   <div>
                     <div className="flex justify-between items-center mb-1">
                       <Label htmlFor="size-progress" className="text-sm font-medium">{t('fileUploadArea.totalSizeLabel')}</Label>
                       <span className="text-xs text-muted-foreground">{formatBytes(totalSizeInBytes)} / {isLoadingAppSettings ? '...' : `${appUploadLimits.maxSizeMB} MB`}</span>
                     </div>
-                    <Progress value={sizeProgress} id="size-progress" className="w-full h-2" 
+                    <Progress value={sizeProgress} id="size-progress" className="w-full h-2"
                               aria-label={`Progreso de tamaño: ${sizeProgress.toFixed(0)}%`} />
                     {totalSizeInBytes > MAX_TOTAL_SIZE_BYTES * 0.8 && (
                         <div className="mt-2 text-xs text-amber-600 flex items-start gap-1">
@@ -393,7 +426,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                   </div>
 
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-foreground">{t('fileUploadArea.fileListTitle', { count: selectedFiles.length })}</h4>
+                    <h4 className="text-sm font-medium text-foreground">{t('fileUploadArea.fileListTitle', { count: selectedFiles.length.toString() })}</h4>
                     <ul className="max-h-48 overflow-y-auto space-y-1 rounded-md border p-2 bg-muted/50">
                       {selectedFiles.map(file => (
                         <li key={file.name} className="text-xs text-foreground flex justify-between items-center p-1.5 bg-background rounded shadow-sm">
@@ -422,6 +455,76 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
             </CardContent>
           </Card>
 
+          <Card className="w-full shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <Brain className="h-7 w-7 text-accent" />
+                {t('fileUploadArea.aiDocSuggestionsTitle')}
+              </CardTitle>
+              <CardDescription>
+                 {t('fileUploadArea.aiDocSuggestionsDescriptionNoPro')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="deep-search-topic">{t('fileUploadArea.searchTopicLabel')}</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="deep-search-topic"
+                    type="text"
+                    value={deepSearchTopic}
+                    onChange={(e) => setDeepSearchTopic(e.target.value)}
+                    placeholder={t('fileUploadArea.searchTopicPlaceholder')}
+                    className="text-sm"
+                    disabled={isLoading || isDeepSearching || isLoadingAppSettings } // Removed isFreeUser check
+                  />
+                  <Button onClick={() => handleDeepSearch()} disabled={isLoading || isDeepSearching || !deepSearchTopic.trim() || isLoadingAppSettings } className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                    {isDeepSearching ? <Loader2 className="animate-spin" /> : <Search className="h-5 w-5" />}
+                    <span className="ml-2 hidden sm:inline">{t('fileUploadArea.suggestButton')}</span>
+                  </Button>
+                </div>
+              </div>
+
+              {isDeepSearching && (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-8 w-8 animate-spin text-accent" />
+                  <p className="ml-2 text-muted-foreground">{t('fileUploadArea.aiSearchingToastTitle')}</p>
+                </div>
+              )}
+
+              {deepSearchResults && (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground italic">{t('fileUploadArea.aiSuggestionsMessage', { message: deepSearchResults.message})}</p>
+                  {deepSearchResults.results.length > 0 && (
+                    <div className="space-y-2 max-h-96 overflow-y-auto border p-3 rounded-md bg-muted/30">
+                      <h4 className="text-sm font-medium text-foreground">{t('fileUploadArea.aiSuggestionsListTitle', { count: deepSearchResults.results.length.toString() })}</h4>
+                      {deepSearchResults.results.map((doc) => (
+                        <div key={doc.id} className="flex items-start space-x-2 p-2 bg-background rounded-md shadow-sm hover:bg-muted/50">
+                          <Checkbox
+                            id={`ds-${doc.id}`}
+                            checked={selectedDeepSearchDocIds.includes(doc.id)}
+                            onCheckedChange={() => toggleDeepSearchDocSelection(doc.id)}
+                            disabled={isLoading || isDeepSearching || isLoadingAppSettings}
+                            aria-label={t('fileUploadArea.selectAISuggestionLabel', { title: doc.title })}
+                            className="mt-1"
+                          />
+                          <Label htmlFor={`ds-${doc.id}`} className="text-xs font-normal flex-1 cursor-pointer">
+                            <span className="font-medium text-foreground block">{doc.title}</span>
+                            <span className="text-muted-foreground text-xs block">{doc.source}</span>
+                            <p className="text-xs text-muted-foreground/80 mt-1">{doc.simulatedTextContent.split('\n\n')[0]}</p>
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Second column on lg screens */}
+        <div className="space-y-8">
           <Card className="w-full shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl flex items-center gap-2">
@@ -464,95 +567,51 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
             </CardContent>
           </Card>
         </div>
-        
-        <div className="space-y-8">
-          <Card className="w-full shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl flex items-center gap-2">
-                <Brain className="h-7 w-7 text-accent" />
-                {t('fileUploadArea.aiDocSuggestionsTitle')}
-              </CardTitle>
-              <CardDescription>
-                {t('fileUploadArea.aiDocSuggestionsDescriptionNoPro')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="deep-search-topic">{t('fileUploadArea.searchTopicLabel')}</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="deep-search-topic"
-                    type="text"
-                    value={deepSearchTopic}
-                    onChange={(e) => setDeepSearchTopic(e.target.value)}
-                    placeholder={t('fileUploadArea.searchTopicPlaceholder')}
-                    className="text-sm"
-                    disabled={isLoading || isDeepSearching || isLoadingAppSettings}
-                  />
-                  <Button onClick={() => handleDeepSearch()} disabled={isLoading || isDeepSearching || !deepSearchTopic.trim() || isLoadingAppSettings} className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                    {isDeepSearching ? <Loader2 className="animate-spin" /> : <Search className="h-5 w-5" />}
-                    <span className="ml-2 hidden sm:inline">{t('fileUploadArea.suggestButton')}</span>
-                  </Button>
-                </div>
-              </div>
-
-              {isDeepSearching && (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="h-8 w-8 animate-spin text-accent" />
-                  <p className="ml-2 text-muted-foreground">{t('fileUploadArea.aiSearchingToastTitle')}</p>
-                </div>
-              )}
-
-              {deepSearchResults && (
-                <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground italic">{t('fileUploadArea.aiSuggestionsMessage', { message: deepSearchResults.message})}</p>
-                  {deepSearchResults.results.length > 0 && (
-                    <div className="space-y-2 max-h-96 overflow-y-auto border p-3 rounded-md bg-muted/30">
-                      <h4 className="text-sm font-medium text-foreground">{t('fileUploadArea.aiSuggestionsListTitle', { count: deepSearchResults.results.length })}</h4>
-                      {deepSearchResults.results.map((doc) => (
-                        <div key={doc.id} className="flex items-start space-x-2 p-2 bg-background rounded-md shadow-sm hover:bg-muted/50">
-                          <Checkbox
-                            id={`ds-${doc.id}`}
-                            checked={selectedDeepSearchDocIds.includes(doc.id)}
-                            onCheckedChange={() => toggleDeepSearchDocSelection(doc.id)}
-                            disabled={isLoading || isDeepSearching || isLoadingAppSettings}
-                            aria-label={t('fileUploadArea.selectAISuggestionLabel', { title: doc.title })}
-                            className="mt-1"
-                          />
-                          <Label htmlFor={`ds-${doc.id}`} className="text-xs font-normal flex-1 cursor-pointer">
-                            <span className="font-medium text-foreground block">{doc.title}</span>
-                            <span className="text-muted-foreground text-xs block">{doc.source}</span>
-                            <p className="text-xs text-muted-foreground/80 mt-1">{doc.simulatedTextContent.split('\n\n')[0]}</p> 
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
       </div>
 
-      <div className="lg:col-span-2 space-y-6 p-6 border rounded-lg shadow-xl bg-card">
+      <div className="space-y-6 p-6 border rounded-lg shadow-xl bg-card"> {/* Removed lg:col-span-2 as it's now a direct child of the form */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-            <div className="space-y-2 md:col-span-2"> 
+            <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="num-questions-select" className="text-md font-medium">{t('dashboardPage.numQuestionsLabel')}</Label>
-                <Select value={numQuestions} onValueChange={setNumQuestions} disabled={isLoading || isDeepSearching || isLoadingAppSettings}>
+                <Select
+                    value={numQuestions}
+                    // onValueChange={val => isFreeUser && parseInt(val, 10) > FREE_USER_MAX_QUESTIONS ? setNumQuestions(FREE_USER_MAX_QUESTIONS.toString()) : setNumQuestions(val)} // Logic for free user limit removed
+                    onValueChange={setNumQuestions}
+                    disabled={isLoading || isDeepSearching || isLoadingAppSettings}
+                >
                 <SelectTrigger id="num-questions-select" className="w-full text-base py-3">
                     <SelectValue placeholder={t('common.selectOption')} />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="5">5 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                    <SelectItem value="10">10 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                    <SelectItem value="15">15 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                    <SelectItem value="20">20 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                    <SelectItem value="25">25 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                    <SelectItem value="30">30 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                    {/* {isFreeUser && <SelectItem value="5">5 {t('fileUploadArea.questionsSuffix')}</SelectItem>}
+                    {!isFreeUser && ( // Options for Pro/Admin - now all users
+                      <> */}
+                        <SelectItem value="5">5 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                        <SelectItem value="10">10 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                        <SelectItem value="15">15 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                        <SelectItem value="20">20 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                        <SelectItem value="25">25 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                        <SelectItem value="30">30 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                      {/* </>
+                    )} */}
+                </SelectContent>
+                </Select>
+                {/* {isFreeUser && <p className="text-xs text-muted-foreground mt-1">{t('fileUploadArea.finalAnalysisConfigFreeUserMaxText', {maxQuestions: FREE_USER_MAX_QUESTIONS.toString()})}</p>} */}
+            </div>
+
+            {/* Exam Type Selector - REMOVED FOR SIMPLICITY BASED ON PREVIOUS REQUESTS
+            <div className="space-y-2">
+                <Label htmlFor="exam-type-select" className="text-md font-medium">{t('fileUploadArea.examTypeLabel')}</Label>
+                <Select value={examType} onValueChange={(value) => setExamType(value as ExamType)} disabled={isLoading || isDeepSearching || isLoadingAppSettings}>
+                <SelectTrigger id="exam-type-select" className="w-full text-base py-3">
+                    <SelectValue placeholder={t('common.selectOption')} />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="test">{t('fileUploadArea.examTypeTest')}</SelectItem>
                 </SelectContent>
                 </Select>
             </div>
+            */}
           </div>
           <Button
             type="submit"
@@ -573,6 +632,26 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
           </Button>
       </div>
     </form>
+
+    {/* Upgrade Dialog for Free User Limit - REMOVED FOR PAU SPECIAL
+    <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>{t('fileUploadArea.dailyLimitReachedPopupTitle')}</AlertDialogTitle>
+                <AlertDialogDescription>
+                    {t('fileUploadArea.dailyLimitReachedPopupDescription')}
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>{t('common.close')}</AlertDialogCancel>
+                <AlertDialogAction asChild>
+                    <Link href="/#pricing">{t('fileUploadArea.viewProPlansButtonPopup')}</Link>
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    */}
     </>
   );
 }
+
