@@ -4,7 +4,6 @@
 import type React from 'react';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,29 +11,24 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, Building, School, Briefcase, Lock, ExternalLink, FileType } from 'lucide-react';
+import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, Building, School, Briefcase, FileType } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { EXAM_CONFIG_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY } from '@/lib/localStorageKeys';
-import type { ExamConfig } from '@/types'; // Removed ExamType as it's not used here directly
+import { EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
+import type { ExamConfig } from '@/types';
 import { findExternalDocuments, type FindExternalDocumentsOutput } from '@/ai/flows/find-external-documents';
 import { Checkbox } from '../ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
-import { UpgradeProAlert } from '@/components/ui/upgrade-pro-alert';
 import { db } from '@/firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
 import { useI18n } from '@/contexts/I18nContext';
 
 interface FileUploadAreaProps {
-  onAnalyze: (content: string, numQuestions: number) => Promise<void>; // Removed examType from onAnalyze
+  onAnalyze: (content: string, numQuestions: number) => Promise<void>;
   isLoading: boolean;
 }
 
 const DEFAULT_MAX_FILES_UPLOAD = 30;
 const DEFAULT_MAX_TOTAL_SIZE_MB = 5; 
-
-const FREE_USER_MAX_QUESTIONS_TO_GENERATE = "5";
-const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 interface CommonExam {
   id: string;
@@ -67,11 +61,9 @@ function formatBytes(bytes: number, decimals = 2) {
 export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaProps) {
   const { t } = useI18n();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [numQuestions, setNumQuestions] = useState<string>(FREE_USER_MAX_QUESTIONS_TO_GENERATE);
-  // const [examType, setExamType] = useState<ExamType>("test"); // Removed examType state
+  const [numQuestions, setNumQuestions] = useState<string>("10");
   const { toast } = useToast();
-  const { userTier, isFirebaseConfigured } = useAuth();
-  const isFreeUser = userTier === 'free';
+  const { isFirebaseConfigured } = useAuth();
 
   const [appUploadLimits, setAppUploadLimits] = useState({
     maxFiles: DEFAULT_MAX_FILES_UPLOAD,
@@ -84,7 +76,6 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   const [selectedDeepSearchDocIds, setSelectedDeepSearchDocIds] = useState<string[]>([]);
   const [isDeepSearching, setIsDeepSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("comunes");
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   useEffect(() => {
     const fetchAppSettings = async () => {
@@ -120,27 +111,20 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
 
   useEffect(() => {
     const storedConfig = localStorage.getItem(EXAM_CONFIG_KEY);
-    let initialNumQuestions = isFreeUser ? FREE_USER_MAX_QUESTIONS_TO_GENERATE : "10";
+    let initialNumQuestions = "10";
 
     if (storedConfig) {
       try {
         const parsedConfig: ExamConfig = JSON.parse(storedConfig);
         if (parsedConfig.defaultNumberOfQuestions) {
-            const configNum = parsedConfig.defaultNumberOfQuestions.toString();
-            if (isFreeUser && parseInt(configNum, 10) > parseInt(FREE_USER_MAX_QUESTIONS_TO_GENERATE, 10)) {
-                initialNumQuestions = FREE_USER_MAX_QUESTIONS_TO_GENERATE;
-            } else {
-                initialNumQuestions = configNum;
-            }
+            initialNumQuestions = parsedConfig.defaultNumberOfQuestions.toString();
         }
-        // Removed defaultExamType logic
       } catch (error) {
         console.error("Error parsing exam config for FileUploadArea:", error);
       }
     }
     setNumQuestions(initialNumQuestions);
-    // setExamType("test"); // Default to test, no selector
-  }, [isFreeUser]);
+  }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -163,23 +147,6 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   };
 
   const handleDeepSearch = useCallback(async (searchTopic?: string) => {
-    if (isFreeUser) {
-      toast({
-        title: t('upgradeProAlert.title'),
-        description: (
-            <div className="flex flex-col gap-2">
-                <span>{t('fileUploadArea.commonExamsProFeatureText')}</span>
-                <Link href="/#pricing" passHref>
-                <Button variant="link" className="p-0 h-auto text-primary hover:underline">{t('upgradeProAlert.updateNow')}</Button>
-                </Link>
-            </div>
-        ),
-        variant: "default",
-        duration: 7000,
-      });
-      return;
-    }
-
     const topicToSearch = searchTopic || deepSearchTopic;
     if (!topicToSearch.trim()) {
       toast({ title: t('common.error'), description: t('fileUploadArea.searchTopicPlaceholder'), variant: "destructive" });
@@ -220,26 +187,10 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     } finally {
       setIsDeepSearching(false);
     }
-  }, [deepSearchTopic, toast, isFreeUser, t]);
+  }, [deepSearchTopic, toast, t]);
 
   const handleCommonExamClick = (exam: CommonExam) => {
     setDeepSearchTopic(exam.keywords);
-    if (isFreeUser) {
-        toast({
-            title: t('upgradeProAlert.title'),
-            description: (
-                <div className="flex flex-col gap-2">
-                    <span>{t('fileUploadArea.useCommonExamProTooltip')}</span>
-                    <Link href="/#pricing" passHref>
-                    <Button variant="link" className="p-0 h-auto text-primary hover:underline">{t('upgradeProAlert.updateNow')}</Button>
-                    </Link>
-                </div>
-            ),
-            variant: "default",
-            duration: 7000,
-        });
-        return;
-    }
     handleDeepSearch(exam.keywords); 
     toast({
         title: t('fileUploadArea.searchingCommonExamToastTitle', { examName: exam.name }),
@@ -249,7 +200,6 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   };
 
   const toggleDeepSearchDocSelection = (docId: string) => {
-    if (isFreeUser) return; 
     setSelectedDeepSearchDocIds(prevSelected =>
       prevSelected.includes(docId)
         ? prevSelected.filter(id => id !== docId)
@@ -259,14 +209,6 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (isFreeUser) {
-      const lastGenerationTime = localStorage.getItem(FREE_USER_LAST_GENERATION_TIMESTAMP_KEY);
-      if (lastGenerationTime && (Date.now() - parseInt(lastGenerationTime, 10) < ONE_DAY_IN_MS)) {
-        setShowUpgradeDialog(true);
-        return;
-      }
-    }
 
     if (selectedFiles.length === 0 && selectedDeepSearchDocIds.length === 0) {
       toast({
@@ -322,16 +264,8 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
         return;
       }
       let finalNumQuestions = parseInt(numQuestions, 10);
-      if (isFreeUser && finalNumQuestions > parseInt(FREE_USER_MAX_QUESTIONS_TO_GENERATE, 10)) {
-        finalNumQuestions = parseInt(FREE_USER_MAX_QUESTIONS_TO_GENERATE, 10);
-        toast({
-          title: t('fileUploadArea.toastFreeUserLimitTitle'),
-          description: t('fileUploadArea.toastFreeUserLimitDescription', {maxQuestions: FREE_USER_MAX_QUESTIONS_TO_GENERATE}),
-          variant: "default"
-        });
-      }
       
-      await onAnalyze(allFilesContent, finalNumQuestions); // Removed examType from onAnalyze call
+      await onAnalyze(allFilesContent, finalNumQuestions);
 
     } catch (error) {
       console.error("Error processing files:", error);
@@ -355,8 +289,8 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
           variant="outline"
           className="h-auto p-4 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md"
           onClick={() => handleCommonExamClick(exam)}
-          disabled={isLoading || isDeepSearching || isFreeUser}
-          title={isFreeUser ? t('fileUploadArea.useCommonExamProTooltip') : exam.name}
+          disabled={isLoading || isDeepSearching}
+          title={exam.name}
         >
           <Image 
             src={exam.logoPlaceholder} 
@@ -508,7 +442,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                 </TabsList>
                 <TabsContent value="comunes" className="mt-4">
                   <p className="text-sm text-muted-foreground mb-3">
-                    {t('fileUploadArea.commonExamsDescription', {proFeature: isFreeUser ? t('fileUploadArea.commonExamsProFeatureText') : ""})}
+                    {t('fileUploadArea.commonExamsDescriptionNoPro')}
                   </p>
                   <div>
                     <h4 className="text-md font-semibold mt-4 mb-2 text-foreground">{t('fileUploadArea.universitiesSectionTitle')}</h4>
@@ -516,7 +450,6 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                     <h4 className="text-md font-semibold mt-6 mb-2 text-foreground">{t('fileUploadArea.oppositionsSectionTitle')}</h4>
                     {renderCommonExams('Oposición')}
                   </div>
-                  {isFreeUser && <UpgradeProAlert featureName={t('fileUploadArea.featureNameCommonExams')} className="mt-4"/>}
                 </TabsContent>
                 <TabsContent value="comunidad">
                   {renderComingSoon("fileUploadArea.comingSoonCommunityExamsTitle", "fileUploadArea.comingSoonCommunityExamsDescription", "community forum discussion")}
@@ -538,10 +471,9 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
               <CardTitle className="text-2xl flex items-center gap-2">
                 <Brain className="h-7 w-7 text-accent" />
                 {t('fileUploadArea.aiDocSuggestionsTitle')}
-                 {isFreeUser && <Lock className="h-5 w-5 text-amber-500" />}
               </CardTitle>
               <CardDescription>
-                {t('fileUploadArea.aiDocSuggestionsDescription', {proFeature: isFreeUser ? t('fileUploadArea.aiDocSuggestionsProLockTooltip') : ""})}
+                {t('fileUploadArea.aiDocSuggestionsDescriptionNoPro')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -555,27 +487,23 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                     onChange={(e) => setDeepSearchTopic(e.target.value)}
                     placeholder={t('fileUploadArea.searchTopicPlaceholder')}
                     className="text-sm"
-                    disabled={isLoading || isDeepSearching || isFreeUser || isLoadingAppSettings}
+                    disabled={isLoading || isDeepSearching || isLoadingAppSettings}
                   />
-                  <Button onClick={() => handleDeepSearch()} disabled={isLoading || isDeepSearching || !deepSearchTopic.trim() || isFreeUser || isLoadingAppSettings} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                  <Button onClick={() => handleDeepSearch()} disabled={isLoading || isDeepSearching || !deepSearchTopic.trim() || isLoadingAppSettings} className="bg-accent hover:bg-accent/90 text-accent-foreground">
                     {isDeepSearching ? <Loader2 className="animate-spin" /> : <Search className="h-5 w-5" />}
                     <span className="ml-2 hidden sm:inline">{t('fileUploadArea.suggestButton')}</span>
                   </Button>
                 </div>
               </div>
 
-              {isFreeUser && (
-                <UpgradeProAlert featureName={t('fileUploadArea.featureNameAIDocSuggestions')} className="mt-4"/>
-              )}
-
-              {!isFreeUser && isDeepSearching && (
+              {isDeepSearching && (
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="h-8 w-8 animate-spin text-accent" />
                   <p className="ml-2 text-muted-foreground">{t('fileUploadArea.aiSearchingToastTitle')}</p>
                 </div>
               )}
 
-              {!isFreeUser && deepSearchResults && (
+              {deepSearchResults && (
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground italic">{t('fileUploadArea.aiSuggestionsMessage', { message: deepSearchResults.message})}</p>
                   {deepSearchResults.results.length > 0 && (
@@ -587,7 +515,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                             id={`ds-${doc.id}`}
                             checked={selectedDeepSearchDocIds.includes(doc.id)}
                             onCheckedChange={() => toggleDeepSearchDocSelection(doc.id)}
-                            disabled={isLoading || isDeepSearching || isFreeUser || isLoadingAppSettings}
+                            disabled={isLoading || isDeepSearching || isLoadingAppSettings}
                             aria-label={t('fileUploadArea.selectAISuggestionLabel', { title: doc.title })}
                             className="mt-1"
                           />
@@ -609,8 +537,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
 
       <div className="lg:col-span-2 space-y-6 p-6 border rounded-lg shadow-xl bg-card">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-            {/* Removed Exam Type Selector */}
-            <div className="space-y-2 md:col-span-2"> {/* Make num questions full width on md+ */}
+            <div className="space-y-2 md:col-span-2"> 
                 <Label htmlFor="num-questions-select" className="text-md font-medium">{t('dashboardPage.numQuestionsLabel')}</Label>
                 <Select value={numQuestions} onValueChange={setNumQuestions} disabled={isLoading || isDeepSearching || isLoadingAppSettings}>
                 <SelectTrigger id="num-questions-select" className="w-full text-base py-3">
@@ -618,28 +545,19 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="5">5 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                    {!isFreeUser && (
-                    <>
-                        <SelectItem value="10">10 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                        <SelectItem value="15">15 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                        <SelectItem value="20">20 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                        <SelectItem value="25">25 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                        <SelectItem value="30">30 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                    </>
-                    )}
+                    <SelectItem value="10">10 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                    <SelectItem value="15">15 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                    <SelectItem value="20">20 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                    <SelectItem value="25">25 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                    <SelectItem value="30">30 {t('fileUploadArea.questionsSuffix')}</SelectItem>
                 </SelectContent>
                 </Select>
             </div>
           </div>
-          {isFreeUser && parseInt(numQuestions) > parseInt(FREE_USER_MAX_QUESTIONS_TO_GENERATE) && (
-                <p className="text-xs text-amber-600 mt-1">
-                    {t('fileUploadArea.selectedQuestionsFreeUserWarning', {selectedCount: numQuestions, maxCount: FREE_USER_MAX_QUESTIONS_TO_GENERATE})}
-                </p>
-            )}
           <Button
             type="submit"
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 text-lg font-semibold rounded-lg shadow-md transition-transform duration-150 ease-in-out active:scale-95 mt-6"
-            disabled={isLoading || isDeepSearching || isLoadingAppSettings || (selectedFiles.length === 0 && selectedDeepSearchDocIds.length === 0 && !isFreeUser) || (isFreeUser && selectedFiles.length === 0) }
+            disabled={isLoading || isDeepSearching || isLoadingAppSettings || (selectedFiles.length === 0 && selectedDeepSearchDocIds.length === 0) }
           >
             {isLoading || isLoadingAppSettings ? (
               <>
@@ -655,26 +573,6 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
           </Button>
       </div>
     </form>
-    <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-amber-600">
-                <AlertTriangle className="h-6 w-6" /> {t('fileUploadArea.dailyLimitReachedPopupTitle')}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-base text-muted-foreground">
-              {t('fileUploadArea.dailyLimitReachedPopupDescription')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-4">
-            <AlertDialogCancel onClick={() => setShowUpgradeDialog(false)}>{t('common.close')}</AlertDialogCancel>
-            <Link href="/#pricing" passHref>
-              <Button className="bg-amber-500 hover:bg-amber-600 text-white" onClick={() => setShowUpgradeDialog(false)}>
-                <ExternalLink className="mr-2 h-4 w-4" /> {t('fileUploadArea.viewProPlansButtonPopup')}
-              </Button>
-            </Link>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

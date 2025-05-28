@@ -1,4 +1,3 @@
-
 {
   "common": {
     "loading": "Loading...",
@@ -145,12 +144,13 @@
     "viewProPlansButton": "View Zeinte Pro Plans",
     "loadingData": "Loading Zeinte data...",
     "betaAdNoticeTitle": "Zeinte is in Beta!",
-    "betaAdNoticeDescription": "Zeinte is currently in Beta and is 100% free to use. To help us cover server costs during this period, we've included some advertising. We appreciate your understanding and support as we work to improve the platform.",
-    "writtenExamTitle": "Written Questions",
-    "writtenExamDescription": "These are open-ended questions based on your documents. Develop your answers in the text area. AI review will be available soon.",
-    "oralExamTitle": "Oral Exam Guide",
-    "oralExamDescription": "These are key topics and guiding questions identified by AI that might be useful for preparing an oral presentation or exam.",
-    "oralExamQuestionPrefix": "Topic/Guiding Question:"
+    "betaAdNoticeDescription": "Zeinte is currently in Beta and is 100% free to use. To help us cover server costs during this period, we've included some advertising. We appreciate your understanding and support as we work to improve the platform."
+  },
+  "pauSpecial": {
+    "title": "Zeinte PAU Special",
+    "description": "Attention PAU students! During this exam period, Zeinte is fully unlocked so you can use the entire platform for free and without limits.",
+    "feedbackRequest": "We only ask for one thing in return: send us your impressions, suggestions, and what you would improve to",
+    "tips": "Remember to be precise in your exam requests and don't forget to upload your notes so the AI can be more accurate. Good luck!"
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Multiple-Choice Question",
@@ -180,12 +180,13 @@
     "storageWarning": "Browser storage is limited. If the size is very large, the \"Re-analyze\" feature might not work.",
     "removeFileLabel": "Remove {{fileName}}",
     "exploreLibraryTitle": "Explore Zeinte Exam Library",
-    "exploreLibraryDescription": "Access common exam templates or manage yours (coming soon).",
+    "exploreLibraryDescription": "Access common exam templates or manage yours.",
     "tabCommonExams": "Common",
     "tabCommunityExams": "Community",
     "tabPersonalExams": "Personal",
     "tabRecommendedExams": "Recommended",
     "commonExamsDescription": "Select a common exam type. This will populate the topic in the \"AI Suggestions\" section and search for related documents (simulated).{{proFeature}}",
+    "commonExamsDescriptionNoPro": "Select a common exam type. This will populate the topic in the \"AI Suggestions\" section and search for related documents (simulated).",
     "commonExamsProFeatureText": " (Pro Feature)",
     "universitiesSectionTitle": "Universities",
     "oppositionsSectionTitle": "Public Service Exams",
@@ -203,6 +204,7 @@
     "aiDocSuggestionsTitle": "AI Document Suggestions in Zeinte",
     "aiDocSuggestionsProLockTooltip": " (Pro Feature)",
     "aiDocSuggestionsDescription": "Enter a topic, and Zeinte's AI will suggest titles and summaries of relevant documents. You can add their simulated content to the analysis.{{proFeature}}",
+    "aiDocSuggestionsDescriptionNoPro": "Enter a topic, and Zeinte's AI will suggest titles and summaries of relevant documents. You can add their simulated content to the analysis.",
     "searchTopicLabel": "Search Topic:",
     "searchTopicPlaceholder": "E.g., Forest ranger exam, 20th Century Spanish History",
     "suggestButton": "Suggest",
@@ -214,7 +216,7 @@
     "aiSuggestionsListTitle": "AI Suggestions ({{count}}):",
     "selectAISuggestionLabel": "Select {{title}}",
     "finalAnalysisConfigTitle": "Final Analysis Configuration in Zeinte",
-    "finalAnalysisConfigDescription": "Define the number of questions and the type of exam to generate.{{freeUserMax}}",
+    "finalAnalysisConfigDescription": "Define the number of questions and the type of exam to generate.",
     "finalAnalysisConfigFreeUserMaxText": " (Maximum {{maxQuestions}} questions for free users).",
     "examTypeLabel": "Type of Exam to Generate:",
     "examTypeTest": "Multiple Choice (Test)",
@@ -418,20 +420,20 @@
     "userUpdatedToastDescription": "{{email}}'s data has been updated.",
     "errorUpdatingUserToastTitle": "Error Updating User",
     "errorUpdatingUserToastDescription": "Could not update user: {{error}}",
-    "deleteUserDialogTitle": "Delete User from Firestore?",
-    "deleteUserDialogDescription": "You are about to delete the user record for <span class=\"font-semibold\">{{email}}</span> from the Firestore database. This action **does not delete the account from Firebase Authentication**. The user might still exist in Firebase Auth. Are you sure you want to continue? This action cannot be undone.",
-    "confirmDeleteUserButton": "Yes, Delete from Firestore",
-    "userDeletedToastTitle": "User Deleted from Firestore",
+    "deleteUserDialogTitle": "¿Eliminar Usuario de Firestore?",
+    "deleteUserDialogDescription": "Estás a punto de eliminar el registro del usuario <span class=\"font-semibold\">{{email}}</span> de la base de datos Firestore. Esta acción **no elimina la cuenta del sistema de autenticación de Firebase**. El usuario podría seguir existiendo en Firebase Auth. ¿Estás seguro de que quieres continuar? Esta acción no se puede deshacer.",
+    "confirmDeleteUserButton": "Sí, Eliminar de Firestore",
+    "userDeletedToastTitle": "Usuario Eliminado de Firestore",
     "userDeletedToastDescription": "{{email}}'s record has been deleted from the database.",
-    "errorDeletingUserToastTitle": "Error Deleting User",
-    "errorDeletingUserToastDescription": "Could not delete user from Firestore: {{error}}",
-    "otherCMSTitle": "Other CMS Functions - Zeinte",
-    "communityContentManagementTitle": "Manage Zeinte Community Content",
-    "communityContentManagementDescription": "Moderate forum topics and messages, manage categories, etc.",
-    "goToCommunityManagementButton": "Go to Community Management",
-    "appGeneralConfigTitle": "General Zeinte App Configuration",
-    "appGeneralConfigDescription": "Global application settings, AI parameters, plan management (future), etc.",
-    "goToConfigButton": "Go to Configuration"
+    "errorDeletingUserToastTitle": "Error al Eliminar",
+    "errorDeletingUserToastDescription": "No se pudo eliminar el usuario de Firestore: {{error}}",
+    "otherCMSTitle": "Otras Funciones del CMS - Zeinte",
+    "communityContentManagementTitle": "Gestionar Contenido Comunidad Zeinte",
+    "communityContentManagementDescription": "Moderar temas y mensajes del foro, gestionar categorías, etc.",
+    "goToCommunityManagementButton": "Ir a Gestión de Comunidad",
+    "appGeneralConfigTitle": "Configuración General de Zeinte",
+    "appGeneralConfigDescription": "Ajustes globales de la aplicación, parámetros de IA, gestión de planes (futuro), etc.",
+    "goToConfigButton": "Ir a Configuración"
   },
   "adminCommunityManagementPage": {
     "loading": "Loading...",
@@ -588,7 +590,7 @@
   "customCourses": {
     "createPage": {
       "title": "Create Custom Course with AI",
-      "description": "Define the main characteristics of your ideal course and let our AI propose an initial syllabus. For now, this section is only accessible to administrators.",
+      "description": "Define the main characteristics of your ideal course and let our AI propose an initial syllabus. Por ahora, esta sección es accesible solo para administradores.",
       "descriptionForAllUsers": "Define the main characteristics of your ideal course and let our AI propose an initial syllabus. Explore this feature!",
       "topicLabel": "Main Course Topic:",
       "topicPlaceholder": "E.g., Quantum Physics for Beginners, Advanced Digital Marketing",
@@ -622,7 +624,7 @@
       "coursePreparationStartedTitle": "Course Preparation Started",
       "coursePreparationStartedDescription": "The AI has started preparing your course. We'll notify you when it's ready (future functionality).",
       "betaNote": "Note: Full course content generation and progress tracking are features under development.",
-      "startOverButton": "Start over with another topic?",
+      "startOverButton": "Start over with another topic",
       "createNewCourseButton": "Create a New Course",
       "courseReadyTitle": "Custom Course Ready!",
       "courseReadyDescription": "Your course content has been generated. You can now start exploring it.",

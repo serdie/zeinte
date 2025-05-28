@@ -4,7 +4,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Sparkles, Loader2, CheckCircle, XCircle, Lock, AlertTriangle } from 'lucide-react';
+import { Sparkles, Loader2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import type { PredictedQuestion } from '@/types';
 import { useState, type MouseEvent } from 'react';
 import { cn } from '@/lib/utils';
@@ -14,7 +14,6 @@ interface PredictedQuestionCardProps {
   question: PredictedQuestion;
   onGetExplanation: (questionText: string, options: string[], correctAnswerIndex: number) => void;
   isExplainingCurrent: boolean;
-  isExplanationDisabled?: boolean; // This prop can now be removed or always passed as false
 }
 
 export default function PredictedQuestionCard({ question, onGetExplanation, isExplainingCurrent }: PredictedQuestionCardProps) {
@@ -42,12 +41,12 @@ export default function PredictedQuestionCard({ question, onGetExplanation, isEx
         <CardHeader>
           <CardTitle className="text-lg font-medium text-destructive flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" />
-            Error en Pregunta
+            {t('predictedQuestionCard.errorCardTitle')}
             </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-destructive">Esta pregunta tipo test no tiene opciones válidas o no se generaron correctamente.</p>
-          <p className="text-sm text-muted-foreground mt-2">Texto de la pregunta: {question.questionText}</p>
+          <p className="text-destructive">{t('predictedQuestionCard.errorCardDescription')}</p>
+          <p className="text-sm text-muted-foreground mt-2">{t('predictedQuestionCard.errorCardQuestionText')} {question.questionText}</p>
         </CardContent>
       </Card>
     );
