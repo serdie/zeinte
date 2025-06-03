@@ -38,6 +38,11 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
+        {/* Google AdSense Account Meta Tag */}
+        {ADSENSE_PUBLISHER_ID && (
+          <meta name="google-adsense-account" content={ADSENSE_PUBLISHER_ID} />
+        )}
+
         {/* Google AdSense Script */}
         {ADSENSE_PUBLISHER_ID && (
           <Script
