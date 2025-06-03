@@ -66,9 +66,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
             &copy; {new Date().getFullYear()} Search and Make S.L (CIF: B45786787) - Zeinte.
           </p>
            <div className="mt-1 space-x-2 text-xs text-sidebar-foreground/60">
-            <Link href="#legal-privacy" className="hover:text-sidebar-primary">{t('legal.privacyPolicy')}</Link>
+            <Link href="/legal/privacy" className="hover:text-sidebar-primary">{t('legal.privacyPolicy')}</Link>
             <span>|</span>
-            <Link href="#legal-cookies" className="hover:text-sidebar-primary">{t('legal.cookiesPolicy')}</Link>
+            <Link href="/legal/cookies" className="hover:text-sidebar-primary">{t('legal.cookiesPolicy')}</Link>
             <span>|</span>
             <Link href="/legal/terms" className="hover:text-sidebar-primary">{t('legal.legalNotice')}</Link>
           </div>
@@ -93,3 +93,5 @@ export default function AppLayout({ children }: AppLayoutProps) {
     </SidebarProvider>
   );
 }
+
+    

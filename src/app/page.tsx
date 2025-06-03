@@ -214,9 +214,9 @@ export default function HomePage() {
           &copy; {new Date().getFullYear()} Search and Make S.L (CIF: B45786787) - Zeinte. {t('homePage.footerRights')}
         </p>
          <div className="mt-2 space-x-4 text-xs text-muted-foreground">
-          <Link href="#legal-privacy" className="hover:text-primary">{t('legal.privacyPolicy')}</Link>
+          <Link href="/legal/privacy" className="hover:text-primary">{t('legal.privacyPolicy')}</Link>
           <span>|</span>
-          <Link href="#legal-cookies" className="hover:text-primary">{t('legal.cookiesPolicy')}</Link>
+          <Link href="/legal/cookies" className="hover:text-primary">{t('legal.cookiesPolicy')}</Link>
           <span>|</span>
           <Link href="/legal/terms" className="hover:text-primary">{t('legal.legalNotice')}</Link>
         </div>
@@ -227,3 +227,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    

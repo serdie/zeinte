@@ -33,14 +33,14 @@ export default function LegalLayout({
         </p>
         <div className="mt-2 space-x-4 text-xs text-muted-foreground">
           <Link href="/legal/terms" className="hover:text-primary">Aviso Legal y Condiciones de Uso</Link>
-          {/* Futuros enlaces:
           <span>|</span>
           <Link href="/legal/privacy" className="hover:text-primary">Política de Privacidad</Link>
           <span>|</span>
           <Link href="/legal/cookies" className="hover:text-primary">Política de Cookies</Link>
-          */}
         </div>
       </footer>
     </div>
   );
 }
+
+    

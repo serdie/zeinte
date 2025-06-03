@@ -12,7 +12,7 @@ export default function LegalTermsPage() {
     <Card className="w-full shadow-lg">
       <CardHeader>
         <CardTitle className="text-2xl md:text-3xl text-primary">
-          AVISO LEGAL Y CONDICIONES GENERALES DE USO DEL SITIO WEB Y APLICACIÓN ADIVINAEXAMEN
+          AVISO LEGAL Y CONDICIONES GENERALES DE USO DEL SITIO WEB Y APLICACIÓN ZEINTE
         </CardTitle>
         <CardDescription className="text-sm text-muted-foreground">
           Última actualización: 3 de junio de 2025
@@ -21,7 +21,7 @@ export default function LegalTermsPage() {
       <CardContent className="space-y-6 text-foreground/90 prose prose-sm sm:prose-base max-w-none">
         <section aria-labelledby="datos-identificativos">
           <h2 id="datos-identificativos" className="text-xl font-semibold text-foreground mt-4 mb-2">1. DATOS IDENTIFICATIVOS DEL TITULAR DEL SITIO WEB Y LA APLICACIÓN</h2>
-          <p>En cumplimiento del deber de información establecido en la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad de la Información y de Comercio Electrónico (LSSI-CE), a continuación se facilitan los datos generales del titular del sitio web zeinte.com y de la aplicación "AdivinaExamen":</p>
+          <p>En cumplimiento del deber de información establecido en la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad de la Información y de Comercio Electrónico (LSSI-CE), a continuación se facilitan los datos generales del titular del sitio web zeinte.com y de la aplicación "Zeinte":</p>
           <ul className="list-disc list-inside ml-4 my-2">
             <li><strong>Denominación Social:</strong> SEARCH AND MAKE S.L.</li>
             <li><strong>NIF:</strong> B45786787</li>
@@ -32,14 +32,14 @@ export default function LegalTermsPage() {
 
         <section aria-labelledby="objeto-ambito">
           <h2 id="objeto-ambito" className="text-xl font-semibold text-foreground mt-6 mb-2">2. OBJETO Y ÁMBITO DE APLICACIÓN</h2>
-          <p>El presente Aviso Legal y las Condiciones Generales de Uso (en adelante, "Condiciones") regulan el acceso y la utilización del sitio web zeinte.com y de la aplicación "AdivinaExamen" (en adelante, "la Plataforma"), propiedad de SEARCH AND MAKE S.L.</p>
+          <p>El presente Aviso Legal y las Condiciones Generales de Uso (en adelante, "Condiciones") regulan el acceso y la utilización del sitio web zeinte.com y de la aplicación "Zeinte" (en adelante, "la Plataforma"), propiedad de SEARCH AND MAKE S.L.</p>
           <p>La utilización de la Plataforma atribuye la condición de usuario e implica la plena y expresa aceptación de todas y cada una de las disposiciones incluidas en estas Condiciones, en la versión publicada por SEARCH AND MAKE S.L. en el momento mismo en que el usuario acceda a la Plataforma.</p>
           <p>SEARCH AND MAKE S.L. se reserva el derecho a modificar, en cualquier momento y sin necesidad de previo aviso, la presentación y configuración de la Plataforma, así como las presentes Condiciones. Por ello, se recomienda al usuario leer atentamente estas Condiciones cada vez que acceda a la Plataforma.</p>
         </section>
 
         <section aria-labelledby="propiedad-intelectual">
           <h2 id="propiedad-intelectual" className="text-xl font-semibold text-foreground mt-6 mb-2">3. PROPIEDAD INTELECTUAL E INDUSTRIAL</h2>
-          <p>Todos los derechos de propiedad intelectual e industrial del contenido de la Plataforma (textos, imágenes, diseños gráficos, código fuente, logotipos, combinaciones de colores, estructura y diseño, selección de materiales usados, programas de ordenador necesarios para su funcionamiento, acceso y uso, etc.), así como de la aplicación "AdivinaExamen", son titularidad exclusiva de SEARCH AND MAKE S.L. o bien de terceros que han autorizado su uso a SEARCH AND MAKE S.L.</p>
+          <p>Todos los derechos de propiedad intelectual e industrial del contenido de la Plataforma (textos, imágenes, diseños gráficos, código fuente, logotipos, combinaciones de colores, estructura y diseño, selección de materiales usados, programas de ordenador necesarios para su funcionamiento, acceso y uso, etc.), así como de la aplicación "Zeinte", son titularidad exclusiva de SEARCH AND MAKE S.L. o bien de terceros que han autorizado su uso a SEARCH AND MAKE S.L.</p>
           <p>Quedan expresamente prohibidas la reproducción, la distribución y la comunicación pública, incluida su modalidad de puesta a disposición, de la totalidad o parte de los contenidos de la Plataforma, con fines comerciales, en cualquier soporte y por cualquier medio técnico, sin la autorización expresa y por escrito de SEARCH AND MAKE S.L.</p>
           <p>El usuario se compromete a respetar los derechos de Propiedad Intelectual e Industrial titularidad de SEARCH AND MAKE S.L. Podrá visualizar los elementos de la Plataforma e incluso imprimirlos, copiarlos y almacenarlos en el disco duro de su ordenador o en cualquier otro soporte físico siempre y cuando sea, única y exclusivamente, para su uso personal y privado.</p>
         </section>
@@ -54,7 +54,7 @@ export default function LegalTermsPage() {
 
         <section aria-labelledby="modificaciones-app">
           <h2 id="modificaciones-app" className="text-xl font-semibold text-foreground mt-6 mb-2">5. MODIFICACIONES DE LA APLICACIÓN Y DEL SITIO WEB</h2>
-          <p>SEARCH AND MAKE S.L. se reserva el derecho a cambiar, modificar, suspender o discontinuar, temporal o permanentemente, la aplicación "AdivinaExamen" y el sitio web zeinte.com o cualquier parte de los mismos, con o sin previo aviso y sin que ello genere derecho a indemnización alguna en favor del usuario. Esta facultad incluye, pero no se limita a, la adición o eliminación de funcionalidades, la alteración del contenido, la interrupción del servicio para mantenimiento o actualización, o la terminación del servicio por completo.</p>
+          <p>SEARCH AND MAKE S.L. se reserva el derecho a cambiar, modificar, suspender o discontinuar, temporal o permanentemente, la aplicación "Zeinte" y el sitio web zeinte.com o cualquier parte de los mismos, con o sin previo aviso y sin que ello genere derecho a indemnización alguna en favor del usuario. Esta facultad incluye, pero no se limita a, la adición o eliminación de funcionalidades, la alteración del contenido, la interrupción del servicio para mantenimiento o actualización, o la terminación del servicio por completo.</p>
         </section>
 
         <section aria-labelledby="enlaces">
@@ -77,3 +77,5 @@ export default function LegalTermsPage() {
     </Card>
   );
 }
+
+    
