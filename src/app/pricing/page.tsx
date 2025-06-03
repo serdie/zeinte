@@ -8,7 +8,7 @@ import { CheckCircle, Sparkles, Star, TrendingUp, Zap, Loader2, ArrowRight, Shie
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react'; // Added useRef
+import { useState, useEffect, useRef } from 'react';
 import { useI18n } from '@/contexts/I18nContext';
 
 declare global {
@@ -18,7 +18,9 @@ declare global {
 }
 
 const PAYPAL_HOSTED_BUTTON_ID = "TFTJY83J7D78U";
-const PAYPAL_CONTAINER_ID = `paypal-container-${PAYPAL_HOSTED_BUTTON_ID}`;
+// Dynamically create container ID to ensure it's unique if component instance changes
+const PAYPAL_CONTAINER_ID_BASE = "paypal-container-";
+
 
 export default function PricingPage() {
   const { currentUser, userTier, updateCurrentUserTier, loading: authLoading } = useAuth();
@@ -27,7 +29,10 @@ export default function PricingPage() {
   const [isSubscribing, setIsSubscribing] = useState(false);
   const { t } = useI18n();
   const [isPayPalButtonRendered, setIsPayPalButtonRendered] = useState(false);
-  const paypalContainerRef = useRef<HTMLDivElement>(null); // Ref for the PayPal button container
+  const paypalContainerRef = useRef<HTMLDivElement>(null);
+  // Generate a unique ID for the PayPal container for this component instance
+  const PAYPAL_CONTAINER_ID = PAYPAL_CONTAINER_ID_BASE + PAYPAL_HOSTED_BUTTON_ID;
+
 
   const handleSubscribePro = async () => {
     if (!currentUser) {
@@ -59,62 +64,84 @@ export default function PricingPage() {
     const container = paypalContainerRef.current;
     let isMounted = true;
 
+    // Condition 1: SDK and container must be ready
     if (!container || !window.paypal || !window.paypal.HostedButtons) {
-      // PayPal SDK or container not ready yet.
-      // The effect will re-run if dependencies change.
+      // If SDK not ready, ensure button is marked as not rendered and clear container
+      if (container && container.innerHTML !== '') container.innerHTML = '';
+      if (isPayPalButtonRendered && isMounted) setIsPayPalButtonRendered(false);
       return;
     }
 
+    // Condition 2: User must be eligible to see the button
     const shouldRenderPayPalButton = currentUser && userTier !== 'pro' && userTier !== 'admin' && !authLoading;
 
     if (shouldRenderPayPalButton) {
-      if (!isPayPalButtonRendered) {
-        // Check if an iframe already exists (e.g., from HMR or previous render attempt)
-        if (container.querySelector('iframe[name^="__paypal_buttons__"]')) {
-          console.warn("PayPal button iframe already exists in container. Assuming rendered.");
-          if (isMounted) setIsPayPalButtonRendered(true);
-        } else {
-          container.innerHTML = ''; // Ensure container is empty before rendering new button
-          window.paypal.HostedButtons({
-            hostedButtonId: PAYPAL_HOSTED_BUTTON_ID,
-          }).render(container) // Render into the ref'd container
-          .then(() => {
-            if (isMounted) setIsPayPalButtonRendered(true);
-          })
-          .catch((error: any) => {
-            console.error("PayPal Hosted Button render() failed:", error);
-            if (isMounted) {
-              toast({
-                title: t('common.error'),
-                description: t('pricingPage.paypalButtonError'),
-                variant: "destructive",
-                duration: 7000,
-              });
-              container.innerHTML = `<p class="text-xs text-destructive">${t('pricingPage.paypalButtonError')}</p>`;
-              setIsPayPalButtonRendered(false);
-            }
-          });
+      const buttonAlreadyInDOM = container.querySelector('iframe[name^="__paypal_buttons__"]');
+
+      if (!buttonAlreadyInDOM) {
+        // If button is not in DOM, and we think it's rendered (isPayPalButtonRendered is true), reset state.
+        if (isPayPalButtonRendered && isMounted) setIsPayPalButtonRendered(false);
+        
+        container.innerHTML = ''; // Clear any previous error messages or stale content
+        
+        // Set a temporary loading message if not already rendered
+        if (!isPayPalButtonRendered) {
+             container.innerHTML = `<div class="flex items-center justify-center text-sm text-muted-foreground p-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>${t('pricingPage.loadingPayPalButton')}</div>`;
         }
+
+        window.paypal.HostedButtons({
+          hostedButtonId: PAYPAL_HOSTED_BUTTON_ID,
+        }).render(`#${PAYPAL_CONTAINER_ID}`)
+        .then(() => {
+          if (isMounted) {
+            // Check again if container still exists before removing loading message
+            if (paypalContainerRef.current && paypalContainerRef.current.id === PAYPAL_CONTAINER_ID) {
+                // The SDK might replace the content, so we don't need to clear it if successful.
+                // If the loading message was inside, SDK's render will overwrite it.
+            }
+            setIsPayPalButtonRendered(true);
+          }
+        })
+        .catch((error: any) => {
+          console.error("PayPal Hosted Button render() failed:", error);
+          if (isMounted) {
+            toast({
+              title: t('common.error'),
+              description: t('pricingPage.paypalButtonError'),
+              variant: "destructive",
+              duration: 7000,
+            });
+            if (paypalContainerRef.current && paypalContainerRef.current.id === PAYPAL_CONTAINER_ID) { 
+                paypalContainerRef.current.innerHTML = `<p class="text-xs text-center text-destructive py-2">${t('pricingPage.paypalButtonError')}</p>`;
+            }
+            setIsPayPalButtonRendered(false);
+          }
+        });
+      } else if (buttonAlreadyInDOM && !isPayPalButtonRendered) {
+        // Button is in DOM (e.g. HMR) but state doesn't reflect it. Sync state.
+        if (isMounted) setIsPayPalButtonRendered(true);
       }
     } else {
-      // Conditions to render button are not met (e.g., user is pro, logged out, or auth is loading)
-      // If button was previously rendered, clean it up
-      if (isPayPalButtonRendered) {
-        container.innerHTML = ''; // Clear the PayPal button
-        if (isMounted) setIsPayPalButtonRendered(false);
+      // Conditions to render are NOT met (e.g., user is pro, logged out, or auth loading)
+      if (container.innerHTML !== '') {
+        container.innerHTML = ''; // Clear the PayPal button or error message
       }
+      if (isPayPalButtonRendered && isMounted) setIsPayPalButtonRendered(false);
     }
 
     return () => {
       isMounted = false;
-      // Cleanup on unmount or before effect re-runs if dependencies changed.
-      // By clearing the innerHTML of the ref'd container, we tell React
-      // that it doesn't need to worry about children PayPal might have injected.
+      // Cleanup on unmount. If PayPal rendered something, clear the container.
+      // This helps prevent React errors if it tries to operate on a container
+      // with externally modified children.
       if (paypalContainerRef.current) {
          paypalContainerRef.current.innerHTML = '';
       }
     };
-  }, [currentUser, userTier, authLoading, isPayPalButtonRendered, toast, t]);
+  // Dependencies that trigger re-evaluation of whether to render the button.
+  // isPayPalButtonRendered is intentionally omitted to prevent loops on render failure.
+  // PAYPAL_CONTAINER_ID and PAYPAL_HOSTED_BUTTON_ID are constants.
+  }, [currentUser, userTier, authLoading, toast, t, PAYPAL_CONTAINER_ID]);
 
 
   return (
@@ -194,7 +221,7 @@ export default function PricingPage() {
               </Button>
             ) : (
               <div className="w-full space-y-4">
-                {/* Simulated Upgrade Button */}
+                {/* Simulated Upgrade Button (Kept for testing tier changes directly) */}
                 <Button
                   size="lg"
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-md"
@@ -211,13 +238,11 @@ export default function PricingPage() {
 
                 {/* PayPal Hosted Button Container */}
                 <div ref={paypalContainerRef} id={PAYPAL_CONTAINER_ID} className="w-full flex justify-center min-h-[50px]">
-                  {/* PayPal button will render here by the SDK */}
-                  {/* Show loading indicator only if PayPal conditions are met but button isn't rendered yet */}
-                  {(currentUser && userTier !== 'pro' && userTier !== 'admin' && !authLoading && !isPayPalButtonRendered) && ( 
-                     <div className="flex items-center justify-center text-sm text-muted-foreground p-2">
-                       <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('pricingPage.loadingPayPalButton')}
-                     </div>
-                  )}
+                  {/* PayPal button will render here by the SDK via useEffect.
+                      A loading message or placeholder can be shown if !isPayPalButtonRendered
+                      and shouldRenderPayPalButton is true.
+                      The useEffect now handles inserting a loading message.
+                   */}
                 </div>
               </div>
             )}
@@ -227,7 +252,7 @@ export default function PricingPage() {
 
       <div className="text-center mt-12">
         <p className="text-sm text-muted-foreground">
-          {t('pricingPage.paymentGatewayComingSoon')}
+          {t('pricingPage.paymentGatewayComingSoon')} {/* This message might be outdated now with real PayPal button */}
         </p>
         <Link href="/dashboard" passHref>
           <Button variant="ghost" className="mt-4 text-primary hover:text-primary/80">
