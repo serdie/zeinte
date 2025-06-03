@@ -16,6 +16,7 @@ interface ConditionalLayoutProps {
 const PUBLIC_PATHS = ['/', '/login', '/signup', '/verify-email'];
 const ADMIN_PATH_PREFIX = '/admin';
 const CUSTOM_COURSES_PATH_PREFIX = '/custom-courses';
+const PROTECTED_PATHS = ['/dashboard', '/upload', '/configure', '/community', '/profile', '/pricing', '/account/subscription'];
 
 
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
@@ -29,10 +30,14 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     }
 
     const isEmailUser = currentUser?.providerData.some(p => p.providerId === 'password');
+    const isGeneralProtectedRoute = PROTECTED_PATHS.includes(pathname) || pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX);
+
 
     if (currentUser) {
       if (isEmailUser && !currentUser.emailVerified && pathname !== '/verify-email') {
-        if (!PUBLIC_PATHS.includes(pathname) || pathname === '/dashboard') { 
+        // If user is email-based, not verified, and not on verify-email page, redirect them there.
+        // This is especially important if they try to access a protected route.
+        if (isGeneralProtectedRoute || pathname.startsWith(ADMIN_PATH_PREFIX)) { 
            router.push('/verify-email');
            return;
         }
@@ -48,20 +53,14 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
         return;
       }
       
-      // Authenticated user routes (custom courses now available to all authenticated users)
-      if (pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX) && !currentUser) {
-        router.push('/login');
-        return;
-      }
-      
+      // Authenticated user trying to access login/signup
       if ((pathname === '/login' || pathname === '/signup') && (currentUser.emailVerified || !isEmailUser)) {
         router.push('/dashboard');
         return;
       }
     } else {
-      // If no user and the route is not public, redirect to login
-      // Also protect custom courses if no user
-      if (!PUBLIC_PATHS.includes(pathname) || pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX)) {
+      // If no user and the route is protected (general or admin), redirect to login
+      if (isGeneralProtectedRoute || pathname.startsWith(ADMIN_PATH_PREFIX)) {
         router.push('/login');
         return;
       }
@@ -77,9 +76,8 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     );
   }
   
-  const isAppRoute = !PUBLIC_PATHS.includes(pathname) || 
-                     (currentUser && (pathname.startsWith(ADMIN_PATH_PREFIX) || pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX) || 
-                                       ['/dashboard', '/upload', '/configure', '/community', '/profile'].includes(pathname)));
+  const isAppRoute = (PROTECTED_PATHS.includes(pathname) || pathname.startsWith(ADMIN_PATH_PREFIX) || pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX));
+
 
   const showAppLayout = currentUser && 
                         (currentUser.emailVerified || currentUser.providerData.some(p => p.providerId === 'google.com')) &&

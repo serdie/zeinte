@@ -140,7 +140,7 @@ export default function HomePage() {
               </ul>
             </CardContent>
             <CardFooter className="mt-auto">
-              <Link href="/signup" passHref className="w-full"> {/* Changed from /upload to /signup */}
+              <Link href="/signup" passHref className="w-full"> 
                 <Button size="lg" variant="outline" className="w-full text-primary border-primary hover:bg-primary/10 hover:text-primary py-3 text-md">
                   {t('homePage.startFreeTrialButton')}
                 </Button>
@@ -151,7 +151,7 @@ export default function HomePage() {
           {/* Pro Plan Card */}
           <Card className="shadow-xl flex flex-col bg-card border-2 border-accent hover:border-accent/70 transition-colors relative overflow-hidden">
             <div className="absolute top-0 right-0 bg-accent text-accent-foreground px-3 py-1 text-xs font-semibold rounded-bl-lg">
-              RECOMENDADO
+              {t('homePage.proPlanRecommended')}
             </div>
             <CardHeader className="text-center pb-4">
               <Star className="h-12 w-12 text-accent mx-auto mb-4" />
@@ -170,9 +170,11 @@ export default function HomePage() {
               </ul>
             </CardContent>
             <CardFooter className="mt-auto">
-              <Button size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-md" onClick={() => alert(t('homePage.subscribeProAlert'))}>
-                {t('homePage.subscribeProButton')}
-              </Button>
+              <Link href="/pricing" passHref className="w-full">
+                <Button size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-md">
+                  {t('homePage.subscribeProButton')}
+                </Button>
+              </Link>
             </CardFooter>
           </Card>
         </div>
@@ -184,7 +186,7 @@ export default function HomePage() {
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
           {t('homePage.revolutionizeStudySubtitle')}
         </p>
-        <Link href="/signup" passHref> {/* Changed from /upload to /signup */}
+        <Link href="/signup" passHref> 
           <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-xl px-12 py-7 rounded-lg shadow-lg transition-transform duration-150 ease-in-out active:scale-95">
             <Sparkles className="mr-3 h-7 w-7" />
             {t('homePage.tryFreeButton')}

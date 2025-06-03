@@ -1,3 +1,4 @@
+
 // src/contexts/AuthContext.tsx
 "use client";
 
@@ -53,6 +54,7 @@ interface AuthContextType {
   logout: () => Promise<void | string>;
   resendVerificationEmail: () => Promise<string | void>;
   isResendingEmail: boolean;
+  updateCurrentUserTier: (newTier: UserTier) => Promise<void | string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -358,6 +360,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateCurrentUserTier = async (newTier: UserTier): Promise<void | string> => {
+    if (!currentUser || !firestoreDb) {
+        return t("authContext.updateTierErrorNoUserOrDb");
+    }
+    // Prevent special users from changing their own tier here, admin can still do it.
+    const userEmailLower = currentUser.email?.toLowerCase();
+    if (userEmailLower === ADMIN_EMAIL.toLowerCase() && newTier !== 'admin') {
+        return t("authContext.updateTierErrorAdminLock");
+    }
+    if (userEmailLower === FREE_USER_EMAIL.toLowerCase() && newTier !== 'pro') {
+        return t("authContext.updateTierErrorSpecialProLock");
+    }
+
+    setLoading(true);
+    try {
+        const userRef = doc(firestoreDb, "users", currentUser.uid);
+        await updateDoc(userRef, { tier: newTier });
+        setUserTier(newTier); // Update local state immediately
+        return; // Success
+    } catch (error) {
+        console.error(t("authContext.updateTierErrorFirestore"), error);
+        return t("authContext.updateTierErrorFirestoreMessage");
+    } finally {
+        setLoading(false);
+    }
+  };
+
 
   const value = {
     currentUser,
@@ -371,6 +400,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     resendVerificationEmail,
     isResendingEmail,
+    updateCurrentUserTier,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

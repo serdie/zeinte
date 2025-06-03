@@ -44,7 +44,12 @@
     "logout": "Cerrar Sesión",
     "userLoading": "Cargando usuario...",
     "userConnected": "Usuario Conectado",
-    "firebaseNotConfigured": "Firebase no configurado"
+    "firebaseNotConfigured": "Firebase no configurado",
+    "tierFree": "Plan Gratuito",
+    "tierPro": "Plan Pro",
+    "tierAdmin": "Admin",
+    "upgradeToPro": "Actualizar a Pro",
+    "manageSubscription": "Gestionar Suscripción"
   },
   "appLayout": {
     "defaultTitle": "Zeinte",
@@ -56,7 +61,9 @@
     "profileTitle": "Mi Perfil - Zeinte",
     "adminTitle": "Panel de Administración - Zeinte",
     "adminAppSettingsTitle": "Configuración de Aplicación - Zeinte",
-    "adminCommunityManagementTitle": "Gestión de Comunidad - Zeinte"
+    "adminCommunityManagementTitle": "Gestión de Comunidad - Zeinte",
+    "pricingTitle": "Planes y Precios - Zeinte",
+    "subscriptionManagementTitle": "Gestionar Suscripción - Zeinte"
   },
   "homePage": {
     "mainTitle": "Zeinte (antes AdivinaExamen): Tu Aliado Inteligente para Aprobar Exámenes",
@@ -72,15 +79,16 @@
     "step3Description": "Practica con preguntas y explicaciones detalladas en Zeinte.",
     "choosePlanTitle": "Elige tu Plan en Zeinte",
     "choosePlanSubtitle": "Empieza gratis o desbloquea todo el potencial de Zeinte con nuestro Plan Pro.",
-    "freeTrialTitle": "Prueba Gratuita",
-    "freeTrialDescription": "Ideal para empezar y conocer Zeinte. Durante nuestra fase Beta, ¡disfruta de más beneficios!",
+    "freeTrialTitle": "Plan Gratuito",
+    "freeTrialDescription": "Ideal para empezar y explorar Zeinte. Durante nuestra fase Beta, ¡disfruta de más beneficios!",
     "freeTrialFeature1": "Análisis de documentos (límite generoso en Beta).",
     "freeTrialFeature2": "Generación de preguntas (límite generoso en Beta).",
     "freeTrialFeature3": "Explicaciones IA (disponible en Beta).",
     "freeTrialFeature4": "Acceso a la Comunidad (simulada por ahora).",
-    "startFreeTrialButton": "Comenzar Prueba Gratuita con Zeinte",
-    "proPlanTitle": "Plan Pro (Próximamente)",
+    "startFreeTrialButton": "Comenzar con Plan Gratuito",
+    "proPlanTitle": "Plan Pro",
     "proPlanDescription": "Desbloquea todas las funcionalidades de Zeinte.",
+    "proPlanRecommended": "RECOMENDADO",
     "proPlanPrice": "9,95€",
     "proPlanPriceSuffix": "/mes",
     "proPlanFeature1": "Análisis ilimitado de documentos.",
@@ -89,7 +97,7 @@
     "proPlanFeature4": "Acceso completo a la Comunidad (futuro).",
     "proPlanFeature5": "Guardar y gestionar tus exámenes y análisis (futuro).",
     "proPlanFeature6": "Soporte prioritario (futuro).",
-    "subscribeProButton": "Suscribirse al Plan Pro de Zeinte (Próximamente)",
+    "subscribeProButton": "Suscribirse al Plan Pro",
     "subscribeProAlert": "Funcionalidad de suscripción Pro para Zeinte próximamente disponible. ¡Disfruta de la Beta mientras tanto!",
     "revolutionizeStudyTitle": "¿Listo para Revolucionar tu Estudio con Zeinte?",
     "revolutionizeStudySubtitle": "Deja de adivinar y empieza a prepararte con la inteligencia artificial de Zeinte (antes AdivinaExamen).",
@@ -151,7 +159,7 @@
     "title": "Zeinte especial PAU",
     "description": "¡Atención estudiantes de la PAU! Durante esta convocatoria, liberamos Zeinte para que podáis usar toda la plataforma de forma gratuita e ilimitada.",
     "feedbackRequest": "Solo os pedimos una cosa a cambio: enviadnos vuestras impresiones, sugerencias y qué mejoraríais a",
-    "tips": "Recordad ser precisos en vuestras peticiones de examen y no olvidéis subir vuestros apuntes para que la IA sea más precisa. ¡Mucha suerte!"
+    "tips": "Recordad ser precisos en vuestras peticiones de examen y no olvidéis subir vuestros apuntes para que la IA se más precisa. ¡Mucha suerte!"
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Pregunta Tipo Test",
@@ -419,7 +427,7 @@
     "displayNameLabel": "Nombre a Mostrar",
     "tierLabel": "Plan (Tier)",
     "selectTierPlaceholder": "Selecciona un plan",
-    "tierFree": "Free",
+    "tierFree": "Gratuito",
     "tierPro": "Pro",
     "tierAdmin": "Admin",
     "saveUserChangesButton": "Guardar Cambios",
@@ -576,7 +584,12 @@
     "resendVerificationNotLoggedIn": "Debes haber iniciado sesión para reenviar el correo de verificación.",
     "resendVerificationAlreadyVerified": "Tu correo electrónico ya está verificado.",
     "resendVerificationGoogleUser": "Los usuarios de Google no requieren verificación de correo electrónico por este método.",
-    "resendVerificationSuccess": "Correo de verificación reenviado a {{email}}. Por favor, revisa tu bandeja de entrada y la carpeta de spam."
+    "resendVerificationSuccess": "Correo de verificación reenviado a {{email}}. Por favor, revisa tu bandeja de entrada y la carpeta de spam.",
+    "updateTierErrorNoUserOrDb": "Usuario no encontrado o base de datos no disponible para actualizar el plan.",
+    "updateTierErrorAdminLock": "El plan del administrador principal no puede ser modificado de esta forma.",
+    "updateTierErrorSpecialProLock": "Este usuario Pro especial no puede cambiar su plan directamente. Contacta al administrador.",
+    "updateTierErrorFirestore": "Error al actualizar el plan en Firestore.",
+    "updateTierErrorFirestoreMessage": "No se pudo actualizar tu plan en la base de datos. Inténtalo de nuevo."
   },
   "upgradeProAlert": {
     "title": "¡Desbloquea Funciones Pro en Zeinte!",
@@ -676,7 +689,45 @@
     "redirectingToDashboard": "Redirigiendo al panel de estudio...",
     "notYetVerifiedTitle": "Aún no Verificado",
     "notYetVerifiedDescription": "Parece que tu correo aún no ha sido verificado. Por favor, haz clic en el enlace del correo que te enviamos."
+  },
+  "pricingPage": {
+    "mainTitle": "Elige el Plan Zeinte Perfecto para Ti",
+    "mainSubtitle": "Desde acceso gratuito hasta funcionalidades Pro ilimitadas, tenemos un plan para cada estudiante.",
+    "freePlanTitle": "Plan Gratuito",
+    "freePlanDescription": "Perfecto para probar las funcionalidades básicas y la potencia de la IA de Zeinte.",
+    "freePlanPrice": "0€",
+    "currentPlanButton": "Tu Plan Actual",
+    "backToDashboardButton": "Volver al Panel",
+    "alreadyProToastTitle": "Ya eres Pro",
+    "alreadyProToastDescription": "Tu cuenta ya disfruta de todos los beneficios del Plan Pro.",
+    "subscriptionSuccessToastTitle": "¡Bienvenido/a al Plan Pro!",
+    "subscriptionSuccessToastDescription": "Has actualizado al Plan Pro. ¡Disfruta de todas las ventajas!",
+    "subscribeProButtonAction": "Actualizar a Pro Ahora",
+    "paymentGatewayComingSoon": "La pasarela de pago se integrará próximamente. Por ahora, tu cambio a Pro es simulado.",
+    "alreadySubscribedButton": "Ya estás Suscrito al Plan Pro"
+  },
+  "subscriptionPage": {
+    "title": "Gestionar Suscripción",
+    "description": "Consulta los detalles de tu plan actual y realiza cambios.",
+    "currentPlanProTitle": "Tu Plan Actual: Zeinte Pro",
+    "currentPlanProDescription": "Estás disfrutando de todas las funcionalidades avanzadas de Zeinte. ¡Gracias por tu apoyo!",
+    "cancelProInfo": "Si cancelas tu suscripción Pro, volverás al Plan Gratuito al final de tu periodo de facturación actual (simulado). Perderás acceso a las funcionalidades Pro ilimitadas.",
+    "cancelButton": "Cancelar Suscripción y Volver al Plan Gratuito",
+    "currentPlanAdminTitle": "Tu Plan Actual: Administrador",
+    "currentPlanAdminDescription": "Como administrador, tienes acceso completo a todas las funcionalidades y al panel de gestión.",
+    "notProOrAdminTitle": "No tienes una suscripción Pro activa",
+    "notProOrAdminDescription": "Actualmente estás en el Plan Gratuito.",
+    "upgradeHereLink": "Actualiza aquí para desbloquear todas las ventajas.",
+    "paymentGatewayComingSoon": "La gestión real de pagos y facturación se integrará próximamente.",
+    "backToDashboardButton": "Volver al Panel de Estudio",
+    "accessDeniedTitle": "Acceso Denegado",
+    "accessDeniedDescription": "Esta sección es para usuarios con Plan Pro o Administradores.",
+    "notProError": "Debes ser un usuario Pro para gestionar una suscripción.",
+    "cancelSuccessToastTitle": "Suscripción Cancelada",
+    "cancelSuccessToastDescription": "Has vuelto al Plan Gratuito. Los cambios se reflejarán inmediatamente (simulación).",
+    "cannotCancelSpecialProTitle": "Plan Especial Pro",
+    "cannotCancelSpecialProDescription": "Tu cuenta tiene un acceso Pro especial durante la beta y no puede ser cancelada desde aquí. Contacta con soporte si tienes dudas.",
+    "specialProUserTitle": "Cuenta Pro Especial (Beta)",
+    "specialProUserDescription": "Esta cuenta tiene acceso Pro especial durante la fase beta y no puede ser modificada desde esta interfaz."
   }
 }
-
-    

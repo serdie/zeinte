@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, UploadCloud, Settings, User, Users, Home, LogIn, LogOut, UserPlus, ShieldCheck, Lightbulb } from 'lucide-react';
+import { BookOpenText, UploadCloud, Settings, User, Users, Home, LogIn, LogOut, UserPlus, ShieldCheck, Lightbulb, ArrowUpCircle, Edit } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -13,10 +13,12 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/contexts/I18nContext'; 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export default function SidebarNav() {
   const pathname = usePathname();
-  const { currentUser, logout, loading, isFirebaseConfigured, isAdmin } = useAuth();
+  const { currentUser, logout, loading, isFirebaseConfigured, isAdmin, userTier } = useAuth();
   const { toast } = useToast();
   const { t } = useI18n(); 
 
@@ -26,7 +28,7 @@ export default function SidebarNav() {
     { href: '/upload', labelKey: 'sidebar.upload', icon: UploadCloud, protected: true },
     { href: '/configure', labelKey: 'sidebar.configureExam', icon: Settings, protected: true },
     { href: '/community', labelKey: 'sidebar.community', icon: Users, protected: true },
-    { href: '/custom-courses/create', labelKey: 'sidebar.createCourse', icon: Lightbulb, protected: true }, // Removed adminOnly: true
+    { href: '/custom-courses/create', labelKey: 'sidebar.createCourse', icon: Lightbulb, protected: true },
     { href: '/profile', labelKey: 'sidebar.profile', icon: User, protected: true },
   ];
 
@@ -48,12 +50,18 @@ export default function SidebarNav() {
     }
   };
 
+  const getTierLabel = (tier: typeof userTier) => {
+    if (tier === 'admin') return t('sidebar.tierAdmin');
+    if (tier === 'pro') return t('sidebar.tierPro');
+    if (tier === 'free') return t('sidebar.tierFree');
+    return '';
+  };
+
   return (
     <SidebarMenu className="flex flex-col justify-between h-full p-2 space-y-2">
       <div className="space-y-1">
         {navItems.map((item) => {
           if (item.protected && isFirebaseConfigured && !currentUser) return null;
-          // Removed item.adminOnly check for custom courses
           
           const label = t(item.labelKey);
           return (
@@ -108,13 +116,42 @@ export default function SidebarNav() {
       </div>
 
       <div className="mt-auto space-y-1">
-         <div className="px-2 py-1 group-data-[collapsible=icon]:hidden">
+         <div className="px-2 py-1 group-data-[collapsible=icon]:hidden space-y-1">
           {loading && <p className="text-xs text-sidebar-foreground/70">{t('sidebar.userLoading')}</p>}
           {!loading && currentUser && (
-            <p className="text-xs text-sidebar-foreground/70 truncate" title={currentUser.email || t('sidebar.userConnected')}>
-              {currentUser.email || t('sidebar.userConnected')}
-              {isAdmin && <span className="text-accent ml-1">(Admin)</span>}
-            </p>
+            <>
+              <p className="text-xs text-sidebar-foreground/70 truncate" title={currentUser.email || t('sidebar.userConnected')}>
+                {currentUser.email || t('sidebar.userConnected')}
+              </p>
+              {userTier && (
+                <div className="flex items-center gap-2">
+                  <Badge 
+                    variant={userTier === 'admin' ? 'destructive' : userTier === 'pro' ? 'default' : 'secondary'}
+                    className={cn(
+                      userTier === 'pro' && 'bg-green-500 text-white',
+                      userTier === 'admin' && 'bg-red-600 text-white',
+                      'text-xs px-1.5 py-0.5'
+                    )}
+                  >
+                    {getTierLabel(userTier)}
+                  </Badge>
+                  {userTier === 'free' && (
+                    <Link href="/pricing" passHref legacyBehavior>
+                      <Button variant="link" size="sm" className="text-xs p-0 h-auto text-sidebar-accent hover:text-sidebar-accent/80">
+                        <ArrowUpCircle className="h-3.5 w-3.5 mr-1"/>{t('sidebar.upgradeToPro')}
+                      </Button>
+                    </Link>
+                  )}
+                  {userTier === 'pro' && (
+                     <Link href="/account/subscription" passHref legacyBehavior>
+                       <Button variant="link" size="sm" className="text-xs p-0 h-auto text-sidebar-accent hover:text-sidebar-accent/80">
+                         <Edit className="h-3.5 w-3.5 mr-1"/>{t('sidebar.manageSubscription')}
+                       </Button>
+                    </Link>
+                  )}
+                </div>
+              )}
+            </>
           )}
           {!isFirebaseConfigured && !loading && <p className="text-xs text-destructive">{t('sidebar.firebaseNotConfigured')}</p>}
         </div>

@@ -44,7 +44,12 @@
     "logout": "Logout",
     "userLoading": "Loading user...",
     "userConnected": "User Connected",
-    "firebaseNotConfigured": "Firebase not configured"
+    "firebaseNotConfigured": "Firebase not configured",
+    "tierFree": "Free Plan",
+    "tierPro": "Pro Plan",
+    "tierAdmin": "Admin",
+    "upgradeToPro": "Upgrade to Pro",
+    "manageSubscription": "Manage Subscription"
   },
   "appLayout": {
     "defaultTitle": "Zeinte",
@@ -56,7 +61,9 @@
     "profileTitle": "My Profile - Zeinte",
     "adminTitle": "Admin Panel - Zeinte",
     "adminAppSettingsTitle": "Application Settings - Zeinte",
-    "adminCommunityManagementTitle": "Community Management - Zeinte"
+    "adminCommunityManagementTitle": "Community Management - Zeinte",
+    "pricingTitle": "Plans & Pricing - Zeinte",
+    "subscriptionManagementTitle": "Manage Subscription - Zeinte"
   },
   "homePage": {
     "mainTitle": "Zeinte (formerly AdivinaExamen): Your Smart Ally to Pass Exams",
@@ -72,15 +79,16 @@
     "step3Description": "Practice with questions and detailed explanations in Zeinte.",
     "choosePlanTitle": "Choose Your Plan in Zeinte",
     "choosePlanSubtitle": "Start for free or unlock the full potential of Zeinte with our Pro Plan.",
-    "freeTrialTitle": "Free Trial",
+    "freeTrialTitle": "Free Plan",
     "freeTrialDescription": "Ideal for getting started and exploring Zeinte. During our Beta phase, enjoy more benefits!",
     "freeTrialFeature1": "Document analysis (generous limit in Beta).",
     "freeTrialFeature2": "Question generation (generous limit in Beta).",
     "freeTrialFeature3": "AI explanations (available in Beta).",
     "freeTrialFeature4": "Community access (simulated for now).",
-    "startFreeTrialButton": "Start Free Trial with Zeinte",
-    "proPlanTitle": "Pro Plan (Coming Soon)",
+    "startFreeTrialButton": "Start with Free Plan",
+    "proPlanTitle": "Pro Plan",
     "proPlanDescription": "Unlock all features of Zeinte.",
+    "proPlanRecommended": "RECOMMENDED",
     "proPlanPrice": "€9.95",
     "proPlanPriceSuffix": "/month",
     "proPlanFeature1": "Unlimited document analysis.",
@@ -89,7 +97,7 @@
     "proPlanFeature4": "Full community access (future).",
     "proPlanFeature5": "Save and manage your exams and analyses (future).",
     "proPlanFeature6": "Priority support (future).",
-    "subscribeProButton": "Subscribe to Zeinte Pro Plan (Coming Soon)",
+    "subscribeProButton": "Subscribe to Pro Plan",
     "subscribeProAlert": "Pro subscription functionality for Zeinte coming soon. Enjoy the Beta in the meantime!",
     "revolutionizeStudyTitle": "Ready to Revolutionize Your Study with Zeinte?",
     "revolutionizeStudySubtitle": "Stop guessing and start preparing with the artificial intelligence of Zeinte (formerly AdivinaExamen).",
@@ -145,7 +153,7 @@
     "viewProPlansButton": "View Zeinte Pro Plans",
     "loadingData": "Loading Zeinte data...",
     "betaAdNoticeTitle": "Zeinte is in Beta!",
-    "betaAdNoticeDescription": "Zeinte is currently in Beta and is 100% free to use. To help us cover server costs during this period, we've included some advertising. We appreciate your understanding and support as we work to improve the platform."
+    "betaAdNoticeDescription": "Zeinte is currently 100% free during our Beta phase. To help us cover server costs, we've included some advertising. We appreciate your understanding and support!"
   },
   "pauSpecial": {
     "title": "Zeinte PAU Special",
@@ -576,7 +584,12 @@
     "resendVerificationNotLoggedIn": "You must be logged in to resend the verification email.",
     "resendVerificationAlreadyVerified": "Your email is already verified.",
     "resendVerificationGoogleUser": "Google users do not require email verification through this method.",
-    "resendVerificationSuccess": "Verification email resent to {{email}}. Please check your inbox and spam folder."
+    "resendVerificationSuccess": "Verification email resent to {{email}}. Please check your inbox and spam folder.",
+    "updateTierErrorNoUserOrDb": "User not found or database unavailable to update plan.",
+    "updateTierErrorAdminLock": "The main administrator's plan cannot be modified this way.",
+    "updateTierErrorSpecialProLock": "This special Pro user cannot change their plan directly. Contact administrator.",
+    "updateTierErrorFirestore": "Error updating plan in Firestore.",
+    "updateTierErrorFirestoreMessage": "Could not update your plan in the database. Try again."
   },
   "upgradeProAlert": {
     "title": "Unlock Pro Features in Zeinte!",
@@ -676,7 +689,45 @@
     "redirectingToDashboard": "Redirecting to study dashboard...",
     "notYetVerifiedTitle": "Not Yet Verified",
     "notYetVerifiedDescription": "It seems your email hasn't been verified yet. Please click the link in the email we sent."
+  },
+  "pricingPage": {
+    "mainTitle": "Choose the Perfect Zeinte Plan for You",
+    "mainSubtitle": "From free access to unlimited Pro features, we have a plan for every student.",
+    "freePlanTitle": "Free Plan",
+    "freePlanDescription": "Perfect for trying out Zeinte's basic features and AI power.",
+    "freePlanPrice": "€0",
+    "currentPlanButton": "Your Current Plan",
+    "backToDashboardButton": "Back to Dashboard",
+    "alreadyProToastTitle": "Already Pro",
+    "alreadyProToastDescription": "Your account already enjoys all Pro Plan benefits.",
+    "subscriptionSuccessToastTitle": "Welcome to Pro!",
+    "subscriptionSuccessToastDescription": "You've successfully upgraded to the Pro Plan. Enjoy all the benefits!",
+    "subscribeProButtonAction": "Upgrade to Pro Now",
+    "paymentGatewayComingSoon": "Payment gateway will be integrated soon. For now, your upgrade to Pro is simulated.",
+    "alreadySubscribedButton": "You are Already on Pro Plan"
+  },
+  "subscriptionPage": {
+    "title": "Manage Subscription",
+    "description": "View your current plan details and make changes.",
+    "currentPlanProTitle": "Your Current Plan: Zeinte Pro",
+    "currentPlanProDescription": "You are enjoying all the advanced features of Zeinte. Thank you for your support!",
+    "cancelProInfo": "If you cancel your Pro subscription, you will revert to the Free Plan at the end of your current billing period (simulated). You will lose access to unlimited Pro features.",
+    "cancelButton": "Cancel Subscription and Revert to Free Plan",
+    "currentPlanAdminTitle": "Your Current Plan: Administrator",
+    "currentPlanAdminDescription": "As an administrator, you have full access to all features and the management panel.",
+    "notProOrAdminTitle": "You do not have an active Pro subscription",
+    "notProOrAdminDescription": "You are currently on the Free Plan.",
+    "upgradeHereLink": "Upgrade here to unlock all benefits.",
+    "paymentGatewayComingSoon": "Actual payment and billing management will be integrated soon.",
+    "backToDashboardButton": "Back to Study Dashboard",
+    "accessDeniedTitle": "Access Denied",
+    "accessDeniedDescription": "This section is for Pro Plan users or Administrators.",
+    "notProError": "You must be a Pro user to manage a subscription.",
+    "cancelSuccessToastTitle": "Subscription Cancelled",
+    "cancelSuccessToastDescription": "You have reverted to the Free Plan. Changes will be reflected immediately (simulation).",
+    "cannotCancelSpecialProTitle": "Special Pro Plan",
+    "cannotCancelSpecialProDescription": "Your account has special Pro access during beta and cannot be cancelled from here. Contact support if you have questions.",
+    "specialProUserTitle": "Special Pro Account (Beta)",
+    "specialProUserDescription": "This account has special Pro access during the beta phase and cannot be modified from this interface."
   }
 }
-
-    
