@@ -572,6 +572,7 @@
     "popupBlockedError": "The Google pop-up was blocked or canceled. Please enable pop-ups for this site and try again.",
     "accountExistsWithDifferentCredentialError": "An account already exists with this email but with a different sign-in method (e.g., Google or password). Try signing in with the original method.",
     "unexpectedError": "An unexpected error occurred ({{errorCode}}). Please try again. If the problem persists, check Firebase configuration.",
+    "handleSubmitGenericError": "An unexpected error occurred while trying to log in. Please try again.",
     "logoutErrorToastTitle": "Logout Error",
     "logoutAttemptFailedConfigOrAuth": "AuthContext: Logout attempt failed because Firebase is not configured or auth service is unavailable.",
     "logoutErrorFirebase": "Error logging out from Firebase:",

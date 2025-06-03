@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, LogIn, Mail, AlertTriangle } from 'lucide-react'; 
+import { useI18n } from '@/contexts/I18nContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -21,6 +22,7 @@ export default function LoginPage() {
   const { loginWithEmail, signInWithGoogle, currentUser, loading: authLoading, isFirebaseConfigured } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!authLoading && currentUser) {
@@ -30,26 +32,34 @@ export default function LoginPage() {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!isFirebaseConfigured) {
-      toast({ title: "Configuración Incompleta", description: "Firebase no está configurado. Revisa las variables de entorno y reinicia el servidor.", variant: "destructive", duration: 7000 });
-      return;
+    try {
+      if (!isFirebaseConfigured) {
+        toast({ title: t("loginPage.configIncompleteToastTitle"), description: t("loginPage.configIncompleteToastDescription"), variant: "destructive", duration: 7000 });
+        return;
+      }
+      setIsLoading(true);
+      setAuthError(null);
+      const result = await loginWithEmail(email, password);
+      if (typeof result === 'string') {
+        setAuthError(result);
+        toast({ title: t("loginPage.loginErrorToastTitle"), description: result, variant: "destructive" });
+      } else {
+        toast({ title: t("loginPage.loginSuccessToastTitle"), description: t("loginPage.loginSuccessToastDescription"), variant: "default" });
+        router.push('/dashboard'); 
+      }
+    } catch (err) {
+      console.error("Unhandled error in login handleSubmit:", err);
+      const genericErrorMessage = t("authContext.handleSubmitGenericError");
+      setAuthError(genericErrorMessage);
+      toast({ title: t("common.error"), description: genericErrorMessage, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(true);
-    setAuthError(null);
-    const result = await loginWithEmail(email, password);
-    if (typeof result === 'string') {
-      setAuthError(result);
-      toast({ title: "Error al Iniciar Sesión", description: result, variant: "destructive" });
-    } else {
-      toast({ title: "Inicio de Sesión Exitoso", description: "Bienvenido de nuevo!", variant: "default" });
-      router.push('/dashboard'); 
-    }
-    setIsLoading(false);
   };
 
   const handleGoogleSignIn = async () => {
     if (!isFirebaseConfigured) {
-      toast({ title: "Configuración Incompleta", description: "Firebase no está configurado. Revisa las variables de entorno y reinicia el servidor.", variant: "destructive", duration: 7000 });
+      toast({ title: t("loginPage.configIncompleteToastTitle"), description: t("loginPage.configIncompleteToastDescription"), variant: "destructive", duration: 7000 });
       return;
     }
     setIsLoading(true);
@@ -57,9 +67,9 @@ export default function LoginPage() {
     const result = await signInWithGoogle();
     if (typeof result === 'string') {
       setAuthError(result);
-      toast({ title: "Error con Google", description: result, variant: "destructive" });
+      toast({ title: t("loginPage.googleErrorToastTitle"), description: result, variant: "destructive" });
     } else {
-      toast({ title: "Inicio de Sesión Exitoso", description: "Bienvenido con Google!", variant: "default" });
+      toast({ title: t("loginPage.loginSuccessToastTitle"), description: t("loginPage.googleSuccessToastDescription"), variant: "default" });
       router.push('/dashboard'); 
     }
     setIsLoading(false);
@@ -70,7 +80,7 @@ export default function LoginPage() {
   }
   
   if (!authLoading && currentUser) {
-     return <div className="flex items-center justify-center min-h-screen"><p>Redirigiendo...</p><Loader2 className="ml-2 h-5 w-5 animate-spin text-primary" /></div>;
+     return <div className="flex items-center justify-center min-h-screen"><p>{t("loginPage.redirecting")}</p><Loader2 className="ml-2 h-5 w-5 animate-spin text-primary" /></div>;
   }
 
   return (
@@ -79,25 +89,25 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-primary flex items-center justify-center gap-2">
             <LogIn className="h-8 w-8" />
-            Iniciar Sesión
+            {t("loginPage.title")}
           </CardTitle>
-          <CardDescription>Accede a tu cuenta para continuar.</CardDescription>
+          <CardDescription>{t("loginPage.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {!isFirebaseConfigured && (
             <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-              <span>Firebase no está configurado correctamente. Por favor, revisa las variables de entorno en `.env.local` y reinicia el servidor. La autenticación no funcionará.</span>
+              <span>{t("loginPage.firebaseNotConfiguredWarning")}</span>
             </div>
           )}
           {authError && <p className="text-sm text-destructive bg-destructive/10 p-3 rounded-md text-center">{authError}</p>}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Correo Electrónico</Label>
+              <Label htmlFor="email">{t("loginPage.emailLabel")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="tu@email.com"
+                placeholder={t("loginPage.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -106,11 +116,11 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">{t("loginPage.passwordLabel")}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Tu contraseña"
+                placeholder={t("loginPage.passwordPlaceholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -120,7 +130,7 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full text-lg py-3 bg-primary hover:bg-primary/90" disabled={isLoading || !isFirebaseConfigured}>
               {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <LogIn className="mr-2 h-5 w-5" />}
-              Entrar
+              {t("loginPage.loginButton")}
             </Button>
           </form>
           <div className="relative">
@@ -129,20 +139,20 @@ export default function LoginPage() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-card px-2 text-muted-foreground">
-                O continúa con
+                {t("loginPage.continueWith")}
               </span>
             </div>
           </div>
           <Button variant="outline" className="w-full text-md py-3" onClick={handleGoogleSignIn} disabled={isLoading || !isFirebaseConfigured}>
             {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <svg className="mr-2 h-5 w-5" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Google</title><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.02 1.08-2.58 2.03-4.66 2.03-3.86 0-6.99-3.11-6.99-7.11s3.13-7.11 6.99-7.11c1.73 0 3.25.59 4.52 1.78l2.48-2.48C17.46.89 15.21 0 12.48 0 5.88 0 0 5.56 0 12.48s5.88 12.48 12.48 12.48c7.02 0 12.24-4.82 12.24-12.72 0-.79-.08-1.54-.2-2.32H12.48z" fill="currentColor"/></svg> }
-            Google
+            {t("loginPage.googleButton")}
           </Button>
         </CardContent>
         <CardFooter className="text-center block">
           <p className="text-sm text-muted-foreground">
-            ¿No tienes una cuenta?{' '}
+            {t("loginPage.noAccount")}{' '}
             <Link href="/signup" className="font-semibold text-primary hover:underline">
-              Regístrate aquí
+              {t("loginPage.signupHere")}
             </Link>
           </p>
         </CardFooter>
