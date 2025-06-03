@@ -63,6 +63,7 @@
     "adminAppSettingsTitle": "Configuración de Aplicación - Zeinte",
     "adminCommunityManagementTitle": "Gestión de Comunidad - Zeinte",
     "pricingTitle": "Planes y Precios - Zeinte",
+    "paypalPaymentTitle": "Pago con PayPal - Zeinte",
     "subscriptionManagementTitle": "Gestionar Suscripción - Zeinte"
   },
   "homePage": {
@@ -704,9 +705,9 @@
     "alreadyProToastDescription": "Tu cuenta ya disfruta de todos los beneficios del Plan Pro.",
     "subscriptionSuccessToastTitle": "¡Bienvenido/a al Plan Pro!",
     "subscriptionSuccessToastDescription": "Has actualizado al Plan Pro. ¡Disfruta de todas las ventajas!",
-    "subscribeProButtonAction": "Actualizar a Pro Ahora",
+    "subscribeProButtonAction": "Pasar a Pro Ahora",
     "payWithPayPalButton": "Pagar con PayPal (Simulado)",
-    "paymentGatewayComingSoon": "La pasarela de pago se integrará próximamente. Por ahora, tu cambio a Pro es simulado.",
+    "paymentGatewayInfo": "La pasarela de pago de PayPal está integrada. El cambio a Pro se simula con el botón alternativo.",
     "alreadySubscribedButton": "Ya estás Suscrito al Plan Pro",
     "loadingPayPalButton": "Cargando botón de PayPal...",
     "paypalButtonError": "No se pudo mostrar el botón de pago de PayPal. Intenta recargar la página o contacta con soporte si el problema persiste."
@@ -734,5 +735,18 @@
     "cannotCancelSpecialProDescription": "Tu cuenta tiene un acceso Pro especial durante la beta y no puede ser cancelada desde aquí. Contacta con soporte si tienes dudas.",
     "specialProUserTitle": "Cuenta Pro Especial (Beta)",
     "specialProUserDescription": "Esta cuenta tiene acceso Pro especial durante la fase beta y no puede ser modificada desde esta interfaz."
+  },
+  "paymentPage": {
+    "title": "Completa tu Suscripción a Zeinte Pro",
+    "description": "Finaliza tu pago con PayPal para desbloquear todas las funciones Pro.",
+    "payPalButtonLoading": "Cargando Botón de Pago PayPal...",
+    "payPalButtonError": "No se pudo cargar el botón de PayPal. Inténtalo de nuevo o contacta con soporte.",
+    "afterPaymentInfo": "Después de completar tu pago con PayPal, tu cuenta se actualizará a Pro. Si esto no sucede automáticamente en unos minutos, por favor, contacta con soporte.",
+    "simulatePaymentButton": "Simular Pago Exitoso y Actualizar Cuenta",
+    "simulatingPayment": "Simulando...",
+    "backToPricing": "Volver a Precios",
+    "alreadyProTitle": "Ya Estás Suscrito",
+    "alreadyProDescription": "Tu cuenta ya es Pro o Admin. Puedes gestionar tu suscripción o ir al panel de estudio.",
+    "goToDashboard": "Ir al Panel de Estudio"
   }
 }

@@ -16,7 +16,16 @@ interface ConditionalLayoutProps {
 const PUBLIC_PATHS = ['/', '/login', '/signup', '/verify-email'];
 const ADMIN_PATH_PREFIX = '/admin';
 const CUSTOM_COURSES_PATH_PREFIX = '/custom-courses';
-const PROTECTED_PATHS = ['/dashboard', '/upload', '/configure', '/community', '/profile', '/pricing', '/account/subscription'];
+const PAYMENT_PATH_PREFIX = '/payment'; // Added payment prefix
+const PROTECTED_PATHS = [
+  '/dashboard', 
+  '/upload', 
+  '/configure', 
+  '/community', 
+  '/profile', 
+  '/pricing', 
+  '/account/subscription'
+];
 
 
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
@@ -30,7 +39,9 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     }
 
     const isEmailUser = currentUser?.providerData.some(p => p.providerId === 'password');
-    const isGeneralProtectedRoute = PROTECTED_PATHS.includes(pathname) || pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX);
+    const isGeneralProtectedRoute = PROTECTED_PATHS.includes(pathname) || 
+                                    pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX) ||
+                                    pathname.startsWith(PAYMENT_PATH_PREFIX); // Added payment path check
 
 
     if (currentUser) {
@@ -76,7 +87,12 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     );
   }
   
-  const isAppRoute = (PROTECTED_PATHS.includes(pathname) || pathname.startsWith(ADMIN_PATH_PREFIX) || pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX));
+  const isAppRoute = (
+    PROTECTED_PATHS.includes(pathname) || 
+    pathname.startsWith(ADMIN_PATH_PREFIX) || 
+    pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX) ||
+    pathname.startsWith(PAYMENT_PATH_PREFIX) // Added payment path check
+  );
 
 
   const showAppLayout = currentUser && 

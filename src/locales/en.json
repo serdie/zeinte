@@ -63,6 +63,7 @@
     "adminAppSettingsTitle": "Application Settings - Zeinte",
     "adminCommunityManagementTitle": "Community Management - Zeinte",
     "pricingTitle": "Plans & Pricing - Zeinte",
+    "paypalPaymentTitle": "PayPal Payment - Zeinte",
     "subscriptionManagementTitle": "Manage Subscription - Zeinte"
   },
   "homePage": {
@@ -704,9 +705,9 @@
     "alreadyProToastDescription": "Your account already enjoys all Pro Plan benefits.",
     "subscriptionSuccessToastTitle": "Welcome to Pro!",
     "subscriptionSuccessToastDescription": "You've successfully upgraded to the Pro Plan. Enjoy all the benefits!",
-    "subscribeProButtonAction": "Upgrade to Pro Now",
+    "subscribeProButtonAction": "Go to Pro Now",
     "payWithPayPalButton": "Pay with PayPal (Simulated)",
-    "paymentGatewayComingSoon": "Payment gateway will be integrated soon. For now, your upgrade to Pro is simulated.",
+    "paymentGatewayInfo": "The PayPal payment gateway is integrated. The upgrade to Pro is simulated with the alternative button.",
     "alreadySubscribedButton": "You are Already on Pro Plan",
     "loadingPayPalButton": "Loading PayPal button...",
     "paypalButtonError": "Could not display the PayPal payment button. Please try reloading the page or contact support if the problem persists."
@@ -734,5 +735,18 @@
     "cannotCancelSpecialProDescription": "Your account has special Pro access during beta and cannot be cancelled from here. Contact support if you have questions.",
     "specialProUserTitle": "Special Pro Account (Beta)",
     "specialProUserDescription": "This account has special Pro access during the beta phase and cannot be modified from this interface."
+  },
+  "paymentPage": {
+    "title": "Complete Your Zeinte Pro Subscription",
+    "description": "Finalize your payment with PayPal to unlock all Pro features.",
+    "payPalButtonLoading": "Loading PayPal Payment Button...",
+    "payPalButtonError": "Could not load PayPal button. Please try again or contact support.",
+    "afterPaymentInfo": "After completing your payment with PayPal, your account will be upgraded to Pro. If this doesn't happen automatically within a few minutes, please contact support.",
+    "simulatePaymentButton": "Simulate Successful Payment & Upgrade Account",
+    "simulatingPayment": "Simulating...",
+    "backToPricing": "Back to Pricing",
+    "alreadyProTitle": "Already Subscribed",
+    "alreadyProDescription": "Your account is already Pro or Admin. You can manage your subscription or go to the dashboard.",
+    "goToDashboard": "Go to Dashboard"
   }
 }
