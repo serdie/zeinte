@@ -1,3 +1,4 @@
+
 // "use client"; // Eliminado para permitir la exportación de metadata
 
 import type { Metadata } from 'next';
@@ -21,11 +22,13 @@ const geistMono = Geist_Mono({
 
 // La exportación de metadata es válida porque este es un Server Component.
 export const metadata: Metadata = {
+  metadataBase: new URL('https://zeinte.com'), // Added metadataBase
   title: 'Zeinte - Tu Aliado Inteligente para Exámenes',
   description: 'Con Zeinte (antes AdivinaExamen), analiza documentos y predice preguntas de examen con IA.',
 };
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+const ADSENSE_PUBLISHER_ID = process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID;
 
 export default function RootLayout({
   children,
@@ -35,15 +38,17 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
-        {/* Google AdSense Script - Reemplaza con tu ID de editor */}
-        <Script
-          async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_ADSENSE_PUBLISHER_ID`}
-          strategy="afterInteractive"
-          crossOrigin="anonymous"
-        />
+        {/* Google AdSense Script */}
+        {ADSENSE_PUBLISHER_ID && (
+          <Script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_PUBLISHER_ID}`}
+            strategy="afterInteractive"
+            crossOrigin="anonymous"
+          />
+        )}
 
-        {/* Google Analytics Scripts - Reemplaza NEXT_PUBLIC_GA_MEASUREMENT_ID en .env.local */}
+        {/* Google Analytics Scripts */}
         {GA_MEASUREMENT_ID && (
           <>
             <Script
