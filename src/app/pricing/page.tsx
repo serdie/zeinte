@@ -4,26 +4,36 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { CheckCircle, Sparkles, Star, TrendingUp, Zap, Loader2, ArrowRight, ShieldCheck, CreditCard } from 'lucide-react';
+import { CheckCircle, Sparkles, Star, TrendingUp, Zap, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useI18n } from '@/contexts/I18nContext';
+
+declare global {
+  interface Window {
+    paypal?: any;
+  }
+}
+
+const PAYPAL_HOSTED_BUTTON_ID = "TFTJY83J7D78U";
+const PAYPAL_CONTAINER_ID = `paypal-container-${PAYPAL_HOSTED_BUTTON_ID}`;
 
 export default function PricingPage() {
   const { currentUser, userTier, updateCurrentUserTier, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [isSubscribing, setIsSubscribing] = useState(false); // For the direct "Upgrade to Pro" button
   const { t } = useI18n();
+  const [isPayPalButtonRendered, setIsPayPalButtonRendered] = useState(false);
 
   const handleSubscribePro = async () => {
     if (!currentUser) {
-      router.push('/login'); 
+      router.push('/login');
       return;
     }
-    if (userTier === 'pro' || userTier === 'admin') { // Admin también se considera "suscrito"
+    if (userTier === 'pro' || userTier === 'admin') {
       toast({ title: t('pricingPage.alreadyProToastTitle'), description: t('pricingPage.alreadyProToastDescription'), variant: "default" });
       router.push('/dashboard');
       return;
@@ -43,6 +53,39 @@ export default function PricingPage() {
     }
     setIsSubscribing(false);
   };
+
+  useEffect(() => {
+    if (currentUser && userTier !== 'pro' && userTier !== 'admin' && !authLoading) {
+      if (window.paypal && window.paypal.HostedButtons && !isPayPalButtonRendered) {
+        // Check if the container exists
+        if (document.getElementById(PAYPAL_CONTAINER_ID)) {
+          try {
+            window.paypal.HostedButtons({
+              hostedButtonId: PAYPAL_HOSTED_BUTTON_ID,
+            }).render(`#${PAYPAL_CONTAINER_ID}`);
+            setIsPayPalButtonRendered(true);
+          } catch (error) {
+            console.error("Error rendering PayPal button:", error);
+            toast({
+              title: "Error PayPal",
+              description: "No se pudo mostrar el botón de PayPal. Intenta recargar la página.",
+              variant: "destructive"
+            });
+          }
+        }
+      }
+    }
+    // Cleanup function for PayPal button if needed, though hosted buttons might not require explicit cleanup.
+    // For more complex PayPal integrations (Smart Buttons), cleanup might be necessary.
+    // return () => {
+    //   const container = document.getElementById(PAYPAL_CONTAINER_ID);
+    //   if (container) {
+    //     container.innerHTML = ""; // Simple cleanup
+    //   }
+    //   setIsPayPalButtonRendered(false);
+    // };
+  }, [currentUser, userTier, authLoading, isPayPalButtonRendered, toast]);
+
 
   return (
     <div className="container mx-auto py-12 px-4">
@@ -72,15 +115,15 @@ export default function PricingPage() {
             </ul>
           </CardContent>
           <CardFooter className="mt-auto">
-            {currentUser && (userTier === 'free' || userTier === null) ? ( // Si es free o no tiene tier aún
+            {currentUser && (userTier === 'free' || userTier === null) ? (
               <Button size="lg" variant="outline" className="w-full text-primary border-primary hover:bg-primary/10 py-3 text-md" disabled>
                 {t('pricingPage.currentPlanButton')}
               </Button>
-            ) : currentUser && (userTier === 'pro' || userTier === 'admin') ? ( // Si es pro o admin
+            ) : currentUser && (userTier === 'pro' || userTier === 'admin') ? (
                <Button size="lg" variant="outline" className="w-full text-primary border-primary hover:bg-primary/10 py-3 text-md" disabled>
                 {userTier === 'pro' ? t('pricingPage.currentPlanButton') : t('pricingPage.adminPlanButton')}
               </Button>
-            ) : ( // Si no hay usuario o estado no claro (ej. cargando o error), mostrar enlace a registrarse
+            ) : (
               <Link href="/signup" passHref className="w-full">
                 <Button size="lg" variant="outline" className="w-full text-primary border-primary hover:bg-primary/10 py-3 text-md">
                   {t('homePage.startFreeTrialButton')}
@@ -120,10 +163,11 @@ export default function PricingPage() {
                 <ShieldCheck className="mr-2 h-5 w-5" /> {t('pricingPage.alreadySubscribedButton')}
               </Button>
             ) : (
-              <div className="w-full space-y-3">
+              <div className="w-full space-y-4">
+                {/* Simulated Upgrade Button (kept for local testing if needed) */}
                 <Button
                   size="lg"
-                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-md"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-md"
                   onClick={handleSubscribePro}
                   disabled={isSubscribing || authLoading || !currentUser}
                 >
@@ -134,20 +178,18 @@ export default function PricingPage() {
                   )}
                   {t('pricingPage.subscribeProButtonAction')}
                 </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="w-full border-blue-600 text-blue-700 hover:bg-blue-500/10 py-3 text-md flex items-center justify-center"
-                  onClick={handleSubscribePro} // Misma función simulada
-                  disabled={isSubscribing || authLoading || !currentUser}
-                >
-                  {isSubscribing ? (
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  ) : (
-                    <CreditCard className="mr-2 h-5 w-5" /> 
-                  )}
-                  {t('pricingPage.payWithPayPalButton')}
-                </Button>
+
+                {/* PayPal Hosted Button Container */}
+                {currentUser && !authLoading && userTier !== 'pro' && userTier !== 'admin' && (
+                  <div id={PAYPAL_CONTAINER_ID} className="w-full flex justify-center">
+                    {/* PayPal button will render here by the SDK */}
+                    {!isPayPalButtonRendered && ( // Show a placeholder or loading for PayPal button
+                       <div className="flex items-center justify-center text-sm text-muted-foreground p-2">
+                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cargando botón de PayPal...
+                       </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </CardFooter>

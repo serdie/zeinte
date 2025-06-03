@@ -29,6 +29,7 @@ export const metadata: Metadata = {
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 const ADSENSE_PUBLISHER_ID = process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID;
+const PAYPAL_CLIENT_ID = "BAAASJSFHovFUl_DSeEP5Nzj6wZc-PyTvey8e7JrWbmrQ-L0yuE1YNQC4EQ7ObltYWufkQUkLmvE_gJX_0"; // Your PayPal Client ID
 
 export default function RootLayout({
   children,
@@ -76,6 +77,12 @@ export default function RootLayout({
             />
           </>
         )}
+
+        {/* PayPal SDK Script */}
+        <Script
+          src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&components=hosted-buttons&disable-funding=venmo&currency=EUR`}
+          strategy="afterInteractive"
+        />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <I18nProvider> {/* Envuelve AuthProvider (y por tanto todo lo demás) con I18nProvider */}
