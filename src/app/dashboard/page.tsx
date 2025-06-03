@@ -34,6 +34,8 @@ export default function DashboardPage() {
   const [numQuestionsForReanalysis, setNumQuestionsForReanalysis] = useState<string>(DEFAULT_NUM_QUESTIONS_REANALYSIS);
 
   const { toast } = useToast();
+  // const { userTier } = useAuth(); // Removed, restrictions lifted
+  // const isFreeUser = userTier === 'free'; // Removed, restrictions lifted
 
   useEffect(() => {
     let defaultNumQuestions = DEFAULT_NUM_QUESTIONS_REANALYSIS;
@@ -72,6 +74,16 @@ export default function DashboardPage() {
   }, []);
 
   const handleGetExplanation = useCallback(async (questionText: string, options: string[], correctAnswerIndex: number) => {
+    // Removed isFreeUser check for PAU special
+    // if (isFreeUser) {
+    //   toast({
+    //     title: t('dashboardPage.upgradeProAlertViewAllMessage', { count: "Detailed", total: "Explanations" }),
+    //     description: t('dashboardPage.reanalyzeButtonProTooltip'),
+    //     variant: "default"
+    //   });
+    //   return;
+    // }
+
     const questionContext = { questionText, options, correctAnswerIndex };
     setSelectedQuestionForExplanation(questionContext);
     setIsExplaining(true);
@@ -110,6 +122,16 @@ export default function DashboardPage() {
       });
       return;
     }
+    // Removed isFreeUser check for PAU special
+    // if (isFreeUser) {
+    //   setShowUpgradeDialog(true); // Or just show a toast if the dialog is removed
+    //   toast({
+    //     title: t('dashboardPage.dailyLimitReachedTitle'),
+    //     description: t('dashboardPage.dailyLimitReachedDescription'),
+    //     variant: "default"
+    //   });
+    //   return;
+    // }
 
     setIsReAnalyzing(true);
     let requestedNum = parseInt(numQuestionsForReanalysis, 10);
@@ -192,7 +214,7 @@ export default function DashboardPage() {
     );
   }
 
-  const questionsToDisplay = predictedData.questions;
+  const questionsToDisplay = predictedData.questions; // Show all questions since restrictions are lifted
   
   return (
     <div className="space-y-8">
@@ -202,7 +224,7 @@ export default function DashboardPage() {
         <AlertDescription className="text-base space-y-2 mt-1">
           <p>{t("pauSpecial.description")}</p>
           <p>
-            {t("pauSpecial.feedbackRequest")} <a href="mailto:dgmarin@diemy.es" className="underline font-medium hover:text-green-800 dark:hover:text-green-300">dgmarin@diemy.es</a>.
+            {t("pauSpecial.feedbackRequest")} <a href="mailto:info@zeinte.com" className="underline font-medium hover:text-green-800 dark:hover:text-green-300">info@zeinte.com</a>.
           </p>
           <p>{t("pauSpecial.tips")}</p>
         </AlertDescription>
