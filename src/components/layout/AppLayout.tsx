@@ -33,10 +33,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
     if (currentPathname.startsWith('/upload')) return t("appLayout.uploadTitle");
     if (currentPathname.startsWith('/configure')) return t("appLayout.configureTitle");
     if (currentPathname.startsWith('/community')) return t("appLayout.communityTitle");
+    if (currentPathname.startsWith('/custom-courses')) return t("appLayout.createCourseTitle");
     if (currentPathname.startsWith('/profile')) return t("appLayout.profileTitle");
+    if (currentPathname.startsWith('/pricing')) return t("appLayout.pricingTitle");
+    if (currentPathname.startsWith('/account/subscription')) return t("appLayout.subscriptionManagementTitle");
     if (currentPathname.startsWith('/admin/app-settings')) return t("appLayout.adminAppSettingsTitle");
     if (currentPathname.startsWith('/admin/community-management')) return t("appLayout.adminCommunityManagementTitle");
     if (currentPathname.startsWith('/admin')) return t("appLayout.adminTitle");
+    // Fallback title for other cases within AppLayout
     return t("appLayout.defaultTitle"); // Should be "Zeinte"
   };
   
@@ -66,7 +70,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <span>|</span>
             <Link href="#legal-cookies" className="hover:text-sidebar-primary">{t('legal.cookiesPolicy')}</Link>
             <span>|</span>
-            <Link href="#legal-terms" className="hover:text-sidebar-primary">{t('legal.legalNotice')}</Link>
+            <Link href="/legal/terms" className="hover:text-sidebar-primary">{t('legal.legalNotice')}</Link>
           </div>
         </SidebarFooter>
       </Sidebar>

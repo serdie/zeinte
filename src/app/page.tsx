@@ -218,7 +218,7 @@ export default function HomePage() {
           <span>|</span>
           <Link href="#legal-cookies" className="hover:text-primary">{t('legal.cookiesPolicy')}</Link>
           <span>|</span>
-          <Link href="#legal-terms" className="hover:text-primary">{t('legal.legalNotice')}</Link>
+          <Link href="/legal/terms" className="hover:text-primary">{t('legal.legalNotice')}</Link>
         </div>
         <p className="mt-2 text-xs text-muted-foreground/80 max-w-3xl mx-auto px-4">
           {t('legal.disclaimerText')}
