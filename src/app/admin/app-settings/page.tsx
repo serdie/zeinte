@@ -13,25 +13,29 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { db } from '@/firebase/config';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface AppSettings {
   maxFilesUpload: number;
   maxTotalSizeMB: number;
-  defaultAiModel?: string; // Placeholder for future
-  defaultTemperature?: number; // Placeholder for future
+  defaultAiModel?: string;
+  defaultTemperature?: number;
   updatedAt?: any;
 }
 
 const DEFAULT_MAX_FILES_UPLOAD = 30;
-const DEFAULT_MAX_TOTAL_SIZE_MB = 5;
+const DEFAULT_MAX_TOTAL_SIZE_MB = 20; // Updated to 20MB
 
 export default function AdminAppSettingsPage() {
   const { currentUser, isAdmin, loading: authLoading, isFirebaseConfigured } = useAuth();
   const { toast } = useToast();
+  const { t } = useI18n();
 
   const [settings, setSettings] = useState<Partial<AppSettings>>({
     maxFilesUpload: DEFAULT_MAX_FILES_UPLOAD,
     maxTotalSizeMB: DEFAULT_MAX_TOTAL_SIZE_MB,
+    defaultAiModel: 'googleai/gemini-2.0-flash',
+    defaultTemperature: 0.7,
   });
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -52,23 +56,23 @@ export default function AdminAppSettingsPage() {
           setSettings({
             maxFilesUpload: data.maxFilesUpload || DEFAULT_MAX_FILES_UPLOAD,
             maxTotalSizeMB: data.maxTotalSizeMB || DEFAULT_MAX_TOTAL_SIZE_MB,
-            defaultAiModel: data.defaultAiModel || '',
-            defaultTemperature: data.defaultTemperature || 0.7,
+            defaultAiModel: data.defaultAiModel || 'googleai/gemini-2.0-flash',
+            defaultTemperature: data.defaultTemperature === undefined ? 0.7 : data.defaultTemperature,
           });
         } else {
           // Initialize with defaults if not found
           setSettings({
             maxFilesUpload: DEFAULT_MAX_FILES_UPLOAD,
             maxTotalSizeMB: DEFAULT_MAX_TOTAL_SIZE_MB,
-            defaultAiModel: '',
+            defaultAiModel: 'googleai/gemini-2.0-flash',
             defaultTemperature: 0.7,
           });
         }
       } catch (error) {
         console.error("Error fetching app settings:", error);
         toast({
-          title: "Error al Cargar Configuración",
-          description: "No se pudieron cargar las configuraciones de la aplicación.",
+          title: t('adminAppSettingsPage.errorLoadingConfigToastTitle'),
+          description: t('adminAppSettingsPage.errorLoadingConfigToastDescription'),
           variant: "destructive",
         });
       } finally {
@@ -77,7 +81,7 @@ export default function AdminAppSettingsPage() {
     };
 
     fetchSettings();
-  }, [isFirebaseConfigured, db, isAdmin, toast]);
+  }, [isFirebaseConfigured, db, isAdmin, toast, t]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
@@ -90,33 +94,46 @@ export default function AdminAppSettingsPage() {
   const handleSaveSettings = async (event: FormEvent) => {
     event.preventDefault();
     if (!isFirebaseConfigured || !db || !isAdmin) {
-      toast({ title: "Error", description: "Firebase no está configurado o no eres administrador.", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('adminAppSettingsPage.firebaseConfigErrorDescription'), variant: "destructive" });
       return;
     }
-    if (!settings.maxFilesUpload || settings.maxFilesUpload <= 0 || !settings.maxTotalSizeMB || settings.maxTotalSizeMB <= 0) {
-        toast({ title: "Valores Inválidos", description: "Los límites deben ser números positivos.", variant: "destructive" });
+    if (!settings.maxFilesUpload || settings.maxFilesUpload <= 0 || 
+        !settings.maxTotalSizeMB || settings.maxTotalSizeMB <= 0 ||
+        (settings.defaultTemperature !== undefined && (settings.defaultTemperature < 0 || settings.defaultTemperature > 1))
+       ) {
+        toast({ title: t('adminAppSettingsPage.invalidValuesToastTitle'), description: t('adminAppSettingsPage.invalidValuesToastDescription'), variant: "destructive" });
         return;
     }
 
     setIsSaving(true);
     try {
       const settingsRef = doc(db, "appSettings", "globalConfig");
-      await setDoc(settingsRef, {
-        ...settings, // Save all current settings, including placeholders
+      const settingsToSave: Partial<AppSettings> = {
         maxFilesUpload: settings.maxFilesUpload,
         maxTotalSizeMB: settings.maxTotalSizeMB,
+        defaultAiModel: settings.defaultAiModel || 'googleai/gemini-2.0-flash',
+        defaultTemperature: settings.defaultTemperature === undefined ? 0.7 : settings.defaultTemperature,
         updatedAt: serverTimestamp(),
-      }, { merge: true });
+      };
+      await setDoc(settingsRef, settingsToSave, { merge: true });
+      
+      let descriptionKey = 'adminAppSettingsPage.configSavedToastDescriptionAll';
+      if (Object.keys(settingsToSave).length === 3 && settingsToSave.maxFilesUpload && settingsToSave.maxTotalSizeMB && settingsToSave.updatedAt) {
+          descriptionKey = 'adminAppSettingsPage.configSavedToastDescriptionFileUploadLimits';
+      } else if (Object.keys(settingsToSave).length === 3 && settingsToSave.defaultAiModel && settingsToSave.defaultTemperature && settingsToSave.updatedAt) {
+          descriptionKey = 'adminAppSettingsPage.configSavedToastDescriptionAISettings';
+      }
+
       toast({
-        title: "Configuración Guardada",
-        description: "Los límites de subida de archivos han sido actualizados.",
+        title: t('adminAppSettingsPage.configSavedToastTitle'),
+        description: t(descriptionKey),
         variant: "default",
       });
     } catch (error) {
       console.error("Error saving app settings:", error);
       toast({
-        title: "Error al Guardar",
-        description: "No se pudo guardar la configuración.",
+        title: t('adminAppSettingsPage.errorSavingConfigToastTitle'),
+        description: t('adminAppSettingsPage.errorSavingConfigToastDescription'),
         variant: "destructive",
       });
     } finally {
@@ -125,17 +142,17 @@ export default function AdminAppSettingsPage() {
   };
 
   if (authLoading || isLoadingSettings) {
-    return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /> <span className="ml-3 text-lg">Cargando...</span></div>;
+    return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /> <span className="ml-3 text-lg">{t('adminAppSettingsPage.loading')}</span></div>;
   }
 
   if (!currentUser || !isAdmin) {
     return (
       <div className="container mx-auto py-8 text-center">
         <ShieldAlert className="h-16 w-16 text-destructive mx-auto mb-4" />
-        <h1 className="text-2xl font-bold text-destructive mb-2">Acceso Denegado</h1>
-        <p className="text-muted-foreground">No tienes permisos para acceder a esta sección.</p>
+        <h1 className="text-2xl font-bold text-destructive mb-2">{t('adminAppSettingsPage.accessDeniedTitle')}</h1>
+        <p className="text-muted-foreground">{t('adminAppSettingsPage.accessDeniedDescription')}</p>
         <Link href="/dashboard" passHref className="mt-6 inline-block">
-            <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />Volver al Panel de Estudio</Button>
+            <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />{t('adminAppSettingsPage.backToDashboard')}</Button>
         </Link>
       </div>
     );
@@ -146,14 +163,14 @@ export default function AdminAppSettingsPage() {
         <div className="container mx-auto py-10 px-4">
             <Alert variant="destructive" className="mb-6">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Error de Configuración de Firebase</AlertTitle>
+                <AlertTitle>{t('adminAppSettingsPage.firebaseConfigErrorTitle')}</AlertTitle>
                 <AlertDescription>
-                    Firebase no está configurado. Las configuraciones no pueden funcionar.
+                    {t('adminAppSettingsPage.firebaseConfigErrorDescription')}
                 </AlertDescription>
             </Alert>
              <div className="text-center">
                 <Link href="/admin" passHref>
-                    <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />Volver al Panel de Administración</Button>
+                    <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />{t('adminAppSettingsPage.backToAdminPanel')}</Button>
                 </Link>
             </div>
         </div>
@@ -164,26 +181,26 @@ export default function AdminAppSettingsPage() {
     <div className="container mx-auto py-8 space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
-          <Settings className="h-8 w-8" /> Configuración General de la Aplicación
+          <Settings className="h-8 w-8" /> {t('adminAppSettingsPage.title')}
         </h1>
         <Link href="/admin" passHref>
-          <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />Volver al Panel de Administración</Button>
+          <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />{t('adminAppSettingsPage.backToAdminPanel')}</Button>
         </Link>
       </div>
 
       <Card className="w-full shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl">Parámetros de la Aplicación</CardTitle>
+          <CardTitle className="text-xl">{t('adminAppSettingsPage.appParamsCardTitle')}</CardTitle>
           <CardDescription>
-            Ajusta configuraciones globales de AdivinaExamen.
+            {t('adminAppSettingsPage.appParamsCardDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSaveSettings} className="space-y-6">
             <fieldset className="border p-4 rounded-md space-y-4">
-              <legend className="text-lg font-medium text-primary px-1">Límites de Subida de Archivos</legend>
+              <legend className="text-lg font-medium text-primary px-1">{t('adminAppSettingsPage.fileUploadLimitsLegend')}</legend>
               <div className="space-y-2">
-                <Label htmlFor="maxFilesUpload">Máximo número de archivos a subir:</Label>
+                <Label htmlFor="maxFilesUpload">{t('adminAppSettingsPage.maxFilesUploadLabel')}</Label>
                 <Input
                   id="maxFilesUpload"
                   name="maxFilesUpload"
@@ -194,10 +211,10 @@ export default function AdminAppSettingsPage() {
                   min="1"
                   required
                 />
-                <p className="text-xs text-muted-foreground">Define cuántos archivos puede subir un usuario a la vez.</p>
+                <p className="text-xs text-muted-foreground">{t('adminAppSettingsPage.maxFilesUploadDescription')}</p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="maxTotalSizeMB">Tamaño total máximo sugerido (MB):</Label>
+                <Label htmlFor="maxTotalSizeMB">{t('adminAppSettingsPage.maxTotalSizeMBLabel')}</Label>
                 <Input
                   id="maxTotalSizeMB"
                   name="maxTotalSizeMB"
@@ -208,14 +225,14 @@ export default function AdminAppSettingsPage() {
                   min="1"
                   required
                 />
-                <p className="text-xs text-muted-foreground">Límite de tamaño total (sugerido) para la subida de archivos. Esto afecta la capacidad de "Re-analizar".</p>
+                <p className="text-xs text-muted-foreground">{t('adminAppSettingsPage.maxTotalSizeMBDescription')}</p>
               </div>
             </fieldset>
 
-            <fieldset className="border p-4 rounded-md space-y-4 opacity-50 cursor-not-allowed">
-              <legend className="text-lg font-medium text-muted-foreground px-1">Configuración de IA (En Desarrollo)</legend>
+            <fieldset className="border p-4 rounded-md space-y-4">
+              <legend className="text-lg font-medium text-primary px-1">{t('adminAppSettingsPage.aiConfigLegend')}</legend>
               <div className="space-y-2">
-                <Label htmlFor="defaultAiModel">Modelo de IA por defecto:</Label>
+                <Label htmlFor="defaultAiModel">{t('adminAppSettingsPage.defaultAiModelLabel')}</Label>
                 <Input
                   id="defaultAiModel"
                   name="defaultAiModel"
@@ -223,12 +240,11 @@ export default function AdminAppSettingsPage() {
                   value={settings.defaultAiModel || 'googleai/gemini-2.0-flash'}
                   onChange={handleInputChange}
                   className="max-w-xs"
-                  disabled
                 />
-                 <p className="text-xs text-muted-foreground">Para análisis y predicción. (Funcionalidad futura).</p>
+                 <p className="text-xs text-muted-foreground">{t('adminAppSettingsPage.defaultAiModelDescription')}</p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="defaultTemperature">Temperatura/Creatividad IA:</Label>
+                <Label htmlFor="defaultTemperature">{t('adminAppSettingsPage.defaultTemperatureLabel')}</Label>
                 <Input
                   id="defaultTemperature"
                   name="defaultTemperature"
@@ -236,35 +252,36 @@ export default function AdminAppSettingsPage() {
                   step="0.1"
                   min="0"
                   max="1"
-                  value={settings.defaultTemperature || 0.7}
+                  value={settings.defaultTemperature === undefined ? '' : settings.defaultTemperature}
                   onChange={handleInputChange}
                   className="max-w-xs"
-                  disabled
                 />
-                <p className="text-xs text-muted-foreground">Valor entre 0 y 1. (Funcionalidad futura).</p>
+                <p className="text-xs text-muted-foreground">{t('adminAppSettingsPage.defaultTemperatureDescription')}</p>
               </div>
             </fieldset>
             
             <Alert variant="default" className="bg-primary/10 border-primary/50">
               <AlertTriangle className="h-4 w-4 text-primary" />
-              <AlertTitle className="text-primary">Nota Importante</AlertTitle>
+              <AlertTitle className="text-primary">{t('adminAppSettingsPage.importantNoteTitle')}</AlertTitle>
               <AlertDescription className="text-primary/80">
-                Actualmente, solo los "Límites de Subida de Archivos" son funcionales. La configuración de IA y otras opciones avanzadas se implementarán en futuras versiones. Los planes de suscripción se gestionan conceptualmente y no a través de esta interfaz por ahora.
+                {t('adminAppSettingsPage.importantNoteDescription')}
               </AlertDescription>
             </Alert>
 
             <Button type="submit" disabled={isSaving || isLoadingSettings} className="w-full sm:w-auto">
               {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              Guardar Configuración
+              {t('adminAppSettingsPage.saveConfigButton')}
             </Button>
           </form>
         </CardContent>
         <CardFooter>
             <p className="text-xs text-muted-foreground">
-                Recuerda configurar las reglas de seguridad de Firestore para permitir al administrador escribir en <code>appSettings/globalConfig</code> y a los usuarios autenticados leerla.
+                {t('adminAppSettingsPage.firestoreSecurityRulesFooter')}
             </p>
         </CardFooter>
       </Card>
     </div>
   );
 }
+
+    

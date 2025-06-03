@@ -2,7 +2,7 @@
 "use client";
 
 import type React from 'react';
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,28 +11,27 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, FileType } from 'lucide-react'; // Removed unused Building, School, Briefcase
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, FileType, Camera, Video, Image as ImageIcon } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { EXAM_CONFIG_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY } from '@/lib/localStorageKeys';
+import { EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
 import type { ExamConfig } from '@/types';
 import { findExternalDocuments, type FindExternalDocumentsOutput } from '@/ai/flows/find-external-documents';
+import { extractTextFromFile, type ExtractTextFromFileInput } from '@/ai/flows/extract-text-from-file-flow';
 import { Checkbox } from '../ui/checkbox';
+import { Alert } from '../ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-// import { UpgradeProAlert } from '@/components/ui/upgrade-pro-alert'; // Commented out as restrictions are currently lifted
 import { useI18n } from '@/contexts/I18nContext';
 
 interface FileUploadAreaProps {
-  onAnalyze: (content: string, numQuestions: number) => Promise<void>; // examType removed
-  isLoading: boolean;
+  onAnalyze: (content: string, numQuestions: number) => Promise<void>;
+  isLoading: boolean; // This is for the final analysis step
 }
 
 const DEFAULT_MAX_FILES_UPLOAD = 30;
-const DEFAULT_MAX_TOTAL_SIZE_MB = 5;
-const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
-const FREE_USER_MAX_QUESTIONS = 5;
+const DEFAULT_MAX_TOTAL_SIZE_MB = 20; // Updated to 20MB
 
 interface CommonExam {
   id: string;
@@ -62,14 +61,12 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaProps) {
+export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing }: FileUploadAreaProps) {
   const { t } = useI18n();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [numQuestions, setNumQuestions] = useState<string>("10");
-  // const [examType, setExamType] = useState<ExamType>("test"); // examType logic removed for now
   const { toast } = useToast();
-  const { isFirebaseConfigured, currentUser, userTier } = useAuth(); // Added userTier
-  const isFreeUser = userTier === 'free';
+  const { isFirebaseConfigured } = useAuth();
 
   const [appUploadLimits, setAppUploadLimits] = useState({
     maxFiles: DEFAULT_MAX_FILES_UPLOAD,
@@ -82,7 +79,16 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   const [selectedDeepSearchDocIds, setSelectedDeepSearchDocIds] = useState<string[]>([]);
   const [isDeepSearching, setIsDeepSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("comunes");
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+
+  const [isProcessingFiles, setIsProcessingFiles] = useState(false); // For text extraction loading
+
+  // Camera state
+  const [showCameraModal, setShowCameraModal] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [capturedImageDataUri, setCapturedImageDataUri] = useState<string | null>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const fetchAppSettings = async () => {
@@ -110,33 +116,22 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
     fetchAppSettings();
   }, [isFirebaseConfigured]);
 
-  const MAX_TOTAL_SIZE_BYTES = useMemo(() => appUploadLimits.maxSizeMB * 1024 * 1024, [appUploadLimits.maxSizeMB]);
-
-  const totalSizeInBytes = useMemo(() => {
-    return selectedFiles.reduce((acc, file) => acc + file.size, 0);
-  }, [selectedFiles]);
-
   useEffect(() => {
     const storedConfig = localStorage.getItem(EXAM_CONFIG_KEY);
-    let initialNumQuestions = "10";
-    // let initialExamType: ExamType = "test"; // examType logic removed
-
     if (storedConfig) {
       try {
         const parsedConfig: ExamConfig = JSON.parse(storedConfig);
         if (parsedConfig.defaultNumberOfQuestions) {
-            initialNumQuestions = parsedConfig.defaultNumberOfQuestions.toString();
+            setNumQuestions(parsedConfig.defaultNumberOfQuestions.toString());
         }
-        // if (parsedConfig.defaultExamType) { // examType logic removed
-        //     initialExamType = parsedConfig.defaultExamType;
-        // }
       } catch (error) {
         console.error("Error parsing exam config for FileUploadArea:", error);
       }
     }
-    setNumQuestions(initialNumQuestions);
-    // setExamType(initialExamType); // examType logic removed
   }, []);
+
+  const MAX_TOTAL_SIZE_BYTES = useMemo(() => appUploadLimits.maxSizeMB * 1024 * 1024, [appUploadLimits.maxSizeMB]);
+  const totalSizeInBytes = useMemo(() => selectedFiles.reduce((acc, file) => acc + file.size, 0), [selectedFiles]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -159,6 +154,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
   };
 
   const handleDeepSearch = useCallback(async (searchTopic?: string) => {
+    // ... (deep search logic remains the same)
     const topicToSearch = searchTopic || deepSearchTopic;
     if (!topicToSearch.trim()) {
       toast({ title: t('common.error'), description: t('fileUploadArea.searchTopicPlaceholder'), variant: "destructive" });
@@ -218,18 +214,104 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
         : [...prevSelected, docId]
     );
   };
+  
+  // Camera functions
+  useEffect(() => {
+    if (showCameraModal) {
+      const getCameraPermission = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          setHasCameraPermission(true);
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        } catch (error) {
+          console.error('Error accessing camera:', error);
+          setHasCameraPermission(false);
+          toast({
+            variant: 'destructive',
+            title: 'Camera Access Denied',
+            description: 'Please enable camera permissions in your browser settings.',
+          });
+          setShowCameraModal(false);
+        }
+      };
+      getCameraPermission();
+
+      return () => { // Cleanup: stop camera stream when modal closes or component unmounts
+        if (videoRef.current && videoRef.current.srcObject) {
+          const stream = videoRef.current.srcObject as MediaStream;
+          stream.getTracks().forEach(track => track.stop());
+        }
+      };
+    }
+  }, [showCameraModal, toast]);
+
+  const handleCapturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      setIsCapturing(true);
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      context?.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUri = canvas.toDataURL('image/jpeg');
+      setCapturedImageDataUri(dataUri);
+      setIsCapturing(false);
+
+      // Stop camera stream after capture
+       if (videoRef.current && videoRef.current.srcObject) {
+          const stream = videoRef.current.srcObject as MediaStream;
+          stream.getTracks().forEach(track => track.stop());
+        }
+    }
+  };
+
+  const handleUseCapturedPhoto = async () => {
+    if (!capturedImageDataUri) return;
+    
+    setIsProcessingFiles(true); // Show loading for OCR
+    toast({ title: "Processing captured photo..." });
+    try {
+      const fileName = `camera_capture_${Date.now()}.jpg`;
+      const result = await extractTextFromFile({ fileDataUri: capturedImageDataUri, fileName });
+      
+      // Create a File object from the data URI to add to selectedFiles
+      const blob = await (await fetch(capturedImageDataUri)).blob();
+      const newFile = new File([blob], fileName, { type: 'image/jpeg' });
+
+      // Check file count limit before adding
+      if (selectedFiles.length >= appUploadLimits.maxFiles) {
+          toast({
+            title: t('fileUploadArea.toastFileLimitExceededTitle'),
+            description: t('fileUploadArea.toastFileLimitExceededDescription', { maxFiles: appUploadLimits.maxFiles.toString() }),
+            variant: "destructive",
+          });
+          setIsProcessingFiles(false);
+          setShowCameraModal(false);
+          setCapturedImageDataUri(null);
+          return;
+      }
+
+      setSelectedFiles(prev => [...prev, newFile]);
+      // Store the extracted text separately or integrate into the combined content later
+      // For now, we will extract text from all files (including this one) during handleSubmit
+      
+      toast({ title: "Photo added", description: `Text from photo will be extracted during analysis.` });
+    } catch (error) {
+      console.error("Error processing captured photo:", error);
+      toast({ title: "Error", description: "Could not process captured photo.", variant: "destructive" });
+    } finally {
+      setIsProcessingFiles(false);
+      setShowCameraModal(false);
+      setCapturedImageDataUri(null);
+    }
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Restrictions removed for PAU special
-    // if (isFreeUser) {
-    //   const lastGenerationTime = localStorage.getItem(FREE_USER_LAST_GENERATION_TIMESTAMP_KEY);
-    //   if (lastGenerationTime && (Date.now() - parseInt(lastGenerationTime, 10) < ONE_DAY_IN_MS)) {
-    //     setShowUpgradeDialog(true);
-    //     return;
-    //   }
-    // }
 
     if (selectedFiles.length === 0 && selectedDeepSearchDocIds.length === 0) {
       toast({
@@ -247,34 +329,50 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
             variant: "destructive",
             duration: 10000,
         });
+        // Allow proceeding but warn.
     }
 
+    setIsProcessingFiles(true);
+    toast({ title: "Extracting text from files...", description: "This may take a moment for images or large documents." });
+
     let allFilesContent = "";
-    const filePromises = selectedFiles.map(file => {
-      return new Promise<string>((resolve, reject) => {
+    const fileProcessingPromises: Promise<string>[] = [];
+
+    // Process uploaded files
+    selectedFiles.forEach(file => {
+      const promise = new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = (eventReader) => {
-          const text = eventReader.target?.result as string;
-          resolve(`Contenido del archivo: ${file.name}\n\n${text}\n\n---\n\n`);
+        reader.onload = async (eventReader) => {
+          const dataUri = eventReader.target?.result as string;
+          try {
+            const extractionResult = await extractTextFromFile({ fileDataUri: dataUri, fileName: file.name });
+            resolve(`Contenido del archivo: ${file.name}\n\n${extractionResult.extractedText}\n\n---\n\n`);
+          } catch (err) {
+            console.error(`Error extracting text from ${file.name}:`, err);
+            resolve(`Error al procesar el archivo: ${file.name}. Puede que el formato no sea compatible o esté dañado.\n\n---\n\n`); // Resolve with error message
+          }
         };
         reader.onerror = (errorReader) => {
           console.error("Error reading file:", file.name, errorReader);
-          reject(t('fileUploadArea.toastErrorProcessingFilesDescription', { error: `Error al leer el archivo ${file.name}`}));
+          resolve(`Error al leer el archivo: ${file.name}.\n\n---\n\n`); // Resolve with error message
         };
-        reader.readAsText(file);
+        reader.readAsDataURL(file); // Read as Data URL for all types for the new flow
       });
+      fileProcessingPromises.push(promise);
     });
 
     try {
-      const fileContents = await Promise.all(filePromises);
-      allFilesContent = fileContents.join('');
+      const fileContentsArray = await Promise.all(fileProcessingPromises);
+      allFilesContent = fileContentsArray.join('');
 
+      // Process deep search documents
       const deepSearchDocsContent = deepSearchResults?.results
         .filter(doc => selectedDeepSearchDocIds.includes(doc.id))
         .map(doc => `Contenido del documento (sugerido por IA): ${doc.title}\n\n${doc.simulatedTextContent}\n\n---\n\n`)
         .join('') || "";
-
       allFilesContent += deepSearchDocsContent;
+
+      setIsProcessingFiles(false);
 
       if (!allFilesContent.trim()) {
         toast({
@@ -284,23 +382,13 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
         });
         return;
       }
-      let finalNumQuestions = parseInt(numQuestions, 10);
-
-      // Restrictions removed for PAU special
-      // if (isFreeUser && finalNumQuestions > FREE_USER_MAX_QUESTIONS) {
-      //   toast({
-      //     title: t('fileUploadArea.toastFreeUserLimitTitle'),
-      //     description: t('fileUploadArea.toastFreeUserLimitDescription', {maxQuestions: FREE_USER_MAX_QUESTIONS.toString()}),
-      //     variant: "default",
-      //     duration: 7000,
-      //   });
-      //   finalNumQuestions = FREE_USER_MAX_QUESTIONS;
-      // }
       
-      await onAnalyze(allFilesContent, finalNumQuestions); // examType removed
+      let finalNumQuestions = parseInt(numQuestions, 10);
+      await onAnalyze(allFilesContent, finalNumQuestions);
 
     } catch (error) {
-      console.error("Error processing files:", error);
+      setIsProcessingFiles(false);
+      console.error("Error processing files for analysis:", error);
       toast({
         title: t('fileUploadArea.toastErrorProcessingFilesTitle'),
         description: typeof error === 'string' ? error : t('fileUploadArea.toastErrorProcessingFilesFallback'),
@@ -321,7 +409,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
           variant="outline"
           className="h-auto p-4 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md"
           onClick={() => handleCommonExamClick(exam)}
-          disabled={isLoading || isDeepSearching } // Removed isFreeUser check
+          disabled={isFinalAnalyzing || isDeepSearching || isProcessingFiles}
           title={exam.name}
         >
           <Image
@@ -390,13 +478,24 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                   multiple
                   onChange={handleFileChange}
                   className="text-sm p-2 rounded-md shadow-sm focus:ring-primary focus:border-primary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                  disabled={isLoading || isDeepSearching || isLoadingAppSettings}
-                  accept=".pdf,.doc,.docx,.txt"
+                  disabled={isFinalAnalyzing || isDeepSearching || isLoadingAppSettings || isProcessingFiles}
+                  accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp"
                 />
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {t('fileUploadArea.supportedFiles', { maxFiles: isLoadingAppSettings ? '...' : appUploadLimits.maxFiles.toString() })}
+                  {t('fileUploadArea.supportedFiles', { maxFiles: isLoadingAppSettings ? '...' : appUploadLimits.maxFiles.toString() })} (PDF, DOC, TXT, PNG, JPG, WEBP).
                 </p>
               </div>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => { setCapturedImageDataUri(null); setShowCameraModal(true); }}
+                disabled={isFinalAnalyzing || isDeepSearching || isLoadingAppSettings || isProcessingFiles || selectedFiles.length >= appUploadLimits.maxFiles}
+                className="w-full"
+              >
+                <Camera className="mr-2 h-5 w-5" />
+                {t('fileUploadArea.useCameraButton')}
+              </Button>
+
 
               {selectedFiles.length > 0 && (
                 <div className="space-y-4">
@@ -431,7 +530,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                       {selectedFiles.map(file => (
                         <li key={file.name} className="text-xs text-foreground flex justify-between items-center p-1.5 bg-background rounded shadow-sm">
                           <div className="flex items-center gap-2 min-w-0">
-                            <FileText className="h-4 w-4 text-primary shrink-0" />
+                            {file.type.startsWith('image/') ? <ImageIcon className="h-4 w-4 text-accent shrink-0" /> : <FileText className="h-4 w-4 text-primary shrink-0" />}
                             <span className="truncate" title={file.name}>{file.name}</span>
                             <span className="text-muted-foreground text-nowrap shrink-0">({formatBytes(file.size)})</span>
                           </div>
@@ -441,7 +540,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                             size="icon"
                             className="h-5 w-5 text-muted-foreground hover:text-destructive shrink-0"
                             onClick={() => removeFile(file.name)}
-                            disabled={isLoading || isDeepSearching || isLoadingAppSettings}
+                            disabled={isFinalAnalyzing || isDeepSearching || isLoadingAppSettings || isProcessingFiles}
                             aria-label={t('fileUploadArea.removeFileLabel', { fileName: file.name })}
                           >
                             <XCircle className="h-4 w-4" />
@@ -476,16 +575,16 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                     onChange={(e) => setDeepSearchTopic(e.target.value)}
                     placeholder={t('fileUploadArea.searchTopicPlaceholder')}
                     className="text-sm"
-                    disabled={isLoading || isDeepSearching || isLoadingAppSettings } // Removed isFreeUser check
+                    disabled={isFinalAnalyzing || isDeepSearching || isLoadingAppSettings || isProcessingFiles } 
                   />
-                  <Button onClick={() => handleDeepSearch()} disabled={isLoading || isDeepSearching || !deepSearchTopic.trim() || isLoadingAppSettings } className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                  <Button onClick={() => handleDeepSearch()} disabled={isFinalAnalyzing || isDeepSearching || !deepSearchTopic.trim() || isLoadingAppSettings || isProcessingFiles } className="bg-accent hover:bg-accent/90 text-accent-foreground">
                     {isDeepSearching ? <Loader2 className="animate-spin" /> : <Search className="h-5 w-5" />}
                     <span className="ml-2 hidden sm:inline">{t('fileUploadArea.suggestButton')}</span>
                   </Button>
                 </div>
               </div>
 
-              {isDeepSearching && (
+              {isDeepSearching && !deepSearchResults && (
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="h-8 w-8 animate-spin text-accent" />
                   <p className="ml-2 text-muted-foreground">{t('fileUploadArea.aiSearchingToastTitle')}</p>
@@ -504,7 +603,7 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
                             id={`ds-${doc.id}`}
                             checked={selectedDeepSearchDocIds.includes(doc.id)}
                             onCheckedChange={() => toggleDeepSearchDocSelection(doc.id)}
-                            disabled={isLoading || isDeepSearching || isLoadingAppSettings}
+                            disabled={isFinalAnalyzing || isDeepSearching || isLoadingAppSettings || isProcessingFiles}
                             aria-label={t('fileUploadArea.selectAISuggestionLabel', { title: doc.title })}
                             className="mt-1"
                           />
@@ -569,59 +668,38 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
         </div>
       </div>
 
-      <div className="space-y-6 p-6 border rounded-lg shadow-xl bg-card"> {/* Removed lg:col-span-2 as it's now a direct child of the form */}
+      <div className="space-y-6 p-6 border rounded-lg shadow-xl bg-card">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
             <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="num-questions-select" className="text-md font-medium">{t('dashboardPage.numQuestionsLabel')}</Label>
                 <Select
                     value={numQuestions}
-                    // onValueChange={val => isFreeUser && parseInt(val, 10) > FREE_USER_MAX_QUESTIONS ? setNumQuestions(FREE_USER_MAX_QUESTIONS.toString()) : setNumQuestions(val)} // Logic for free user limit removed
                     onValueChange={setNumQuestions}
-                    disabled={isLoading || isDeepSearching || isLoadingAppSettings}
+                    disabled={isFinalAnalyzing || isDeepSearching || isLoadingAppSettings || isProcessingFiles}
                 >
                 <SelectTrigger id="num-questions-select" className="w-full text-base py-3">
                     <SelectValue placeholder={t('common.selectOption')} />
                 </SelectTrigger>
                 <SelectContent>
-                    {/* {isFreeUser && <SelectItem value="5">5 {t('fileUploadArea.questionsSuffix')}</SelectItem>}
-                    {!isFreeUser && ( // Options for Pro/Admin - now all users
-                      <> */}
-                        <SelectItem value="5">5 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                        <SelectItem value="10">10 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                        <SelectItem value="15">15 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                        <SelectItem value="20">20 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                        <SelectItem value="25">25 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                        <SelectItem value="30">30 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                      {/* </>
-                    )} */}
-                </SelectContent>
-                </Select>
-                {/* {isFreeUser && <p className="text-xs text-muted-foreground mt-1">{t('fileUploadArea.finalAnalysisConfigFreeUserMaxText', {maxQuestions: FREE_USER_MAX_QUESTIONS.toString()})}</p>} */}
-            </div>
-
-            {/* Exam Type Selector - REMOVED FOR SIMPLICITY BASED ON PREVIOUS REQUESTS
-            <div className="space-y-2">
-                <Label htmlFor="exam-type-select" className="text-md font-medium">{t('fileUploadArea.examTypeLabel')}</Label>
-                <Select value={examType} onValueChange={(value) => setExamType(value as ExamType)} disabled={isLoading || isDeepSearching || isLoadingAppSettings}>
-                <SelectTrigger id="exam-type-select" className="w-full text-base py-3">
-                    <SelectValue placeholder={t('common.selectOption')} />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="test">{t('fileUploadArea.examTypeTest')}</SelectItem>
+                    <SelectItem value="5">5 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                    <SelectItem value="10">10 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                    <SelectItem value="15">15 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                    <SelectItem value="20">20 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                    <SelectItem value="25">25 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                    <SelectItem value="30">30 {t('fileUploadArea.questionsSuffix')}</SelectItem>
                 </SelectContent>
                 </Select>
             </div>
-            */}
           </div>
           <Button
             type="submit"
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 text-lg font-semibold rounded-lg shadow-md transition-transform duration-150 ease-in-out active:scale-95 mt-6"
-            disabled={isLoading || isDeepSearching || isLoadingAppSettings || (selectedFiles.length === 0 && selectedDeepSearchDocIds.length === 0) }
+            disabled={isFinalAnalyzing || isDeepSearching || isLoadingAppSettings || isProcessingFiles || (selectedFiles.length === 0 && selectedDeepSearchDocIds.length === 0) }
           >
-            {isLoading || isLoadingAppSettings ? (
+            {isFinalAnalyzing || isLoadingAppSettings || isProcessingFiles ? (
               <>
                 <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                {isLoadingAppSettings ? t('fileUploadArea.loadingConfigButton') : t('fileUploadArea.analyzingButton')}
+                {isLoadingAppSettings ? t('fileUploadArea.loadingConfigButton') : (isProcessingFiles ? t('fileUploadArea.processingFilesButton') : t('fileUploadArea.analyzingButton'))}
               </>
             ) : (
               <>
@@ -633,25 +711,66 @@ export default function FileUploadArea({ onAnalyze, isLoading }: FileUploadAreaP
       </div>
     </form>
 
-    {/* Upgrade Dialog for Free User Limit - REMOVED FOR PAU SPECIAL
-    <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-        <AlertDialogContent>
-            <AlertDialogHeader>
-                <AlertDialogTitle>{t('fileUploadArea.dailyLimitReachedPopupTitle')}</AlertDialogTitle>
-                <AlertDialogDescription>
-                    {t('fileUploadArea.dailyLimitReachedPopupDescription')}
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-                <AlertDialogCancel>{t('common.close')}</AlertDialogCancel>
-                <AlertDialogAction asChild>
-                    <Link href="/#pricing">{t('fileUploadArea.viewProPlansButtonPopup')}</Link>
-                </AlertDialogAction>
-            </AlertDialogFooter>
-        </AlertDialogContent>
-    </AlertDialog>
-    */}
+    <Dialog open={showCameraModal} onOpenChange={(open) => {
+        setShowCameraModal(open);
+        if (!open && videoRef.current && videoRef.current.srcObject) { // Stop stream if modal is closed
+            const stream = videoRef.current.srcObject as MediaStream;
+            stream.getTracks().forEach(track => track.stop());
+            videoRef.current.srcObject = null; // Clear srcObject
+            setHasCameraPermission(null); // Reset permission status
+        }
+    }}>
+        <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+                <DialogTitle>{t('fileUploadArea.cameraModalTitle')}</DialogTitle>
+                <DialogDescription>
+                    {t('fileUploadArea.cameraModalDescription')}
+                </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 my-4">
+                {hasCameraPermission === null && <p>{t('fileUploadArea.cameraRequestingPermission')}</p>}
+                {hasCameraPermission === false && (
+                    <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <p>{t('fileUploadArea.cameraPermissionDenied')}</p>
+                    </Alert>
+                )}
+                {hasCameraPermission && !capturedImageDataUri && (
+                    <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay playsInline muted />
+                )}
+                {capturedImageDataUri && (
+                    <Image src={capturedImageDataUri} alt="Captured photo" width={400} height={300} className="rounded-md mx-auto" />
+                )}
+                <canvas ref={canvasRef} className="hidden"></canvas>
+            </div>
+            <DialogFooter className="sm:justify-between">
+                <DialogClose asChild>
+                    <Button type="button" variant="outline">{t('common.cancel')}</Button>
+                </DialogClose>
+                <div>
+                {!capturedImageDataUri && hasCameraPermission && (
+                    <Button type="button" onClick={handleCapturePhoto} disabled={isCapturing}>
+                        {isCapturing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
+                        {t('fileUploadArea.capturePhotoButton')}
+                    </Button>
+                )}
+                {capturedImageDataUri && (
+                    <>
+                    <Button type="button" variant="ghost" onClick={() => setCapturedImageDataUri(null)} className="mr-2">
+                        {t('fileUploadArea.retakePhotoButton')}
+                    </Button>
+                    <Button type="button" onClick={handleUseCapturedPhoto} disabled={isProcessingFiles}>
+                        {isProcessingFiles ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                        {t('fileUploadArea.useThisPhotoButton')}
+                    </Button>
+                    </>
+                )}
+                </div>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
     </>
   );
 }
 
+    
