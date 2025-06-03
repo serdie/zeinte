@@ -24,7 +24,7 @@ export default function PricingPage() {
   const { currentUser, userTier, updateCurrentUserTier, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  const [isSubscribing, setIsSubscribing] = useState(false); // For the direct "Upgrade to Pro" button
+  const [isSubscribing, setIsSubscribing] = useState(false);
   const { t } = useI18n();
   const [isPayPalButtonRendered, setIsPayPalButtonRendered] = useState(false);
 
@@ -56,35 +56,40 @@ export default function PricingPage() {
 
   useEffect(() => {
     if (currentUser && userTier !== 'pro' && userTier !== 'admin' && !authLoading) {
-      if (window.paypal && window.paypal.HostedButtons && !isPayPalButtonRendered) {
-        // Check if the container exists
-        if (document.getElementById(PAYPAL_CONTAINER_ID)) {
-          try {
+      const paypalContainer = document.getElementById(PAYPAL_CONTAINER_ID);
+
+      if (paypalContainer && window.paypal && window.paypal.HostedButtons) {
+        if (!isPayPalButtonRendered) {
+          // Check if a PayPal button iframe already exists in the container (e.g., due to HMR)
+          if (paypalContainer.querySelector('iframe[name^="__paypal_buttons__"]')) {
+            console.warn("PayPal button iframe already exists in container, likely due to HMR. Marking as rendered.");
+            setIsPayPalButtonRendered(true);
+          } else {
+            // Container is empty or doesn't have a PayPal button, proceed to render
+            paypalContainer.innerHTML = ''; // Ensure it's definitely empty before rendering
             window.paypal.HostedButtons({
               hostedButtonId: PAYPAL_HOSTED_BUTTON_ID,
-            }).render(`#${PAYPAL_CONTAINER_ID}`);
-            setIsPayPalButtonRendered(true);
-          } catch (error) {
-            console.error("Error rendering PayPal button:", error);
-            toast({
-              title: "Error PayPal",
-              description: "No se pudo mostrar el botón de PayPal. Intenta recargar la página.",
-              variant: "destructive"
+            }).render(`#${PAYPAL_CONTAINER_ID}`)
+            .then(() => {
+              setIsPayPalButtonRendered(true);
+            })
+            .catch((error: any) => {
+              console.error("PayPal Hosted Button render() failed:", error);
+              toast({
+                title: t('common.error'),
+                description: t('pricingPage.paypalButtonError'),
+                variant: "destructive",
+                duration: 7000,
+              });
+              if (paypalContainer) {
+                  paypalContainer.innerHTML = `<p class="text-xs text-destructive">${t('pricingPage.paypalButtonError')}</p>`;
+              }
             });
           }
         }
       }
     }
-    // Cleanup function for PayPal button if needed, though hosted buttons might not require explicit cleanup.
-    // For more complex PayPal integrations (Smart Buttons), cleanup might be necessary.
-    // return () => {
-    //   const container = document.getElementById(PAYPAL_CONTAINER_ID);
-    //   if (container) {
-    //     container.innerHTML = ""; // Simple cleanup
-    //   }
-    //   setIsPayPalButtonRendered(false);
-    // };
-  }, [currentUser, userTier, authLoading, isPayPalButtonRendered, toast]);
+  }, [currentUser, userTier, authLoading, isPayPalButtonRendered, toast, t]);
 
 
   return (
@@ -181,11 +186,11 @@ export default function PricingPage() {
 
                 {/* PayPal Hosted Button Container */}
                 {currentUser && !authLoading && userTier !== 'pro' && userTier !== 'admin' && (
-                  <div id={PAYPAL_CONTAINER_ID} className="w-full flex justify-center">
+                  <div id={PAYPAL_CONTAINER_ID} className="w-full flex justify-center min-h-[50px]">
                     {/* PayPal button will render here by the SDK */}
-                    {!isPayPalButtonRendered && ( // Show a placeholder or loading for PayPal button
+                    {!isPayPalButtonRendered && ( 
                        <div className="flex items-center justify-center text-sm text-muted-foreground p-2">
-                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cargando botón de PayPal...
+                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('pricingPage.loadingPayPalButton')}
                        </div>
                     )}
                   </div>

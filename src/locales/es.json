@@ -707,7 +707,9 @@
     "subscribeProButtonAction": "Actualizar a Pro Ahora",
     "payWithPayPalButton": "Pagar con PayPal (Simulado)",
     "paymentGatewayComingSoon": "La pasarela de pago se integrará próximamente. Por ahora, tu cambio a Pro es simulado.",
-    "alreadySubscribedButton": "Ya estás Suscrito al Plan Pro"
+    "alreadySubscribedButton": "Ya estás Suscrito al Plan Pro",
+    "loadingPayPalButton": "Cargando botón de PayPal...",
+    "paypalButtonError": "No se pudo mostrar el botón de pago de PayPal. Intenta recargar la página o contacta con soporte si el problema persiste."
   },
   "subscriptionPage": {
     "title": "Gestionar Suscripción",
