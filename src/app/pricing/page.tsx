@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { CheckCircle, Sparkles, Star, TrendingUp, Zap, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
+import { CheckCircle, Sparkles, Star, TrendingUp, Zap, Loader2, ArrowRight, ShieldCheck, CreditCard } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -20,10 +20,10 @@ export default function PricingPage() {
 
   const handleSubscribePro = async () => {
     if (!currentUser) {
-      router.push('/login'); // Should not happen if page is protected
+      router.push('/login'); 
       return;
     }
-    if (userTier === 'pro') {
+    if (userTier === 'pro' || userTier === 'admin') { // Admin también se considera "suscrito"
       toast({ title: t('pricingPage.alreadyProToastTitle'), description: t('pricingPage.alreadyProToastDescription'), variant: "default" });
       router.push('/dashboard');
       return;
@@ -72,14 +72,18 @@ export default function PricingPage() {
             </ul>
           </CardContent>
           <CardFooter className="mt-auto">
-            {userTier === 'free' || !currentUser ? (
+            {currentUser && (userTier === 'free' || userTier === null) ? ( // Si es free o no tiene tier aún
               <Button size="lg" variant="outline" className="w-full text-primary border-primary hover:bg-primary/10 py-3 text-md" disabled>
                 {t('pricingPage.currentPlanButton')}
               </Button>
-            ) : (
-              <Link href="/dashboard" passHref className="w-full">
+            ) : currentUser && (userTier === 'pro' || userTier === 'admin') ? ( // Si es pro o admin
+               <Button size="lg" variant="outline" className="w-full text-primary border-primary hover:bg-primary/10 py-3 text-md" disabled>
+                {userTier === 'pro' ? t('pricingPage.currentPlanButton') : t('pricingPage.adminPlanButton')}
+              </Button>
+            ) : ( // Si no hay usuario o estado no claro (ej. cargando o error), mostrar enlace a registrarse
+              <Link href="/signup" passHref className="w-full">
                 <Button size="lg" variant="outline" className="w-full text-primary border-primary hover:bg-primary/10 py-3 text-md">
-                  {t('pricingPage.backToDashboardButton')}
+                  {t('homePage.startFreeTrialButton')}
                 </Button>
               </Link>
             )}
@@ -111,24 +115,40 @@ export default function PricingPage() {
             </ul>
           </CardContent>
           <CardFooter className="mt-auto">
-            {userTier === 'pro' ? (
+            {currentUser && (userTier === 'pro' || userTier === 'admin') ? (
               <Button size="lg" className="w-full bg-accent/70 py-3 text-md" disabled>
                 <ShieldCheck className="mr-2 h-5 w-5" /> {t('pricingPage.alreadySubscribedButton')}
               </Button>
             ) : (
-              <Button 
-                size="lg" 
-                className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-md" 
-                onClick={handleSubscribePro}
-                disabled={isSubscribing || authLoading || !currentUser}
-              >
-                {isSubscribing ? (
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                ) : (
-                  <Sparkles className="mr-2 h-5 w-5" />
-                )}
-                {t('pricingPage.subscribeProButtonAction')}
-              </Button>
+              <div className="w-full space-y-3">
+                <Button
+                  size="lg"
+                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-md"
+                  onClick={handleSubscribePro}
+                  disabled={isSubscribing || authLoading || !currentUser}
+                >
+                  {isSubscribing ? (
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-2 h-5 w-5" />
+                  )}
+                  {t('pricingPage.subscribeProButtonAction')}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full border-blue-600 text-blue-700 hover:bg-blue-500/10 py-3 text-md flex items-center justify-center"
+                  onClick={handleSubscribePro} // Misma función simulada
+                  disabled={isSubscribing || authLoading || !currentUser}
+                >
+                  {isSubscribing ? (
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  ) : (
+                    <CreditCard className="mr-2 h-5 w-5" /> 
+                  )}
+                  {t('pricingPage.payWithPayPalButton')}
+                </Button>
+              </div>
             )}
           </CardFooter>
         </Card>

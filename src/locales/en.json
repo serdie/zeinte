@@ -602,7 +602,7 @@
     "privacyPolicy": "Privacy Policy",
     "cookiesPolicy": "Cookies Policy",
     "legalNotice": "Legal Notice and Terms of Use",
-    "disclaimerText": "Zeinte es una herramienta de ayuda al estudio basada en inteligencia artificial. Los resultados y predicciones generados son para fines orientativos y no garantizan el éxito en ningún examen. El usuario es responsable del uso de la información proporcionada. Search and Make S.L. no se hace responsable de errores, omisiones o interpretaciones del contenido generado. Nos reservamos el derecho de modificar la aplicación y sus funcionalidades en cualquier momento. Los datos de uso se recopilan de forma anónima para mejorar la aplicación."
+    "disclaimerText": "Zeinte is an AI-based study aid tool. The results and predictions generated are for guidance purposes and do not guarantee success in any exam. The user is responsible for the use of the information provided. Search and Make S.L. is not responsible for errors, omissions, or interpretations of the generated content. We reserve the right to modify the application and its functionalities at any time. Usage data is collected anonymously to improve the application."
   },
   "adsense": {
     "placeholderDashboard": "Ad Space (e.g., Dashboard Banner)",
@@ -698,12 +698,14 @@
     "freePlanDescription": "Perfect for trying out Zeinte's basic features and AI power.",
     "freePlanPrice": "€0",
     "currentPlanButton": "Your Current Plan",
+    "adminPlanButton": "Administrator Plan",
     "backToDashboardButton": "Back to Dashboard",
     "alreadyProToastTitle": "Already Pro",
     "alreadyProToastDescription": "Your account already enjoys all Pro Plan benefits.",
     "subscriptionSuccessToastTitle": "Welcome to Pro!",
     "subscriptionSuccessToastDescription": "You've successfully upgraded to the Pro Plan. Enjoy all the benefits!",
     "subscribeProButtonAction": "Upgrade to Pro Now",
+    "payWithPayPalButton": "Pay with PayPal (Simulated)",
     "paymentGatewayComingSoon": "Payment gateway will be integrated soon. For now, your upgrade to Pro is simulated.",
     "alreadySubscribedButton": "You are Already on Pro Plan"
   },
