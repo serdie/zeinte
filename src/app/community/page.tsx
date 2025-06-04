@@ -63,7 +63,7 @@ export default function CommunityPage() {
     <div className="container mx-auto py-8 space-y-8">
       <Card className="w-full shadow-xl bg-card">
         <CardHeader className="pb-4">
-          <CardTitle className="text-3xl flex items-center gap-3 text-primary">
+          <CardTitle className="text-3xl md:text-4xl flex items-center gap-3 text-primary">
             <Users className="h-8 w-8" />
             {t('communityPage.title')}
           </CardTitle>
@@ -88,10 +88,12 @@ export default function CommunityPage() {
             </Button>
           </div>
 
-          {/* AdSense Ad Unit Placeholder - Replace with your ad unit code */}
+          {/* AdSense Ad Unit Placeholder REMOVED */}
+          {/* 
           <div style={{ width: '100%', minHeight: '90px', backgroundColor: '#f0f0f0', border: '1px dashed #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '20px 0', padding: '10px', textAlign: 'center' }}>
             <span style={{ color: '#999', fontSize: '0.9rem' }}>{t("adsense.placeholderCommunity")}</span>
           </div>
+          */}
 
 
           {filteredTopics.length === 0 && searchTerm && (

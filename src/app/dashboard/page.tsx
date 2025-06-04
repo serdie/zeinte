@@ -34,8 +34,6 @@ export default function DashboardPage() {
   const [numQuestionsForReanalysis, setNumQuestionsForReanalysis] = useState<string>(DEFAULT_NUM_QUESTIONS_REANALYSIS);
 
   const { toast } = useToast();
-  // const { userTier } = useAuth(); // Removed, restrictions lifted
-  // const isFreeUser = userTier === 'free'; // Removed, restrictions lifted
 
   useEffect(() => {
     let defaultNumQuestions = DEFAULT_NUM_QUESTIONS_REANALYSIS;
@@ -74,16 +72,6 @@ export default function DashboardPage() {
   }, []);
 
   const handleGetExplanation = useCallback(async (questionText: string, options: string[], correctAnswerIndex: number) => {
-    // Removed isFreeUser check for PAU special
-    // if (isFreeUser) {
-    //   toast({
-    //     title: t('dashboardPage.upgradeProAlertViewAllMessage', { count: "Detailed", total: "Explanations" }),
-    //     description: t('dashboardPage.reanalyzeButtonProTooltip'),
-    //     variant: "default"
-    //   });
-    //   return;
-    // }
-
     const questionContext = { questionText, options, correctAnswerIndex };
     setSelectedQuestionForExplanation(questionContext);
     setIsExplaining(true);
@@ -122,16 +110,6 @@ export default function DashboardPage() {
       });
       return;
     }
-    // Removed isFreeUser check for PAU special
-    // if (isFreeUser) {
-    //   setShowUpgradeDialog(true); // Or just show a toast if the dialog is removed
-    //   toast({
-    //     title: t('dashboardPage.dailyLimitReachedTitle'),
-    //     description: t('dashboardPage.dailyLimitReachedDescription'),
-    //     variant: "default"
-    //   });
-    //   return;
-    // }
 
     setIsReAnalyzing(true);
     let requestedNum = parseInt(numQuestionsForReanalysis, 10);
@@ -200,7 +178,7 @@ export default function DashboardPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center p-6 bg-card rounded-lg shadow-xl">
         <BookOpenText className="h-20 w-20 text-primary mb-6" />
-        <h2 className="text-3xl font-semibold text-foreground mb-3">{t('dashboardPage.emptyTitle')}</h2>
+        <h2 className="text-3xl md:text-4xl font-semibold text-foreground mb-3">{t('dashboardPage.emptyTitle')}</h2>
         <p className="text-lg text-muted-foreground mb-8 max-w-md">
           {t('dashboardPage.emptySubtitle')}
         </p>
@@ -214,7 +192,7 @@ export default function DashboardPage() {
     );
   }
 
-  const questionsToDisplay = predictedData.questions; // Show all questions since restrictions are lifted
+  const questionsToDisplay = predictedData.questions;
   
   return (
     <div className="space-y-8">
@@ -230,13 +208,16 @@ export default function DashboardPage() {
         </AlertDescription>
       </Alert>
 
+      {/* AdSense Ad Unit Placeholder REMOVED */}
+      {/* 
       <div style={{ width: '100%', minHeight: '90px', backgroundColor: '#f0f0f0', border: '1px dashed #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '20px 0', padding: '10px', textAlign: 'center' }}>
         <span style={{ color: '#999', fontSize: '0.9rem' }}>{t("adsense.placeholderDashboard")}</span>
       </div>
+      */}
 
       <Alert className="border-primary bg-primary/10">
         <Info className="h-5 w-5 text-primary" />
-        <AlertTitle className="font-semibold text-primary">{t('dashboardPage.questionsReadyTitle')}</AlertTitle>
+        <AlertTitle className="font-semibold text-primary text-lg md:text-xl">{t('dashboardPage.questionsReadyTitle')}</AlertTitle>
         <AlertDescription className="text-primary/80">
           {t('dashboardPage.questionsReadyDescription')}
           <br />
