@@ -4,10 +4,12 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import type React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react'; // Added useState
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast'; // Added useToast
+import { useI18n } from '@/contexts/I18nContext'; // Added useI18n
 
 interface ConditionalLayoutProps {
   children: React.ReactNode;
@@ -16,13 +18,14 @@ interface ConditionalLayoutProps {
 const PUBLIC_PATHS = ['/', '/login', '/signup', '/verify-email'];
 const ADMIN_PATH_PREFIX = '/admin';
 const CUSTOM_COURSES_PATH_PREFIX = '/custom-courses';
-const PAYMENT_PATH_PREFIX = '/payment'; // Added payment prefix
+const PAYMENT_PATH_PREFIX = '/payment'; 
+const PROFILE_PATH = '/profile';
 const PROTECTED_PATHS = [
   '/dashboard', 
   '/upload', 
   '/configure', 
   '/community', 
-  '/profile', 
+  PROFILE_PATH, 
   '/pricing', 
   '/account/subscription'
 ];
@@ -31,7 +34,11 @@ const PROTECTED_PATHS = [
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { currentUser, loading, isFirebaseConfigured, isAdmin } = useAuth();
+  const { currentUser, userProfileData, loading, isFirebaseConfigured, isAdmin } = useAuth(); // Get userProfileData
+  const { toast } = useToast();
+  const { t } = useI18n();
+  const [interestPromptShown, setInterestPromptShown] = useState(false);
+
 
   useEffect(() => {
     if (loading || !isFirebaseConfigured) { 
@@ -41,13 +48,11 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     const isEmailUser = currentUser?.providerData.some(p => p.providerId === 'password');
     const isGeneralProtectedRoute = PROTECTED_PATHS.includes(pathname) || 
                                     pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX) ||
-                                    pathname.startsWith(PAYMENT_PATH_PREFIX); // Added payment path check
+                                    pathname.startsWith(PAYMENT_PATH_PREFIX);
 
 
-    if (currentUser) {
+    if (currentUser && userProfileData) { // Ensure userProfileData is loaded
       if (isEmailUser && !currentUser.emailVerified && pathname !== '/verify-email') {
-        // If user is email-based, not verified, and not on verify-email page, redirect them there.
-        // This is especially important if they try to access a protected route.
         if (isGeneralProtectedRoute || pathname.startsWith(ADMIN_PATH_PREFIX)) { 
            router.push('/verify-email');
            return;
@@ -57,6 +62,20 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
         router.push('/dashboard');
         return;
       }
+
+      // Check for primary interest configuration
+      if (!userProfileData.primaryInterest && pathname !== PROFILE_PATH && !interestPromptShown) {
+        toast({
+          title: t('conditionalLayout.interestSetupTitle'),
+          description: t('conditionalLayout.interestSetupDescription'),
+          variant: "default",
+          duration: 8000, // Longer duration for user to read
+        });
+        setInterestPromptShown(true); // Ensure toast is shown only once per session load
+        router.push(PROFILE_PATH);
+        return;
+      }
+
 
       // Admin-specific routes
       if (pathname.startsWith(ADMIN_PATH_PREFIX) && !isAdmin) {
@@ -69,15 +88,15 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
         router.push('/dashboard');
         return;
       }
-    } else {
+    } else if (!currentUser) { // No user
       // If no user and the route is protected (general or admin), redirect to login
-      if (isGeneralProtectedRoute || pathname.startsWith(ADMIN_PATH_PREFIX)) {
+      if (isGeneralProtectedRoute || pathname.startsWith(ADMIN_PATH_PREFIX) || pathname === PROFILE_PATH) {
         router.push('/login');
         return;
       }
     }
 
-  }, [pathname, currentUser, loading, router, isFirebaseConfigured, isAdmin]);
+  }, [pathname, currentUser, userProfileData, loading, router, isFirebaseConfigured, isAdmin, toast, t, interestPromptShown]);
 
   if (loading || (!isFirebaseConfigured && !PUBLIC_PATHS.includes(pathname))) {
     return (
@@ -91,12 +110,14 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     PROTECTED_PATHS.includes(pathname) || 
     pathname.startsWith(ADMIN_PATH_PREFIX) || 
     pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX) ||
-    pathname.startsWith(PAYMENT_PATH_PREFIX) // Added payment path check
+    pathname.startsWith(PAYMENT_PATH_PREFIX) 
   );
 
 
   const showAppLayout = currentUser && 
+                        userProfileData && // Ensure profile data is available
                         (currentUser.emailVerified || currentUser.providerData.some(p => p.providerId === 'google.com')) &&
+                        (userProfileData.primaryInterest || pathname === PROFILE_PATH) && // Allow access to profile page to set interest
                         isAppRoute;
 
   if (showAppLayout) {

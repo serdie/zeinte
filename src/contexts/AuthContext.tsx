@@ -28,7 +28,7 @@ const FIREBASE_GENERAL_CONFIG_ERROR_MESSAGE_KEY = "authContext.firebaseGeneralCo
 
 export type UserTier = 'admin' | 'pro' | 'free' | null;
 
-interface AppUserFirestoreData extends DocumentData {
+export interface AppUserFirestoreData extends DocumentData {
   uid: string;
   email?: string | null;
   displayName?: string | null;
@@ -37,13 +37,16 @@ interface AppUserFirestoreData extends DocumentData {
   tier?: UserTier;
   createdAt?: any;
   lastLogin?: any;
-  preferences?: string[];
+  preferences?: string[]; // Kept for now, but primary/secondary interests are the focus
+  primaryInterest?: string | null;
+  secondaryInterests?: string[];
   emailVerified?: boolean;
 }
 
 
 interface AuthContextType {
   currentUser: User | null;
+  userProfileData: AppUserFirestoreData | null; // Added to expose Firestore profile data
   loading: boolean;
   isFirebaseConfigured: boolean;
   isAdmin: boolean;
@@ -55,12 +58,14 @@ interface AuthContextType {
   resendVerificationEmail: () => Promise<string | void>;
   isResendingEmail: boolean;
   updateCurrentUserTier: (newTier: UserTier) => Promise<void | string>;
+  updateUserInterests: (primaryInterest: string, secondaryInterests: string[]) => Promise<void | string>; // Added
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [userProfileData, setUserProfileData] = useState<AppUserFirestoreData | null>(null); // State for Firestore profile
   const [loading, setLoading] = useState(true);
   const [firebaseConfigStatus, setFirebaseConfigStatus] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -74,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const firestoreDb: Firestore | undefined = useMemo(() => firestoreDbService, []);
 
   useEffect(() => {
-    setFirebaseConfigStatus(isFirebaseFullyConfigured); // Update state based on the imported check
+    setFirebaseConfigStatus(isFirebaseFullyConfigured);
     if (!isFirebaseFullyConfigured) {
       console.warn(t(FIREBASE_GENERAL_CONFIG_ERROR_MESSAGE_KEY));
       setLoading(false);
@@ -96,6 +101,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let determinedTier: UserTier;
         let specialDisplayName: string | undefined = undefined;
         const userEmailLower = user.email?.toLowerCase();
+        let firestoreData: AppUserFirestoreData | null = null;
+
+        if (userDocSnap.exists()) {
+            firestoreData = userDocSnap.data() as AppUserFirestoreData;
+        }
 
         if (userEmailLower === ADMIN_EMAIL.toLowerCase()) {
             determinedTier = 'admin';
@@ -103,28 +113,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             determinedTier = 'pro'; 
             specialDisplayName = 'dginteligenciaartificial';
         } else {
-            if (userDocSnap.exists() && userDocSnap.data()?.tier) {
-                determinedTier = userDocSnap.data()?.tier as UserTier;
-            } else {
-                determinedTier = 'free'; // Default for new users or users without a tier
-            }
+            determinedTier = firestoreData?.tier || 'free'; // Default for new users or users without a tier
         }
         
-        await saveUserToFirestore(user, determinedTier, specialDisplayName, user.emailVerified);
+        const savedProfileData = await saveUserToFirestore(user, determinedTier, specialDisplayName, user.emailVerified, firestoreData);
         
         setIsAdmin(determinedTier === 'admin');
         setUserTier(determinedTier);
         setCurrentUser(user);
+        setUserProfileData(savedProfileData); // Set the full profile data
       } else {
         setIsAdmin(false);
         setUserTier(null);
         setCurrentUser(null);
+        setUserProfileData(null);
       }
       setLoading(false);
     }, (error) => {
       console.error(t("authContext.authContextErrorListener"), error);
       setLoading(false);
       setCurrentUser(null);
+      setUserProfileData(null);
       setIsAdmin(false);
       setUserTier(null);
     });
@@ -172,25 +181,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const saveUserToFirestore = async (user: User, tierToSave: UserTier, forcedDisplayName?: string, emailVerifiedParam?: boolean) => {
+  const saveUserToFirestore = async (
+    user: User, 
+    tierToSave: UserTier, 
+    forcedDisplayName?: string, 
+    emailVerifiedParam?: boolean,
+    existingFirestoreData?: AppUserFirestoreData | null
+  ): Promise<AppUserFirestoreData> => {
     if (!firestoreDb) {
         console.warn(t("authContext.firestoreUnavailableSaveUser"));
-        return;
+        // Return a default structure or throw an error
+        const placeholderData: AppUserFirestoreData = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || user.email?.split('@')[0] || 'Usuario',
+            tier: 'free',
+            createdAt: serverTimestamp(),
+            lastLogin: serverTimestamp(),
+            primaryInterest: null,
+            secondaryInterests: [],
+            emailVerified: user.emailVerified,
+        };
+        return placeholderData;
     }
     const userRef = doc(firestoreDb, "users", user.uid);
-    const userSnap = await getDoc(userRef);
-
+    
     let displayName = forcedDisplayName;
     if (!displayName) { 
         displayName = user.displayName ||
-                      (userSnap.exists() && userSnap.data()?.displayName) ||
+                      existingFirestoreData?.displayName ||
                       user.email?.split('@')[0] ||
                       'Usuario';
     }
     
     const effectiveEmailVerified = emailVerifiedParam === undefined ? user.emailVerified : emailVerifiedParam;
 
-    const userDataToSet: Partial<AppUserFirestoreData> = {
+    const dataToSync: Partial<AppUserFirestoreData> = {
         uid: user.uid,
         email: user.email,
         displayName: displayName,
@@ -201,22 +227,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         emailVerified: effectiveEmailVerified,
     };
 
+    let finalUserData: AppUserFirestoreData;
+
     try {
-      if (!userSnap.exists()) {
-          await setDoc(userRef, {
-              ...userDataToSet,
+      if (!existingFirestoreData) {
+          const newUserProfileData: AppUserFirestoreData = {
+              ...dataToSync,
               createdAt: serverTimestamp(),
-              preferences: [], 
-          });
+              primaryInterest: dataToSync.primaryInterest === undefined ? null : dataToSync.primaryInterest, // Ensure it's explicitly null if not set
+              secondaryInterests: dataToSync.secondaryInterests || [],
+              preferences: [], // Keep preferences if it was used, or initialize
+          } as AppUserFirestoreData; // Cast because not all fields are present yet
+          await setDoc(userRef, newUserProfileData);
+          finalUserData = newUserProfileData;
       } else {
-          const updateData: Partial<AppUserFirestoreData> = { ...userDataToSet };
+          const updateData: Partial<AppUserFirestoreData> = { ...dataToSync };
           if (user.email?.toLowerCase() === FREE_USER_EMAIL.toLowerCase() && tierToSave === 'pro' && forcedDisplayName === 'dginteligenciaartificial') {
              updateData.displayName = 'dginteligenciaartificial'; 
           }
+          // Ensure interests are not overwritten if they already exist and are not part of this specific sync
+          if (updateData.primaryInterest === undefined && existingFirestoreData.primaryInterest !== undefined) {
+            updateData.primaryInterest = existingFirestoreData.primaryInterest;
+          }
+          if (updateData.secondaryInterests === undefined && existingFirestoreData.secondaryInterests !== undefined) {
+            updateData.secondaryInterests = existingFirestoreData.secondaryInterests;
+          }
+
           await setDoc(userRef, updateData, { merge: true });
+          // Fetch again to get merged data with timestamps
+          const updatedSnap = await getDoc(userRef);
+          finalUserData = updatedSnap.data() as AppUserFirestoreData;
       }
+      return finalUserData;
     } catch (error) {
         console.error(t("authContext.errorSavingUserToFirestore"), error);
+        // Fallback to a default structure if save fails
+        const placeholderData: AppUserFirestoreData = {
+            uid: user.uid, email: user.email, displayName, tier: tierToSave,
+            primaryInterest: null, secondaryInterests: [],
+            createdAt: serverTimestamp(), lastLogin: serverTimestamp(),
+            emailVerified: effectiveEmailVerified,
+        };
+        return placeholderData;
     }
   };
 
@@ -261,7 +313,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         initialTier = 'free';
       }
       
-      await saveUserToFirestore(user, initialTier, forcedName, false); 
+      const newProfileData = await saveUserToFirestore(user, initialTier, forcedName, false); 
+      setUserProfileData(newProfileData); // Set profile data after sign up
       return user;
     } catch (error) {
       return handleAuthError(error as AuthError);
@@ -277,6 +330,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // User data will be fetched and set by onAuthStateChanged
       return userCredential.user;
     } catch (error) {
       return handleAuthError(error as AuthError);
@@ -292,6 +346,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
+      // User data will be fetched and set by onAuthStateChanged
       return result.user;
     } catch (error) {
       return handleAuthError(error as AuthError);
@@ -308,6 +363,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } catch (e) { /* ignore */ }
         }
         setCurrentUser(null);
+        setUserProfileData(null);
         setIsAdmin(false);
         setUserTier(null);
         setLoading(false); 
@@ -318,6 +374,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await firebaseSignOut(auth);
       setCurrentUser(null);
+      setUserProfileData(null);
       setIsAdmin(false);
       setUserTier(null);
       // onAuthStateChanged will set loading to false.
@@ -361,10 +418,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateCurrentUserTier = async (newTier: UserTier): Promise<void | string> => {
-    if (!currentUser || !firestoreDb) {
+    if (!currentUser || !firestoreDb || !userProfileData) { // Check userProfileData as well
         return t("authContext.updateTierErrorNoUserOrDb");
     }
-    // Prevent special users from changing their own tier here, admin can still do it.
     const userEmailLower = currentUser.email?.toLowerCase();
     if (userEmailLower === ADMIN_EMAIL.toLowerCase() && newTier !== 'admin') {
         return t("authContext.updateTierErrorAdminLock");
@@ -377,8 +433,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
         const userRef = doc(firestoreDb, "users", currentUser.uid);
         await updateDoc(userRef, { tier: newTier });
-        setUserTier(newTier); // Update local state immediately
-        return; // Success
+        setUserTier(newTier); 
+        setUserProfileData(prev => prev ? { ...prev, tier: newTier } : null); // Update local profile data
+        return; 
     } catch (error) {
         console.error(t("authContext.updateTierErrorFirestore"), error);
         return t("authContext.updateTierErrorFirestoreMessage");
@@ -387,9 +444,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateUserInterests = async (primaryInterest: string, secondaryInterests: string[]): Promise<void | string> => {
+    if (!currentUser || !firestoreDb) {
+      return t("authContext.updateInterestsErrorNoUserOrDb");
+    }
+    setLoading(true);
+    try {
+      const userRef = doc(firestoreDb, "users", currentUser.uid);
+      await updateDoc(userRef, {
+        primaryInterest: primaryInterest,
+        secondaryInterests: secondaryInterests,
+      });
+      setUserProfileData(prev => prev ? { ...prev, primaryInterest, secondaryInterests } : null); // Update local profile data
+      return; // Success
+    } catch (error) {
+      console.error(t("authContext.updateInterestsErrorFirestore"), error);
+      return t("authContext.updateInterestsErrorFirestoreMessage");
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const value = {
     currentUser,
+    userProfileData, // Expose userProfileData
     loading,
     isFirebaseConfigured: firebaseConfigStatus,
     isAdmin,
@@ -401,6 +480,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     resendVerificationEmail,
     isResendingEmail,
     updateCurrentUserTier,
+    updateUserInterests, // Expose new function
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
