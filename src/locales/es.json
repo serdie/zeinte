@@ -330,6 +330,7 @@
     "defaultDisplayName": "Mi Perfil en Zeinte",
     "manageInfo": "Gestiona tu información personal y preferencias en Zeinte.",
     "manageInfoAndInterests": "Gestiona tu información personal y configura tus áreas de estudio para personalizar tu experiencia en Zeinte.",
+    "viewYourInterests": "Visualiza tus áreas de estudio configuradas o modifícalas.",
     "emailLabel": "Correo Electrónico",
     "usernameLabel": "Nombre de Usuario",
     "usernameNotSet": "No especificado",
@@ -402,7 +403,13 @@
     "interestCertOtherCustom": "Otra Certificación (especificar)",
     "categoryEstudioGeneral": "Estudio General y Otros",
     "interestGeneralStudy": "Cultura General / Aprendizaje Autodidacta",
-    "interestOtherStudiesCustomMain": "Otro Tipo de Estudio (especificar)"
+    "interestOtherStudiesCustomMain": "Otro Tipo de Estudio (especificar)",
+    "changePreferencesButton": "Cambiar Preferencias de Estudio",
+    "cancelButton": "Cancelar",
+    "notSet": "No establecido",
+    "noPrimaryInterestSet": "Aún no has configurado tu interés principal de estudio.",
+    "noSecondaryInterestsSet": "No has añadido intereses secundarios.",
+    "betaFeatureNote": "Esta funcionalidad de personalización está en desarrollo. ¡Pronto verás cómo Zeinte se adapta aún más a ti!"
   },
   "configurePage": {
     "loadingConfig": "Cargando configuración de Zeinte...",
