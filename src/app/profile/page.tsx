@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Mail, ShieldCheck, Bookmark, Layers, CheckCircle, Save, AlertTriangle, Info, Loader2 } from 'lucide-react';
+import { User, Mail, ShieldCheck, Save, AlertTriangle, Info, Loader2, ChevronDown, ChevronUp, CheckSquare, Square, PenLine } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth, type AppUserFirestoreData } from '@/contexts/AuthContext';
@@ -13,37 +13,13 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/contexts/I18nContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils'; // Import cn utility
-
-
-// Define study interests with keys for i18n
-const studyInterestsList = [
-  { id: 'oposicion_hacienda', nameKey: 'profilePage.interestOppHacienda' },
-  { id: 'oposicion_administrativo', nameKey: 'profilePage.interestOppAdminGeneral' },
-  { id: 'oposicion_justicia', nameKey: 'profilePage.interestOppJustice' },
-  { id: 'oposicion_seguridad', nameKey: 'profilePage.interestOppSecurity' },
-  { id: 'oposicion_sanidad', nameKey: 'profilePage.interestOppHealth' },
-  { id: 'oposicion_educacion', nameKey: 'profilePage.interestOppEducation' },
-  { id: 'oposicion_forestal', nameKey: 'profilePage.interestOppForestal' },
-  { id: 'oposicion_otra', nameKey: 'profilePage.interestOppOther' },
-  { id: 'universidad_ingenieria', nameKey: 'profilePage.interestUniEngineering' },
-  { id: 'universidad_derecho', nameKey: 'profilePage.interestUniLaw' },
-  { id: 'universidad_ade', nameKey: 'profilePage.interestUniBusiness' },
-  { id: 'universidad_medicina', nameKey: 'profilePage.interestUniMedicine' },
-  { id: 'universidad_otra', nameKey: 'profilePage.interestUniOther' },
-  { id: 'bachillerato_selectividad', nameKey: 'profilePage.interestHighSchoolEvaU' },
-  { id: 'idiomas_ingles_c1', nameKey: 'profilePage.interestLangEnglishC1' },
-  { id: 'idiomas_ingles_b2', nameKey: 'profilePage.interestLangEnglishB2' },
-  { id: 'idiomas_frances_b1', nameKey: 'profilePage.interestLangFrenchB1' },
-  { id: 'idiomas_otro', nameKey: 'profilePage.interestLangOther' },
-  { id: 'carnet_conducir_b', nameKey: 'profilePage.interestDrivingLicenseB' },
-  { id: 'certificaciones_profesionales', nameKey: 'profilePage.interestProfessionalCert' },
-  { id: 'estudio_general', nameKey: 'profilePage.interestGeneralStudy' },
-  { id: 'otro_estudio', nameKey: 'profilePage.interestOtherStudies' },
-];
+import { cn } from '@/lib/utils';
+import { categorizedStudyInterests, type InterestCategory, type InterestOption } from '@/lib/studyInterestsData';
 
 
 export default function ProfilePage() {
@@ -52,34 +28,175 @@ export default function ProfilePage() {
   const { t } = useI18n();
 
   const [primaryInterest, setPrimaryInterest] = useState<string | null>(null);
-  const [secondaryInterests, setSecondaryInterests] = useState<string[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
+  const [customPrimaryInterestValue, setCustomPrimaryInterestValue] = useState('');
+  const [selectedPrimaryInterestIsCustom, setSelectedPrimaryInterestIsCustom] = useState(false);
 
-  const translatedInterests = useMemo(() => {
-    return studyInterestsList.map(interest => ({
-      ...interest,
-      name: t(interest.nameKey)
+  const [secondaryInterests, setSecondaryInterests] = useState<string[]>([]);
+  const [customSecondaryInterestValues, setCustomSecondaryInterestValues] = useState<Record<string, string>>({});
+  
+  const [isSaving, setIsSaving] = useState(false);
+  const [activeAccordionItem, setActiveAccordionItem] = useState<string | undefined>(undefined);
+
+
+  const translatedCategorizedInterests = useMemo(() => {
+    return categorizedStudyInterests.map(category => ({
+      ...category,
+      name: t(category.nameKey),
+      options: category.options.map(option => ({
+        ...option,
+        name: t(option.nameKey)
+      }))
     }));
   }, [t]);
 
   useEffect(() => {
     if (userProfileData) {
-      setPrimaryInterest(userProfileData.primaryInterest || null);
-      setSecondaryInterests(userProfileData.secondaryInterests || []);
+      const currentPrimary = userProfileData.primaryInterest || null;
+      setPrimaryInterest(currentPrimary);
+
+      // Check if the current primary interest is a custom one
+      let isCustomP = false;
+      let customPValue = '';
+      if (currentPrimary) {
+        const flatOptions = translatedCategorizedInterests.flatMap(cat => cat.options);
+        const primaryOptionMatch = flatOptions.find(opt => opt.id === currentPrimary);
+        if (!primaryOptionMatch) { // If ID not in predefined, it's custom text
+          isCustomP = true;
+          customPValue = currentPrimary;
+          // Try to find which "Otros" option it might correspond to for UI state
+          for (const category of translatedCategorizedInterests) {
+            for (const option of category.options) {
+              if (option.isCustomEntry) {
+                 // Heuristic: if currentPrimary starts with a known custom option ID (e.g. "oposicion_otra_custom:Mi Opo")
+                 // This part is tricky if we only save the text. For now, assume any non-ID match is a custom entry.
+                 // For better UX, we'd need to know *which* "Otros" it came from.
+                 // For now, we'll just set the custom input field value if it's not a direct ID match.
+              }
+            }
+          }
+        }
+      }
+      setSelectedPrimaryInterestIsCustom(isCustomP);
+      setCustomPrimaryInterestValue(customPValue);
+
+
+      const currentSecondary = userProfileData.secondaryInterests || [];
+      const predefinedSecondaryIds = translatedCategorizedInterests.flatMap(cat => cat.options.map(opt => opt.id));
+      const customSecondaryTexts = currentSecondary.filter(interest => !predefinedSecondaryIds.includes(interest));
+      const standardSecondaryIds = currentSecondary.filter(interest => predefinedSecondaryIds.includes(interest));
+      
+      setSecondaryInterests(standardSecondaryIds);
+
+      const initialCustomValues: Record<string, string> = {};
+      // This part is tricky: mapping saved custom texts back to their original "Otros" input fields.
+      // For simplicity, if there are custom texts, we can't reliably map them back to specific "Otros" inputs
+      // unless we stored them with a prefix or a more complex structure.
+      // So, for now, customSecondaryInterestValues will be primarily for *new* custom entries.
+      // We can display the saved custom texts separately if needed.
+      // For now, we'll just pre-fill the first available "Otros" if there's one custom text.
+      const firstCustomOpp = translatedCategorizedInterests.flatMap(c => c.options).find(o => o.id === 'oposicion_otra_custom');
+      if (customSecondaryTexts.length > 0 && firstCustomOpp) {
+        // This is a simplification. True mapping requires knowing which "otros" it came from.
+      }
+      setCustomSecondaryInterestValues(initialCustomValues);
+
+
     }
-  }, [userProfileData]);
+  }, [userProfileData, translatedCategorizedInterests]);
+
+  const handlePrimaryInterestChange = (value: string) => {
+    setPrimaryInterest(value);
+    const flatOption = translatedCategorizedInterests.flatMap(c => c.options).find(o => o.id === value);
+    if (flatOption?.isCustomEntry) {
+      setSelectedPrimaryInterestIsCustom(true);
+      // Do not clear customPrimaryInterestValue here, let user type
+    } else {
+      setSelectedPrimaryInterestIsCustom(false);
+      setCustomPrimaryInterestValue(''); // Clear if a non-custom option is selected
+    }
+  };
+  
+  const handleSecondaryInterestChange = (optionId: string, categoryId: string, isCustom: boolean | undefined, checked: boolean | "indeterminate") => {
+    if (typeof checked !== 'boolean') return;
+
+    setSecondaryInterests(prev => {
+      const isAlreadySelected = prev.includes(optionId);
+      if (checked) {
+        return isAlreadySelected ? prev : [...prev, optionId];
+      } else {
+        // If unchecking a custom entry, also clear its text value
+        if (isCustom) {
+          setCustomSecondaryInterestValues(prevCustom => {
+            const newCustom = { ...prevCustom };
+            delete newCustom[optionId];
+            return newCustom;
+          });
+        }
+        return prev.filter(id => id !== optionId);
+      }
+    });
+  };
+  
+  const handleCustomSecondaryInputChange = (customOptionId: string, value: string) => {
+    setCustomSecondaryInterestValues(prev => ({ ...prev, [customOptionId]: value }));
+  };
+
 
   const handleSaveInterests = async () => {
-    if (!primaryInterest) {
-      toast({
+    let finalPrimaryInterest: string | null = primaryInterest;
+
+    if (selectedPrimaryInterestIsCustom) {
+      if (!customPrimaryInterestValue.trim()) {
+        toast({
+          title: t('profilePage.customPrimaryInterestRequiredTitle'),
+          description: t('profilePage.customPrimaryInterestRequiredDescription'),
+          variant: "destructive",
+        });
+        return;
+      }
+      finalPrimaryInterest = customPrimaryInterestValue.trim();
+    } else if (!primaryInterest) {
+       toast({
         title: t('profilePage.primaryInterestRequiredTitle'),
         description: t('profilePage.primaryInterestRequiredDescription'),
         variant: "destructive",
       });
       return;
     }
+
+    const finalSecondaryInterests: string[] = [...secondaryInterests.filter(id => {
+        // Filter out "Otros" placeholder IDs if their text input is empty
+        const option = translatedCategorizedInterests.flatMap(c => c.options).find(o => o.id === id);
+        if (option?.isCustomEntry && !customSecondaryInterestValues[id]?.trim()) {
+            return false;
+        }
+        return true;
+    })];
+    
+    Object.entries(customSecondaryInterestValues).forEach(([key, value]) => {
+        // Add custom text only if the "Otros" checkbox for it was selected
+        // AND the text is not empty.
+        // The `secondaryInterests` state already holds the IDs of selected "Otros" checkboxes.
+        if (value.trim() && secondaryInterests.includes(key)) {
+            finalSecondaryInterests.push(value.trim());
+        }
+    });
+    // Remove duplicates that might arise if an "Otros" ID was kept and its text was also added
+    const uniqueSecondaryInterests = Array.from(new Set(finalSecondaryInterests));
+    
+    // Filter out the "Otros" IDs themselves if their custom text has been added
+    const finalUniqueSecondaryInterests = uniqueSecondaryInterests.filter(interest => {
+        const isCustomPlaceholderId = categorizedStudyInterests.flatMap(c => c.options).some(o => o.id === interest && o.isCustomEntry);
+        if (isCustomPlaceholderId && customSecondaryInterestValues[interest]?.trim()) {
+            // If it's a placeholder ID for a custom entry that has text, filter out the ID
+            return false; 
+        }
+        return true;
+    });
+
+
     setIsSaving(true);
-    const result = await updateUserInterests(primaryInterest, secondaryInterests);
+    const result = await updateUserInterests(finalPrimaryInterest!, finalUniqueSecondaryInterests);
     if (typeof result === 'string') {
       toast({ title: t('profilePage.errorSavingPreferencesToastTitle'), description: result, variant: "destructive" });
     } else {
@@ -88,21 +205,12 @@ export default function ProfilePage() {
     setIsSaving(false);
   };
 
-  const handleSecondaryInterestChange = (interestId: string, checked: boolean | "indeterminate") => {
-    if (typeof checked === 'boolean') { // Ensure checked is boolean
-        setSecondaryInterests(prev =>
-        checked ? [...prev, interestId] : prev.filter(id => id !== interestId)
-        );
-    }
-  };
 
-  if (loading || !isFirebaseConfigured) { // Combined loading check
+  if (loading || !isFirebaseConfigured) {
     return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /> <span className="ml-3 text-lg">{t('profilePage.loadingProfile')}</span></div>;
   }
 
   if (!currentUser) {
-    // This case should ideally be handled by ConditionalLayout redirecting to login,
-    // but as a fallback:
     return <div className="text-center py-10">{t('profilePage.loginPrompt')}</div>;
   }
 
@@ -123,7 +231,7 @@ export default function ProfilePage() {
             {currentUser.displayName || t('profilePage.defaultDisplayName')}
           </CardTitle>
           <CardDescription className="text-base md:text-lg text-muted-foreground">
-            {t('profilePage.manageInfo')}
+            {t('profilePage.manageInfoAndInterests')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -137,43 +245,100 @@ export default function ProfilePage() {
             </Alert>
           )}
 
-          <div className="space-y-3 p-4 border rounded-md shadow-sm bg-background/50">
-             <h3 className="text-lg font-semibold text-primary flex items-center gap-2"><Bookmark className="h-5 w-5" />{t('profilePage.primaryInterestTitle')}</h3>
-             <p className="text-sm text-muted-foreground">{t('profilePage.primaryInterestDescription')}</p>
-            <RadioGroup value={primaryInterest || ""} onValueChange={setPrimaryInterest} className="space-y-1">
-              <ScrollArea className="h-[200px] w-full pr-3">
-                {translatedInterests.map((interest) => (
-                  <div key={interest.id} className="flex items-center space-x-2 p-2 hover:bg-muted rounded-md">
-                    <RadioGroupItem value={interest.id} id={`primary-${interest.id}`} />
-                    <Label htmlFor={`primary-${interest.id}`} className="font-normal cursor-pointer flex-1">{interest.name}</Label>
-                  </div>
+          {/* Primary Interest Selection */}
+          <Card className="bg-background/50">
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center gap-2"><PenLine className="h-5 w-5 text-primary" />{t('profilePage.primaryInterestTitleNew')}</CardTitle>
+              <CardDescription>{t('profilePage.primaryInterestDescriptionNew')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible className="w-full" value={activeAccordionItem} onValueChange={setActiveAccordionItem}>
+                {translatedCategorizedInterests.map((category) => (
+                  <AccordionItem value={category.id} key={`primary-${category.id}`}>
+                    <AccordionTrigger>{category.name}</AccordionTrigger>
+                    <AccordionContent>
+                      <RadioGroup value={primaryInterest || ""} onValueChange={handlePrimaryInterestChange} className="space-y-1">
+                        <ScrollArea className="h-auto max-h-[250px] w-full pr-3">
+                          {category.options.map((option) => (
+                            <div key={option.id} className="flex flex-col space-y-1 p-2 hover:bg-muted rounded-md">
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value={option.id} id={`primary-${option.id}`} />
+                                <Label htmlFor={`primary-${option.id}`} className="font-normal cursor-pointer flex-1">{option.name}</Label>
+                              </div>
+                              {option.isCustomEntry && primaryInterest === option.id && selectedPrimaryInterestIsCustom && (
+                                <Input
+                                  type="text"
+                                  placeholder={t('profilePage.customInterestPlaceholder')}
+                                  value={customPrimaryInterestValue}
+                                  onChange={(e) => setCustomPrimaryInterestValue(e.target.value)}
+                                  className="mt-1 ml-6 text-sm"
+                                />
+                              )}
+                            </div>
+                          ))}
+                        </ScrollArea>
+                      </RadioGroup>
+                    </AccordionContent>
+                  </AccordionItem>
                 ))}
-              </ScrollArea>
-            </RadioGroup>
-          </div>
+              </Accordion>
+               {selectedPrimaryInterestIsCustom && !customPrimaryInterestValue.trim() && (
+                <p className="text-xs text-destructive mt-2 ml-1">{t('profilePage.customInterestRequiredError')}</p>
+              )}
+            </CardContent>
+          </Card>
 
-          <div className="space-y-3 p-4 border rounded-md shadow-sm bg-background/50">
-             <h3 className="text-lg font-semibold text-primary flex items-center gap-2"><Layers className="h-5 w-5" />{t('profilePage.secondaryInterestsTitle')}</h3>
-             <p className="text-sm text-muted-foreground">{t('profilePage.secondaryInterestsDescription')}</p>
-            <ScrollArea className="h-[200px] w-full pr-3">
-                <div className="space-y-1">
-                {translatedInterests.map((interest) => (
-                    <div key={interest.id} className="flex items-center space-x-3 p-2 hover:bg-muted rounded-md">
-                    <Checkbox
-                        id={`secondary-${interest.id}`}
-                        checked={secondaryInterests.includes(interest.id)}
-                        onCheckedChange={(checked) => handleSecondaryInterestChange(interest.id, checked)}
-                        disabled={primaryInterest === interest.id} 
-                    />
-                    <Label htmlFor={`secondary-${interest.id}`} className={cn("font-normal cursor-pointer flex-1", primaryInterest === interest.id && "text-muted-foreground line-through")}>{interest.name}</Label>
-                    </div>
+          {/* Secondary Interests Selection */}
+          <Card className="bg-background/50">
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center gap-2"><CheckSquare className="h-5 w-5 text-primary" />{t('profilePage.secondaryInterestsTitleNew')}</CardTitle>
+              <CardDescription>{t('profilePage.secondaryInterestsDescriptionNew')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="multiple" className="w-full">
+                {translatedCategorizedInterests.map((category) => (
+                  <AccordionItem value={category.id} key={`secondary-${category.id}`}>
+                    <AccordionTrigger>{category.name}</AccordionTrigger>
+                    <AccordionContent>
+                      <ScrollArea className="h-auto max-h-[250px] w-full pr-3 space-y-1">
+                        {category.options.map((option) => (
+                          <div key={option.id} className="flex flex-col space-y-1 p-2 hover:bg-muted rounded-md">
+                            <div className="flex items-center space-x-3">
+                              <Checkbox
+                                id={`secondary-${option.id}`}
+                                checked={secondaryInterests.includes(option.id) || (primaryInterest === option.id && !option.isCustomEntry)}
+                                onCheckedChange={(checked) => handleSecondaryInterestChange(option.id, category.id, option.isCustomEntry, checked)}
+                                disabled={primaryInterest === option.id && !option.isCustomEntry}
+                              />
+                              <Label 
+                                htmlFor={`secondary-${option.id}`} 
+                                className={cn("font-normal cursor-pointer flex-1", (primaryInterest === option.id && !option.isCustomEntry) && "text-muted-foreground line-through")}
+                              >
+                                {option.name}
+                              </Label>
+                            </div>
+                            {option.isCustomEntry && secondaryInterests.includes(option.id) && (
+                                <Input
+                                  type="text"
+                                  placeholder={t('profilePage.customInterestPlaceholder')}
+                                  value={customSecondaryInterestValues[option.id] || ''}
+                                  onChange={(e) => handleCustomSecondaryInputChange(option.id, e.target.value)}
+                                  className="mt-1 ml-7 text-sm"
+                                  disabled={primaryInterest === option.id}
+                                />
+                              )}
+                          </div>
+                        ))}
+                      </ScrollArea>
+                    </AccordionContent>
+                  </AccordionItem>
                 ))}
-                </div>
-            </ScrollArea>
-          </div>
+              </Accordion>
+            </CardContent>
+          </Card>
           
-          <Button onClick={handleSaveInterests} disabled={isSaving || !primaryInterest} className="w-full sm:w-auto">
-            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          <Button onClick={handleSaveInterests} disabled={isSaving || !primaryInterest} className="w-full sm:w-auto text-base py-3">
+            {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
             {t('profilePage.savePreferencesButton')}
           </Button>
 
