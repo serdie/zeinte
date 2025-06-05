@@ -468,11 +468,9 @@
     "userTableProviderHeader": "Proveedor",
     "userTableTierHeader": "Plan (Tier)",
     "userTableCreationDateHeader": "Fecha de Creación",
-    "userTableActionsHeader": "Acciones",
     "userTablePrimaryInterestHeader": "Interés Principal",
     "userTableSecondaryInterestsHeader": "Intereses Secundarios",
-    "editUserButtonTooltip": "Editar Usuario",
-    "deleteUserButtonTooltip": "Eliminar Usuario (Firestore)",
+    "userTableActionsHeader": "Acciones",
     "notAvailable": "N/D",
     "invalidDate": "Fecha inválida",
     "deleteUserDisclaimerTitle": "Nota Importante sobre Eliminación de Usuarios",
@@ -487,14 +485,14 @@
     "tierAdmin": "Admin",
     "saveUserChangesButton": "Guardar Cambios",
     "userUpdatedToastTitle": "Usuario Actualizado",
-    "userUpdatedToastDescription": "{{email}}'s data has been updated.",
+    "userUpdatedToastDescription": "Los datos de {{email}} han sido actualizados.",
     "errorUpdatingUserToastTitle": "Error al Actualizar",
     "errorUpdatingUserToastDescription": "No se pudo actualizar el usuario: {{error}}",
     "deleteUserDialogTitle": "¿Eliminar Usuario de Firestore?",
     "deleteUserDialogDescription": "Estás a punto de eliminar el registro del usuario <span class=\"font-semibold\">{{email}}</span> de la base de datos Firestore. Esta acción **no elimina la cuenta del sistema de autenticación de Firebase**. El usuario podría seguir existiendo en Firebase Auth. ¿Estás seguro de que quieres continuar? Esta acción no se puede deshacer.",
     "confirmDeleteUserButton": "Sí, Eliminar de Firestore",
     "userDeletedToastTitle": "Usuario Eliminado de Firestore",
-    "userDeletedToastDescription": "{{email}}'s record has been deleted from the database.",
+    "userDeletedToastDescription": "El registro de {{email}} ha sido eliminado de la base de datos.",
     "errorDeletingUserToastTitle": "Error al Eliminar",
     "errorDeletingUserToastDescription": "No se pudo eliminar el usuario de Firestore: {{error}}",
     "otherCMSTitle": "Otras Funciones del CMS - Zeinte",
@@ -503,7 +501,9 @@
     "goToCommunityManagementButton": "Ir a Gestión de Comunidad",
     "appGeneralConfigTitle": "Configuración General de Zeinte",
     "appGeneralConfigDescription": "Ajustes globales de la aplicación, parámetros de IA, gestión de planes (futuro), etc.",
-    "goToConfigButton": "Ir a Configuración"
+    "goToConfigButton": "Ir a Configuración",
+    "notSet": "No establecido",
+    "noneSet": "Ninguno"
   },
   "adminCommunityManagementPage": {
     "loading": "Cargando...",
@@ -811,5 +811,3 @@
     "interestSetupDescription": "Hemos añadido nuevas formas de adaptar Zeinte a tus necesidades. Por favor, configura tu área de estudio principal para empezar."
   }
 }
-
-    

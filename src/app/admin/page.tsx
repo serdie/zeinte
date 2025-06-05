@@ -17,18 +17,12 @@ import { Button } from '@/components/ui/button';
 import { db } from '@/firebase/config';
 import { collection, getDocs, Timestamp, type DocumentData, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import type { UserTier } from '@/contexts/AuthContext';
+import type { UserTier, AppUserFirestoreData as AuthAppUser } from '@/contexts/AuthContext'; // Import AppUserFirestoreData
+import { useI18n } from '@/contexts/I18nContext';
 
-interface AppUser extends DocumentData {
+// Update AppUser to correctly include fields from AuthAppUser
+interface AppUser extends AuthAppUser {
   id: string; // document ID from Firestore snapshot
-  uid: string; // Firebase Auth UID, usually same as document ID for 'users' collection
-  email?: string;
-  displayName?: string;
-  provider?: string; // Fallback if providerData is not available
-  providerData?: { providerId: string; uid: string }[]; // From Firebase Auth User object
-  createdAt?: Timestamp | { seconds: number, nanoseconds: number } | null;
-  tier?: UserTier;
-  preferences?: string[];
 }
 
 const formatFirebaseTimestamp = (timestamp: Timestamp | { seconds: number, nanoseconds: number } | undefined | null): string => {
@@ -38,8 +32,6 @@ const formatFirebaseTimestamp = (timestamp: Timestamp | { seconds: number, nanos
   if (timestamp instanceof Timestamp) {
     date = timestamp.toDate();
   } else if (timestamp && typeof (timestamp as {seconds: number}).seconds === 'number') {
-    // Handle Firestore Timestamp-like objects that might not be actual Timestamp instances
-    // (e.g., after serialization/deserialization or from certain Firestore SDK versions/contexts)
     date = new Date((timestamp as {seconds: number}).seconds * 1000);
   } else {
     return 'Fecha inválida';
@@ -52,6 +44,7 @@ type SortOrder = 'asc' | 'desc' | 'none';
 export default function AdminPage() {
   const { currentUser, isAdmin, loading: authLoading, isFirebaseConfigured } = useAuth();
   const { toast } = useToast();
+  const { t } = useI18n();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -66,13 +59,13 @@ export default function AdminPage() {
   const [isDeletingUser, setIsDeletingUser] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc'); // Default: newest first
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc'); 
 
   const fetchUsers = async () => {
     if (!isAdmin || !isFirebaseConfigured || !db) {
       setIsLoadingUsers(false);
       if (isAdmin && (!isFirebaseConfigured || !db)) {
-        setFetchError("Firebase Firestore no está configurado o no está disponible. No se pueden cargar los usuarios.");
+        setFetchError(t("adminPage.firebaseConfigErrorDescription"));
       }
       return;
     }
@@ -83,16 +76,16 @@ export default function AdminPage() {
       const querySnapshot = await getDocs(usersCollectionRef);
       const usersList = querySnapshot.docs.map(docSnapshot => ({ 
         id: docSnapshot.id, 
-        uid: docSnapshot.data().uid || docSnapshot.id, // Ensure uid is populated, fallback to doc.id if necessary
+        // uid: docSnapshot.data().uid || docSnapshot.id, // uid is already part of AppUserFirestoreData via AuthAppUser
         ...docSnapshot.data()
-      } as AppUser));
+      } as AppUser)); // Cast to the updated AppUser type
       setUsers(usersList);
     } catch (error: any) {
       console.error("Error fetching users:", error);
       if (error.code === 'permission-denied' || (error.message && error.message.toLowerCase().includes('permission-denied'))) {
-        setFetchError("Error de permisos al cargar usuarios. Asegúrate de que las reglas de seguridad de Firestore permiten al administrador leer la colección 'users'. Revisa la consola de Firebase > Firestore Database > Rules.");
+        setFetchError(t("adminPage.errorLoadingUsersPermissionDenied"));
       } else {
-        setFetchError(`Error al cargar usuarios: ${error.message}`);
+        setFetchError(t("adminPage.errorLoadingUsersDescription", {error: error.message}));
       }
     } finally {
       setIsLoadingUsers(false);
@@ -103,7 +96,7 @@ export default function AdminPage() {
     if (isAdmin && isFirebaseConfigured && db) {
       fetchUsers();
     }
-  }, [isAdmin, isFirebaseConfigured]); // Removed db from dependency array as it's memoized in AuthContext
+  }, [isAdmin, isFirebaseConfigured]);
 
   const filteredAndSortedUsers = useMemo(() => {
     let processedUsers = [...users];
@@ -118,10 +111,10 @@ export default function AdminPage() {
     if (sortOrder !== 'none') {
       processedUsers.sort((a, b) => {
         const timeA = a.createdAt
-          ? (a.createdAt instanceof Timestamp ? a.createdAt.toMillis() : (a.createdAt.seconds * 1000 + Math.floor((a.createdAt.nanoseconds || 0) / 1000000)))
+          ? (a.createdAt instanceof Timestamp ? a.createdAt.toMillis() : ((a.createdAt as {seconds: number, nanoseconds: number}).seconds * 1000 + Math.floor(((a.createdAt as {seconds: number, nanoseconds: number}).nanoseconds || 0) / 1000000)))
           : 0;
         const timeB = b.createdAt
-          ? (b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : (b.createdAt.seconds * 1000 + Math.floor((b.createdAt.nanoseconds || 0) / 1000000)))
+          ? (b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : ((b.createdAt as {seconds: number, nanoseconds: number}).seconds * 1000 + Math.floor(((b.createdAt as {seconds: number, nanoseconds: number}).nanoseconds || 0) / 1000000)))
           : 0;
 
         if (sortOrder === 'asc') {
@@ -138,7 +131,7 @@ export default function AdminPage() {
     setSortOrder(prevOrder => {
       if (prevOrder === 'desc') return 'asc';
       if (prevOrder === 'asc') return 'none';
-      return 'desc'; // 'none' goes to 'desc'
+      return 'desc';
     });
   };
 
@@ -166,13 +159,13 @@ export default function AdminPage() {
         displayName: editedDisplayName,
         tier: editedTier,
       });
-      toast({ title: "Usuario Actualizado", description: `Los datos de ${editingUser.email} han sido actualizados.`, variant: "default" });
+      toast({ title: t("adminPage.userUpdatedToastTitle"), description: t("adminPage.userUpdatedToastDescription", { email: editingUser.email || 'N/A' }), variant: "default" });
       setIsEditDialogOpen(false);
       setEditingUser(null);
       fetchUsers(); 
     } catch (error: any) {
       console.error("Error updating user:", error);
-      toast({ title: "Error al Actualizar", description: `No se pudo actualizar el usuario: ${error.message}`, variant: "destructive" });
+      toast({ title: t("adminPage.errorUpdatingUserToastTitle"), description: t("adminPage.errorUpdatingUserToastDescription", {error: error.message}), variant: "destructive" });
     } finally {
       setIsSavingUser(false);
     }
@@ -185,29 +178,29 @@ export default function AdminPage() {
     const userRef = doc(db, "users", userToDelete.uid); 
     try {
       await deleteDoc(userRef);
-      toast({ title: "Usuario Eliminado de Firestore", description: `El registro de ${userToDelete.email} ha sido eliminado de la base de datos.`, variant: "default" });
+      toast({ title: t("adminPage.userDeletedToastTitle"), description: t("adminPage.userDeletedToastDescription", {email: userToDelete.email || 'N/A'}), variant: "default" });
       setUserToDelete(null); 
       fetchUsers(); 
     } catch (error: any) {
       console.error("Error deleting user from Firestore:", error);
-      toast({ title: "Error al Eliminar", description: `No se pudo eliminar el usuario de Firestore: ${error.message}`, variant: "destructive" });
+      toast({ title: t("adminPage.errorDeletingUserToastTitle"), description: t("adminPage.errorDeletingUserToastDescription", {error: error.message}), variant: "destructive" });
     } finally {
       setIsDeletingUser(false);
     }
   };
 
   if (authLoading) {
-    return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /> <span className="ml-3 text-lg">Cargando panel de administración...</span></div>;
+    return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /> <span className="ml-3 text-lg">{t("adminPage.loadingAdminPanel")}</span></div>;
   }
 
   if (!currentUser || !isAdmin) {
     return (
       <div className="container mx-auto py-8 text-center">
         <ShieldAlert className="h-16 w-16 text-destructive mx-auto mb-4" />
-        <h1 className="text-2xl font-bold text-destructive mb-2">Acceso Denegado</h1>
-        <p className="text-muted-foreground">No tienes permisos para acceder a esta sección.</p>
+        <h1 className="text-2xl font-bold text-destructive mb-2">{t("adminPage.accessDeniedTitle")}</h1>
+        <p className="text-muted-foreground">{t("adminPage.accessDeniedDescription")}</p>
         <Link href="/dashboard" passHref className="mt-6 inline-block">
-            <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />Volver al Panel de Estudio</Button>
+            <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />{t("adminPage.backToDashboard")}</Button>
         </Link>
       </div>
     );
@@ -218,14 +211,14 @@ export default function AdminPage() {
         <div className="container mx-auto py-10 px-4">
             <Alert variant="destructive" className="mb-6">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Error de Configuración de Firebase</AlertTitle>
+                <AlertTitle>{t("adminPage.firebaseConfigErrorTitle")}</AlertTitle>
                 <AlertDescription>
-                    Firebase Firestore no está configurado o disponible. El panel de administración no puede funcionar correctamente. Por favor, revisa las variables de entorno en <code>.env.local</code> y la consola de Firebase.
+                    {t("adminPage.firebaseConfigErrorDescription")}
                 </AlertDescription>
             </Alert>
              <div className="text-center">
                 <Link href="/dashboard" passHref>
-                    <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />Volver al Panel de Estudio</Button>
+                    <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />{t("adminPage.backToDashboard")}</Button>
                 </Link>
             </div>
         </div>
@@ -236,18 +229,18 @@ export default function AdminPage() {
     <div className="container mx-auto py-8 space-y-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
-          <ShieldAlert className="h-8 w-8" /> Panel de Administración
+          <ShieldAlert className="h-8 w-8" /> {t("adminPage.adminPanelTitle")}
         </h1>
         <Link href="/dashboard" passHref>
-          <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />Volver al Panel de Estudio</Button>
+          <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />{t("adminPage.backToDashboard")}</Button>
         </Link>
       </div>
       
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Nota Importante sobre Eliminación de Usuarios</AlertTitle>
+        <AlertTitle>{t("adminPage.deleteUserDisclaimerTitle")}</AlertTitle>
         <AlertDescription>
-          La función "Eliminar Usuario" en este panel solo borra el registro del usuario de la base de datos Firestore (colección 'users'). **No elimina la cuenta del sistema de autenticación de Firebase.** Para una eliminación completa, necesitarías usar el SDK de Admin de Firebase en un entorno de backend seguro.
+          {t("adminPage.deleteUserDisclaimerDescription")}
         </AlertDescription>
       </Alert>
 
@@ -256,12 +249,12 @@ export default function AdminPage() {
           <CardTitle className="text-2xl flex items-center justify-between">
             <div className="flex items-center">
               <Users className="h-6 w-6 mr-2" />
-              Gestión de Usuarios
+              {t("adminPage.userManagementTitle")}
             </div>
-            <span className="text-sm font-normal text-muted-foreground">Total: {users.length}</span>
+            <span className="text-sm font-normal text-muted-foreground">{t("adminPage.totalUsers", { count: users.length.toString() })}</span>
           </CardTitle>
           <CardDescription>
-            Bienvenido, {currentUser.email}. Aquí puedes visualizar y gestionar los usuarios registrados en Zeinte.
+            {t("adminPage.welcomeMessage", { email: currentUser.email || 'Admin' })}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -270,33 +263,33 @@ export default function AdminPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Buscar por email o nombre..."
+                placeholder={t("adminPage.searchUserPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full"
+                className="pl-10 w-full text-sm"
               />
             </div>
             <Button onClick={toggleSortOrder} variant="outline" className="w-full sm:w-auto">
               {getSortIcon()}
               <span className="ml-2">
-                Ordenar por Fecha: {sortOrder === 'desc' ? 'Nuevos Primero' : sortOrder === 'asc' ? 'Antiguos Primero' : 'Sin Orden'}
+                {t("adminPage.sortDateLabel", { order: sortOrder === 'desc' ? t("adminPage.sortDateNewest") : sortOrder === 'asc' ? t("adminPage.sortDateOldest") : t("adminPage.sortDateNone") })}
               </span>
             </Button>
           </div>
 
           {isLoadingUsers ? (
             <div className="flex items-center justify-center py-10">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" /> Cargando usuarios...
+              <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" /> {t("adminPage.loadingUsers")}
             </div>
           ) : fetchError ? (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Error al Cargar Usuarios</AlertTitle>
+              <AlertTitle>{t("adminPage.errorLoadingUsersTitle")}</AlertTitle>
               <AlertDescription>{fetchError}</AlertDescription>
             </Alert>
           ) : filteredAndSortedUsers.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">
-              {users.length === 0 ? "No hay usuarios registrados todavía." : "No se encontraron usuarios que coincidan con la búsqueda."}
+              {users.length === 0 ? t("adminPage.noUsersRegistered") : t("adminPage.noUsersMatchSearch")}
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -304,36 +297,44 @@ export default function AdminPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>UID</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Nombre a Mostrar</TableHead>
-                    <TableHead>Proveedor</TableHead>
-                    <TableHead>Tier</TableHead>
-                    <TableHead>Fecha de Creación</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    <TableHead>{t("adminPage.userTableEmailHeader")}</TableHead>
+                    <TableHead>{t("adminPage.userTableDisplayNameHeader")}</TableHead>
+                    <TableHead>{t("adminPage.userTableProviderHeader")}</TableHead>
+                    <TableHead>{t("adminPage.userTableTierHeader")}</TableHead>
+                    <TableHead>{t("adminPage.userTableCreationDateHeader")}</TableHead>
+                    <TableHead>{t("adminPage.userTablePrimaryInterestHeader")}</TableHead>
+                    <TableHead>{t("adminPage.userTableSecondaryInterestsHeader")}</TableHead>
+                    <TableHead className="text-right">{t("adminPage.userTableActionsHeader")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredAndSortedUsers.map((user) => (
                     <TableRow key={user.uid}>
                       <TableCell className="font-mono text-xs truncate max-w-[100px]" title={user.uid}>{user.uid}</TableCell>
-                      <TableCell className="font-medium">{user.email || 'N/A'}</TableCell>
-                      <TableCell>{user.displayName || 'N/A'}</TableCell>
-                      <TableCell>{user.providerData && user.providerData.length > 0 ? user.providerData[0].providerId : user.provider || 'N/A'}</TableCell>
+                      <TableCell className="font-medium">{user.email || t("adminPage.notAvailable")}</TableCell>
+                      <TableCell>{user.displayName || t("adminPage.notAvailable")}</TableCell>
+                      <TableCell>{user.providerData && user.providerData.length > 0 ? user.providerData[0].providerId : user.provider || t("adminPage.notAvailable")}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 text-xs rounded-full ${
                           user.tier === 'admin' ? 'bg-red-500 text-white' :
                           user.tier === 'pro' ? 'bg-green-500 text-white' :
                           user.tier === 'free' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-700'
                         }`}>
-                          {user.tier || 'N/A'}
+                          {user.tier || t("adminPage.notAvailable")}
                         </span>
                       </TableCell>
                       <TableCell>{formatFirebaseTimestamp(user.createdAt)}</TableCell>
+                      <TableCell>{user.primaryInterest || t("adminPage.notSet")}</TableCell>
+                      <TableCell>
+                        {user.secondaryInterests && user.secondaryInterests.length > 0
+                          ? user.secondaryInterests.join(', ')
+                          : t("adminPage.noneSet")}
+                      </TableCell>
                       <TableCell className="text-right space-x-1">
-                        <Button variant="outline" size="sm" onClick={() => handleOpenEditDialog(user)} title="Editar Usuario">
+                        <Button variant="outline" size="sm" onClick={() => handleOpenEditDialog(user)} title={t("adminPage.editUserButtonTooltip")}>
                             <Edit3 className="h-4 w-4" />
                         </Button>
-                        <Button variant="destructive" size="sm" onClick={() => setUserToDelete(user)} title="Eliminar Usuario (Firestore)">
+                        <Button variant="destructive" size="sm" onClick={() => setUserToDelete(user)} title={t("adminPage.deleteUserButtonTooltip")}>
                             <Trash2 className="h-4 w-4" />
                         </Button>
                       </TableCell>
@@ -350,41 +351,41 @@ export default function AdminPage() {
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-xl">Editar Usuario: {editingUser.email}</DialogTitle>
+              <DialogTitle className="text-xl">{t("adminPage.editUserDialogTitle", {email: editingUser.email || 'N/A'})}</DialogTitle>
               <DialogDescription>
-                Modifica el nombre a mostrar y el plan (tier) del usuario.
+                {t("adminPage.editUserDialogDescription")}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSaveUserChanges} className="space-y-4 py-4">
               <div>
-                <Label htmlFor="displayName">Nombre a Mostrar</Label>
+                <Label htmlFor="displayName">{t("adminPage.displayNameLabel")}</Label>
                 <Input 
                   id="displayName" 
                   value={editedDisplayName} 
                   onChange={(e) => setEditedDisplayName(e.target.value)} 
-                  className="mt-1"
+                  className="mt-1 text-sm"
                 />
               </div>
               <div>
-                <Label htmlFor="tier">Plan (Tier)</Label>
+                <Label htmlFor="tier">{t("adminPage.tierLabel")}</Label>
                 <Select value={editedTier} onValueChange={(value) => setEditedTier(value as UserTier)}>
                   <SelectTrigger id="tier" className="mt-1">
-                    <SelectValue placeholder="Selecciona un plan" />
+                    <SelectValue placeholder={t("adminPage.selectTierPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="free">Free</SelectItem>
-                    <SelectItem value="pro">Pro</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="free">{t("adminPage.tierFree")}</SelectItem>
+                    <SelectItem value="pro">{t("adminPage.tierPro")}</SelectItem>
+                    <SelectItem value="admin">{t("adminPage.tierAdmin")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <DialogFooter className="mt-6">
                 <DialogClose asChild>
-                  <Button type="button" variant="outline">Cancelar</Button>
+                  <Button type="button" variant="outline">{t("common.cancel")}</Button>
                 </DialogClose>
                 <Button type="submit" disabled={isSavingUser}>
                   {isSavingUser ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4" />}
-                  Guardar Cambios
+                  {t("adminPage.saveUserChangesButton")}
                 </Button>
               </DialogFooter>
             </form>
@@ -396,18 +397,16 @@ export default function AdminPage() {
           <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                <AlertDialogTitle>¿Eliminar Usuario de Firestore?</AlertDialogTitle>
+                <AlertDialogTitle>{t("adminPage.deleteUserDialogTitle")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                    Estás a punto de eliminar el registro del usuario <span className="font-semibold">{userToDelete.email}</span> de la base de datos Firestore.
-                    Esta acción **no elimina la cuenta del sistema de autenticación de Firebase**. El usuario podría seguir existiendo en Firebase Auth.
-                    ¿Estás seguro de que quieres continuar? Esta acción no se puede deshacer.
+                  <span dangerouslySetInnerHTML={{ __html: t("adminPage.deleteUserDialogDescription", {email: userToDelete.email || 'N/A'}) }} />
                 </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setUserToDelete(null)} disabled={isDeletingUser}>Cancelar</AlertDialogCancel>
+                <AlertDialogCancel onClick={() => setUserToDelete(null)} disabled={isDeletingUser}>{t("common.cancel")}</AlertDialogCancel>
                 <AlertDialogAction onClick={handleDeleteUser} disabled={isDeletingUser} className="bg-destructive hover:bg-destructive/90">
                     {isDeletingUser ? <Loader2 className="animate-spin mr-2" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                    Sí, Eliminar de Firestore
+                    {t("adminPage.confirmDeleteUserButton")}
                 </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
@@ -415,19 +414,19 @@ export default function AdminPage() {
       )}
 
       <div className="mt-10 space-y-6">
-        <h2 className="text-2xl font-semibold text-foreground border-b pb-2">Otras Funciones del CMS</h2>
+        <h2 className="text-2xl font-semibold text-foreground border-b pb-2">{t("adminPage.otherCMSTitle")}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-xl flex items-center">
                 <MessageSquare className="h-5 w-5 mr-2" />
-                Gestionar Contenido Comunidad
+                {t("adminPage.communityContentManagementTitle")}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">Moderar temas y mensajes del foro, gestionar categorías, etc.</p>
+              <p className="text-sm text-muted-foreground">{t("adminPage.communityContentManagementDescription")}</p>
               <Link href="/admin/community-management" passHref>
-                 <Button variant="outline" size="sm" className="mt-3">Ir a Gestión de Comunidad</Button>
+                 <Button variant="outline" size="sm" className="mt-3">{t("adminPage.goToCommunityManagementButton")}</Button>
               </Link>
             </CardContent>
           </Card>
@@ -435,13 +434,13 @@ export default function AdminPage() {
             <CardHeader>
               <CardTitle className="text-xl flex items-center">
                 <Settings className="h-5 w-5 mr-2" />
-                Configuración General de la App
+                {t("adminPage.appGeneralConfigTitle")}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">Ajustes globales de la aplicación, parámetros de IA, gestión de planes (futuro), etc.</p>
+              <p className="text-sm text-muted-foreground">{t("adminPage.appGeneralConfigDescription")}</p>
                <Link href="/admin/app-settings" passHref>
-                 <Button variant="outline" size="sm" className="mt-3">Ir a Configuración</Button>
+                 <Button variant="outline" size="sm" className="mt-3">{t("adminPage.goToConfigButton")}</Button>
                </Link>
             </CardContent>
           </Card>

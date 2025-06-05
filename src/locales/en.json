@@ -468,11 +468,9 @@
     "userTableProviderHeader": "Provider",
     "userTableTierHeader": "Plan (Tier)",
     "userTableCreationDateHeader": "Creation Date",
-    "userTableActionsHeader": "Actions",
     "userTablePrimaryInterestHeader": "Primary Interest",
     "userTableSecondaryInterestsHeader": "Secondary Interests",
-    "editUserButtonTooltip": "Edit User",
-    "deleteUserButtonTooltip": "Delete User (Firestore)",
+    "userTableActionsHeader": "Actions",
     "notAvailable": "N/A",
     "invalidDate": "Invalid date",
     "deleteUserDisclaimerTitle": "Important Note on User Deletion",
@@ -503,7 +501,9 @@
     "goToCommunityManagementButton": "Go to Community Management",
     "appGeneralConfigTitle": "Zeinte General App Configuration",
     "appGeneralConfigDescription": "Global application settings, AI parameters, plan management (future), etc.",
-    "goToConfigButton": "Go to Configuration"
+    "goToConfigButton": "Go to Configuration",
+    "notSet": "Not set",
+    "noneSet": "None"
   },
   "adminCommunityManagementPage": {
     "loading": "Cargando...",
@@ -811,5 +811,3 @@
     "interestSetupDescription": "Hemos añadido nuevas formas de adaptar Zeinte a tus necesidades. Por favor, configura tu área de estudio principal para empezar."
   }
 }
-
-    
