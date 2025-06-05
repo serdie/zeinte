@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Mail, ShieldCheck, Bookmark, Layers, CheckCircle, Save, AlertTriangle, Info } from 'lucide-react';
+import { User, Mail, ShieldCheck, Bookmark, Layers, CheckCircle, Save, AlertTriangle, Info, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth, type AppUserFirestoreData } from '@/contexts/AuthContext';
@@ -16,6 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/contexts/I18nContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils'; // Import cn utility
 
 
 // Define study interests with keys for i18n
@@ -95,11 +96,13 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading || !isFirebaseConfigured) {
-    return <div className="text-center py-10">{t('profilePage.loadingProfile')}</div>;
+  if (loading || !isFirebaseConfigured) { // Combined loading check
+    return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /> <span className="ml-3 text-lg">{t('profilePage.loadingProfile')}</span></div>;
   }
 
   if (!currentUser) {
+    // This case should ideally be handled by ConditionalLayout redirecting to login,
+    // but as a fallback:
     return <div className="text-center py-10">{t('profilePage.loginPrompt')}</div>;
   }
 
