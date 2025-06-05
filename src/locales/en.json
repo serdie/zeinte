@@ -408,6 +408,7 @@
     "cancelButton": "Cancel",
     "notSet": "Not set",
     "noPrimaryInterestSet": "You haven't set your primary study interest yet.",
+    "noPrimaryInterestSetDescription": "Please click 'Change Study Preferences' to select your main area.",
     "noSecondaryInterestsSet": "You haven't added any secondary interests.",
     "betaFeatureNote": "This customization feature is under development. Soon you'll see how Zeinte adapts even more to you!"
   },
@@ -793,20 +794,22 @@
     "specialProUserDescription": "This account has special Pro access during the beta phase and cannot be modified from this interface."
   },
   "paymentPage": {
-    "title": "Complete Your Zeinte Pro Subscription",
-    "description": "Finalize your payment with PayPal to unlock all Pro features.",
-    "payPalButtonLoading": "Loading PayPal Payment Button...",
-    "payPalButtonError": "Could not load PayPal button. Please try again or contact support.",
-    "afterPaymentInfo": "After completing your payment with PayPal, your account will be upgraded to Pro. If this doesn't happen automatically within a few minutes, please contact support.",
-    "simulatePaymentButton": "Simulate Successful Payment & Upgrade Account",
-    "simulatingPayment": "Simulating...",
-    "backToPricing": "Back to Pricing",
-    "alreadyProTitle": "Already Subscribed",
-    "alreadyProDescription": "Your account is already Pro or Admin. You can manage your subscription or go to the dashboard.",
-    "goToDashboard": "Go to Dashboard"
+    "title": "Completa tu Suscripción a Zeinte Pro",
+    "description": "Finaliza tu pago con PayPal para desbloquear todas las funciones Pro.",
+    "payPalButtonLoading": "Cargando Botón de Pago PayPal...",
+    "payPalButtonError": "No se pudo cargar el botón de PayPal. Inténtalo de nuevo o contacta con soporte.",
+    "afterPaymentInfo": "Después de completar tu pago con PayPal, tu cuenta se actualizará a Pro. Si esto no sucede automáticamente en unos minutos, por favor, contacta con soporte.",
+    "simulatePaymentButton": "Simular Pago Exitoso y Actualizar Cuenta",
+    "simulatingPayment": "Simulando...",
+    "backToPricing": "Volver a Precios",
+    "alreadyProTitle": "Ya Estás Suscrito",
+    "alreadyProDescription": "Tu cuenta ya es Pro o Admin. Puedes gestionar tu suscripción o ir al panel de estudio.",
+    "goToDashboard": "Ir al Panel de Estudio"
   },
   "conditionalLayout": {
     "interestSetupTitle": "¡Personaliza tu Experiencia en Zeinte!",
     "interestSetupDescription": "Hemos añadido nuevas formas de adaptar Zeinte a tus necesidades. Por favor, configura tu área de estudio principal para empezar."
   }
 }
+
+    

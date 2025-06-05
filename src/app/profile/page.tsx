@@ -12,7 +12,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -21,12 +21,15 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { categorizedStudyInterests, type InterestCategory, type InterestOption } from '@/lib/studyInterestsData';
 
+const GENERAL_OTHER_INTEREST_ID = 'estudio_otro_custom_main'; // ID for the main "Other" category's custom input
+
 export default function ProfilePage() {
   const { currentUser, userProfileData, loading, updateUserInterests, isFirebaseConfigured } = useAuth();
   const { toast } = useToast();
   const { t } = useI18n();
 
   const [isEditingPreferences, setIsEditingPreferences] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // States for form inputs when in edit mode
   const [editingPrimaryInterest, setEditingPrimaryInterest] = useState<string | null>(null);
@@ -58,26 +61,43 @@ export default function ProfilePage() {
         }
       }
     }
-    return interestValue; // It's a custom string
+    // If not found by ID, it's a custom string
+    return interestValue;
   }, [t]);
 
   const initializeEditingStates = useCallback(() => {
-    if (!userProfileData) return;
+    if (!userProfileData) {
+      setEditingPrimaryInterest(null);
+      setIsEditingPrimaryCustom(false);
+      setEditingCustomPrimaryValue('');
+      setEditingSecondaryInterests([]);
+      setEditingCustomSecondaryValues({});
+      return;
+    }
 
     const profilePrimary = userProfileData.primaryInterest || null;
+    let primaryRadioSelection: string | null = null;
     let isCustomP = false;
     let customPVal = '';
-    let primaryRadioSelection = profilePrimary;
+
+    const flatOptions = translatedCategorizedInterests.flatMap(cat => cat.options);
 
     if (profilePrimary) {
-      const flatOptions = translatedCategorizedInterests.flatMap(cat => cat.options);
       const primaryOptionMatch = flatOptions.find(opt => opt.id === profilePrimary);
-      if (!primaryOptionMatch) { // It's a custom string
+      if (primaryOptionMatch && !primaryOptionMatch.isCustomEntry) {
+        primaryRadioSelection = profilePrimary;
+        isCustomP = false;
+        customPVal = '';
+      } else { // It's a custom string, or an ID of a custom entry option
         isCustomP = true;
-        customPVal = profilePrimary;
-        // Try to find a generic "Otros" radio to select if it's a custom string
-        const genericOtherOption = flatOptions.find(opt => opt.isCustomEntry && opt.id.includes('estudio_otro_custom_main')) || flatOptions.find(opt => opt.isCustomEntry);
+        customPVal = profilePrimary; // Assume it's the custom text itself
+        // Try to find the generic "Otros" radio button to select
+        const genericOtherOption = flatOptions.find(opt => opt.id === GENERAL_OTHER_INTEREST_ID) || flatOptions.find(opt => opt.isCustomEntry);
         primaryRadioSelection = genericOtherOption ? genericOtherOption.id : null;
+        if (primaryOptionMatch && primaryOptionMatch.isCustomEntry) { // If profilePrimary IS an ID of a custom entry option
+            primaryRadioSelection = profilePrimary; // Keep it selected
+            customPVal = ''; // The custom text would be handled separately or might be missing if only ID was stored
+        }
       }
     }
     setEditingPrimaryInterest(primaryRadioSelection);
@@ -85,47 +105,49 @@ export default function ProfilePage() {
     setEditingCustomPrimaryValue(customPVal);
 
     const profileSecondary = userProfileData.secondaryInterests || [];
-    const predefinedSecondaryIds = translatedCategorizedInterests.flatMap(cat => cat.options.map(opt => opt.id));
-    
     const secInterestsToSet: string[] = [];
     const customSecValuesToSet: Record<string, string> = {};
 
     profileSecondary.forEach(secInterest => {
-      const optionMatch = predefinedSecondaryIds.includes(secInterest);
-      if (optionMatch) {
+      const optionMatch = flatOptions.find(opt => opt.id === secInterest);
+      if (optionMatch && !optionMatch.isCustomEntry) {
         secInterestsToSet.push(secInterest);
-      } else { // It's a custom string
-        // Find the first "Otros" checkbox to associate this custom text with for editing
-        // This is a heuristic; ideally, we'd store which "Otros" it came from.
-        const firstOtherCheckbox = translatedCategorizedInterests.flatMap(c => c.options).find(o => o.isCustomEntry);
-        if (firstOtherCheckbox && !secInterestsToSet.includes(firstOtherCheckbox.id) && !customSecValuesToSet[firstOtherCheckbox.id]) {
-            secInterestsToSet.push(firstOtherCheckbox.id); // Select the "Otros" checkbox
-            customSecValuesToSet[firstOtherCheckbox.id] = secInterest; // Put the text in its input
+      } else if (optionMatch && optionMatch.isCustomEntry) {
+        // This means an ID of a custom entry checkbox was saved
+        secInterestsToSet.push(secInterest);
+        // We don't automatically populate its text field here, user has to re-type or it's a toggle for the "Other" category
+      } else if (!optionMatch) { // It's a custom string not matching any ID
+        // Try to associate with the first available "Otros" checkbox that doesn't already have a custom value
+        const availableOtherCheckbox = flatOptions.find(o => o.isCustomEntry && !customSecValuesToSet[o.id]);
+        if (availableOtherCheckbox) {
+          if (!secInterestsToSet.includes(availableOtherCheckbox.id)) {
+            secInterestsToSet.push(availableOtherCheckbox.id);
+          }
+          customSecValuesToSet[availableOtherCheckbox.id] = secInterest;
         }
-        // If multiple custom texts, only the first might get an input this way. Others are just "there".
+        // If no "Otros" checkbox is available, this custom string might not appear editable directly
+        // but it's still part of profileSecondary for display.
       }
     });
     setEditingSecondaryInterests(secInterestsToSet);
     setEditingCustomSecondaryValues(customSecValuesToSet);
 
-  }, [userProfileData, translatedCategorizedInterests]);
+  }, [userProfileData, translatedCategorizedInterests, t]);
   
   useEffect(() => {
-    // Initialize editing states when component mounts or userProfileData changes,
-    // but only if not currently editing (to preserve unsaved changes during an edit session).
-    if (userProfileData && !isEditingPreferences) {
+    if (!isEditingPreferences) {
       initializeEditingStates();
     }
   }, [userProfileData, isEditingPreferences, initializeEditingStates]);
 
 
   const handleEditPreferencesClick = () => {
-    initializeEditingStates(); // Re-initialize from profile data when starting edit
+    initializeEditingStates(); 
     setIsEditingPreferences(true);
   };
 
   const handleCancelEdit = () => {
-    initializeEditingStates(); // Reset to profile data on cancel
+    initializeEditingStates(); 
     setIsEditingPreferences(false);
   };
   
@@ -134,8 +156,15 @@ export default function ProfilePage() {
     const flatOption = translatedCategorizedInterests.flatMap(c => c.options).find(o => o.id === value);
     if (flatOption?.isCustomEntry) {
       setIsEditingPrimaryCustom(true);
-      // If switching to custom, keep existing custom text or clear it
-      // setEditingCustomPrimaryValue(''); // Optionally clear
+      // If switching to custom, and it's the main custom input, clear its value or prefill if needed.
+      if (value === GENERAL_OTHER_INTEREST_ID && editingCustomPrimaryValue && editingPrimaryInterest !== GENERAL_OTHER_INTEREST_ID) {
+          // User switched TO the main custom input from another custom input. Keep the text.
+      } else if (value === GENERAL_OTHER_INTEREST_ID) {
+          // Switched to main custom, maybe clear it or set to userProfileData's custom if applicable
+      } else {
+          // Switched to a different "other" radio, clear the main custom value
+          // setEditingCustomPrimaryValue('');
+      }
     } else {
       setIsEditingPrimaryCustom(false);
       setEditingCustomPrimaryValue(''); 
@@ -146,10 +175,11 @@ export default function ProfilePage() {
     if (typeof checked !== 'boolean') return;
     setEditingSecondaryInterests(prev => {
       const isAlreadySelected = prev.includes(optionId);
-      const optionDetails = translatedCategorizedInterests.flatMap(c => c.options).find(o => o.id === optionId);
       if (checked) {
         return isAlreadySelected ? prev : [...prev, optionId];
       } else {
+        // If unchecking an "Otros" checkbox, also clear its custom text input
+        const optionDetails = translatedCategorizedInterests.flatMap(c => c.options).find(o => o.id === optionId);
         if (optionDetails?.isCustomEntry) {
           setEditingCustomSecondaryValues(prevCustom => {
             const newCustom = { ...prevCustom };
@@ -167,44 +197,51 @@ export default function ProfilePage() {
   };
 
   const handleSaveInterests = async () => {
-    let finalPrimaryInterest: string | null = editingPrimaryInterest;
+    let finalPrimaryInterest: string | null = null;
 
-    if (isEditingPrimaryCustom) {
+    if (isEditingPrimaryCustom && editingPrimaryInterest && translatedCategorizedInterests.flatMap(c=>c.options).find(o=>o.id === editingPrimaryInterest)?.isCustomEntry) {
       if (!editingCustomPrimaryValue.trim()) {
         toast({ title: t('profilePage.customPrimaryInterestRequiredTitle'), description: t('profilePage.customPrimaryInterestRequiredDescription'), variant: "destructive" });
         return;
       }
       finalPrimaryInterest = editingCustomPrimaryValue.trim();
-    } else if (!editingPrimaryInterest) {
+    } else if (editingPrimaryInterest) {
+      finalPrimaryInterest = editingPrimaryInterest;
+    } else {
        toast({ title: t('profilePage.primaryInterestRequiredTitle'), description: t('profilePage.primaryInterestRequiredDescription'), variant: "destructive" });
        return;
     }
 
-    const finalSecondaryInterests: string[] = [];
+    const finalSecondaryInterestsSet = new Set<string>();
     editingSecondaryInterests.forEach(id => {
       const option = translatedCategorizedInterests.flatMap(c => c.options).find(o => o.id === id);
       if (option?.isCustomEntry) {
         if (editingCustomSecondaryValues[id]?.trim()) {
-          finalSecondaryInterests.push(editingCustomSecondaryValues[id].trim());
+          finalSecondaryInterestsSet.add(editingCustomSecondaryValues[id].trim());
         }
-        // Do not add the placeholder ID itself if custom text is provided
+        // Do not add the placeholder ID itself if custom text is provided and meaningful
+        // Or, if the checkbox ID itself is considered a "category" of "other"
+        // For simplicity, if an "other" checkbox is checked AND its input is filled, only custom text is saved.
+        // If "other" checkbox is checked AND input is EMPTY, then maybe the ID of checkbox is saved (e.g. "user is interested in Other Oppositions")
+        // Current: only save custom text if present.
       } else {
-        finalSecondaryInterests.push(id);
+        finalSecondaryInterestsSet.add(id);
       }
     });
     
-    const uniqueSecondaryInterests = Array.from(new Set(finalSecondaryInterests));
+    const uniqueSecondaryInterests = Array.from(finalSecondaryInterestsSet);
 
     setIsSaving(true);
-    const result = await updateUserInterests(finalPrimaryInterest!, uniqueSecondaryInterests);
+    const result = await updateUserInterests(finalPrimaryInterest, uniqueSecondaryInterests);
     if (typeof result === 'string') {
       toast({ title: t('profilePage.errorSavingPreferencesToastTitle'), description: result, variant: "destructive" });
     } else {
       toast({ title: t('profilePage.preferencesSavedToastTitle'), description: t('profilePage.preferencesSavedToastDescription'), variant: "default" });
-      setIsEditingPreferences(false); // Exit edit mode
+      setIsEditingPreferences(false); 
     }
     setIsSaving(false);
   };
+
 
   if (loading || !isFirebaseConfigured) {
     return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /> <span className="ml-3 text-lg">{t('profilePage.loadingProfile')}</span></div>;
@@ -236,7 +273,11 @@ export default function ProfilePage() {
               {getInterestDisplayName(userProfileData.primaryInterest, translatedCategorizedInterests)}
             </p>
           ) : (
-            <p className="text-muted-foreground">{t('profilePage.noPrimaryInterestSet')}</p>
+            <Alert variant="default" className="bg-amber-500/10 border-amber-500/50 text-amber-700 dark:bg-amber-700/20 dark:text-amber-400 dark:border-amber-600">
+                <Info className="h-5 w-5" />
+                <AlertTitle>{t('profilePage.noPrimaryInterestSet')}</AlertTitle>
+                <AlertDescription>{t('profilePage.noPrimaryInterestSetDescription')}</AlertDescription>
+            </Alert>
           )}
         </CardContent>
       </Card>
@@ -268,7 +309,14 @@ export default function ProfilePage() {
     </div>
   );
 
-  const renderEditMode = () => (
+  const renderEditMode = () => {
+    const saveDisabled = isSaving ||
+        (!isEditingPrimaryCustom && !editingPrimaryInterest) ||
+        (isEditingPrimaryCustom && editingPrimaryInterest === GENERAL_OTHER_INTEREST_ID && !editingCustomPrimaryValue.trim()) ||
+        (isEditingPrimaryCustom && editingPrimaryInterest !== GENERAL_OTHER_INTEREST_ID && !editingCustomPrimaryValue.trim() && translatedCategorizedInterests.flatMap(c => c.options).find(o => o.id === editingPrimaryInterest)?.isCustomEntry)
+
+
+    return (
     <div className="space-y-6">
       {userProfileData && !userProfileData.primaryInterest && (
          <Alert variant="default" className="bg-amber-500/10 border-amber-500/50 text-amber-700 dark:bg-amber-700/20 dark:text-amber-400 dark:border-amber-600">
@@ -296,7 +344,7 @@ export default function ProfilePage() {
                             <RadioGroupItem value={option.id} id={`primary-${option.id}`} />
                             <Label htmlFor={`primary-${option.id}`} className="font-normal cursor-pointer flex-1">{option.name}</Label>
                           </div>
-                          {option.isCustomEntry && editingPrimaryInterest === option.id && (
+                          {option.isCustomEntry && editingPrimaryInterest === option.id && isEditingPrimaryCustom && (
                             <Input
                               type="text"
                               placeholder={t('profilePage.customInterestPlaceholder')}
@@ -313,7 +361,7 @@ export default function ProfilePage() {
               </AccordionItem>
             ))}
           </Accordion>
-           {isEditingPrimaryCustom && !editingCustomPrimaryValue.trim() && editingPrimaryInterest && translatedCategorizedInterests.flatMap(c=>c.options).find(o=>o.id===editingPrimaryInterest)?.isCustomEntry &&(
+           {isEditingPrimaryCustom && editingPrimaryInterest && translatedCategorizedInterests.flatMap(c=>c.options).find(o=>o.id===editingPrimaryInterest)?.isCustomEntry && !editingCustomPrimaryValue.trim() && (
             <p className="text-xs text-destructive mt-2 ml-1">{t('profilePage.customInterestRequiredError')}</p>
           )}
         </CardContent>
@@ -321,7 +369,7 @@ export default function ProfilePage() {
 
       <Card className="bg-background/50">
         <CardHeader>
-          <CardTitle className="text-xl flex items-center gap-2"><CheckSquare className="h-5 w-5 text-primary" />{t('profilePage.secondaryInterestsTitleNew')}</CardTitle>
+          <CardTitle className="text-xl flex items-center gap-2"><PenLine className="h-5 w-5 text-primary" />{t('profilePage.secondaryInterestsTitleNew')}</CardTitle>
           <CardDescription>{t('profilePage.secondaryInterestsDescriptionNew')}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -372,13 +420,14 @@ export default function ProfilePage() {
           <X className="mr-2 h-5 w-5" />
           {t('profilePage.cancelButton')}
         </Button>
-        <Button onClick={handleSaveInterests} disabled={isSaving || !editingPrimaryInterest} className="w-full sm:w-auto text-base py-3">
+        <Button onClick={handleSaveInterests} disabled={saveDisabled} className="w-full sm:w-auto text-base py-3">
           {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
           {t('profilePage.savePreferencesButton')}
         </Button>
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="container mx-auto py-8 space-y-8">
@@ -389,7 +438,7 @@ export default function ProfilePage() {
             <AvatarFallback>{getInitials(currentUser.email)}</AvatarFallback>
           </Avatar>
           <CardTitle className="text-2xl md:text-3xl">
-            {currentUser.displayName || t('profilePage.defaultDisplayName')}
+            {userProfileData?.displayName || currentUser.displayName || t('profilePage.defaultDisplayName')}
           </CardTitle>
           <CardDescription className="text-base md:text-lg text-muted-foreground">
             {isEditingPreferences ? t('profilePage.manageInfoAndInterests') : t('profilePage.viewYourInterests')}
@@ -451,3 +500,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    

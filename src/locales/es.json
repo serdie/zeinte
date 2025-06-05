@@ -290,9 +290,9 @@
     "configIncompleteToastDescription": "Firebase no está configurado. Revisa las variables de entorno y reinicia el servidor.",
     "loginErrorToastTitle": "Error al Iniciar Sesión en Zeinte",
     "loginSuccessToastTitle": "Inicio de Sesión Exitoso en Zeinte",
-    "loginSuccessToastDescription": "Bienvenido de nuevo!",
+    "loginSuccessToastDescription": "¡Bienvenido de nuevo!",
     "googleErrorToastTitle": "Error con Google en Zeinte",
-    "googleSuccessToastDescription": "Bienvenido con Google a Zeinte!",
+    "googleSuccessToastDescription": "¡Bienvenido con Google a Zeinte!",
     "loading": "Cargando...",
     "redirecting": "Redirigiendo..."
   },
@@ -316,7 +316,7 @@
     "signupSuccessToastTitle": "Registro Exitoso en Zeinte",
     "signupSuccessEmailVerificationToastDescription": "¡Bienvenido/a! Se ha enviado un correo de verificación a {{email}}. Por favor, revisa tu bandeja de entrada (y spam) y haz clic en el enlace para activar tu cuenta. Puede tardar unos minutos en llegar.",
     "googleErrorToastTitle": "Error con Google en Zeinte",
-    "googleSuccessToastDescription": "Bienvenido con Google a Zeinte!",
+    "googleSuccessToastDescription": "¡Bienvenido con Google a Zeinte!",
     "loading": "Cargando...",
     "redirecting": "Redirigiendo...",
     "betaWelcomeMessage": "¡Bienvenido/a a la Beta de Zeinte! Durante esta fase, todas las cuentas nuevas operan con beneficios ampliados del Plan Gratuito, permitiéndote explorar la mayoría de nuestras features. El Plan Pro completo con todas sus ventajas exclusivas y la pasarela de pago se activarán pronto.",
@@ -408,6 +408,7 @@
     "cancelButton": "Cancelar",
     "notSet": "No establecido",
     "noPrimaryInterestSet": "Aún no has configurado tu interés principal de estudio.",
+    "noPrimaryInterestSetDescription": "Por favor, pulsa en 'Cambiar Preferencias de Estudio' para seleccionar tu área principal.",
     "noSecondaryInterestsSet": "No has añadido intereses secundarios.",
     "betaFeatureNote": "Esta funcionalidad de personalización está en desarrollo. ¡Pronto verás cómo Zeinte se adapta aún más a ti!"
   },
@@ -810,3 +811,5 @@
     "interestSetupDescription": "Hemos añadido nuevas formas de adaptar Zeinte a tus necesidades. Por favor, configura tu área de estudio principal para empezar."
   }
 }
+
+    
