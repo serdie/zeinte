@@ -36,7 +36,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     if (currentPathname.startsWith('/custom-courses')) return t("appLayout.createCourseTitle");
     if (currentPathname.startsWith('/profile')) return t("appLayout.profileTitle");
     if (currentPathname.startsWith('/pricing')) return t("appLayout.pricingTitle");
-    if (currentPathname.startsWith('/payment/paypal')) return t("appLayout.paypalPaymentTitle"); // Added
+    if (currentPathname.startsWith('/payment/paypal')) return t("appLayout.paypalPaymentTitle");
     if (currentPathname.startsWith('/account/subscription')) return t("appLayout.subscriptionManagementTitle");
     if (currentPathname.startsWith('/admin/app-settings')) return t("appLayout.adminAppSettingsTitle");
     if (currentPathname.startsWith('/admin/community-management')) return t("appLayout.adminCommunityManagementTitle");
@@ -50,7 +50,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <SidebarProvider defaultOpen={!isMobile} open={isMobile ? false : undefined}>
-      <Sidebar variant="sidebar" collapsible="icon">
+      {/* Changed collapsible to "none" to prevent icon-only mode on desktop */}
+      <Sidebar variant="sidebar" collapsible="none"> 
         <SidebarHeader className="p-4">
           <Link href="/" className="flex items-center gap-2 text-sidebar-primary hover:text-sidebar-primary/90 transition-colors">
             <Brain className="h-8 w-8" />
@@ -78,7 +79,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
           <div className="flex items-center gap-2">
-            <div className="md:hidden">
+            <div className="md:hidden"> {/* This trigger is for mobile off-canvas */}
               <SidebarTrigger />
             </div>
             <h2 className="text-lg font-semibold text-foreground">

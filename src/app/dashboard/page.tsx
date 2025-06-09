@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw, Microscope, Sparkles } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from '@/contexts/I18nContext';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const DEFAULT_NUM_QUESTIONS_REANALYSIS = "10";
 
@@ -196,49 +197,44 @@ export default function DashboardPage() {
   
   return (
     <div className="space-y-8">
-      <Alert variant="default" className="bg-green-500/10 border-green-500/50 text-green-700 dark:bg-green-700/20 dark:text-green-400 dark:border-green-600">
-        <Sparkles className="h-6 w-6" />
-        <AlertTitle className="text-xl font-semibold">{t("pauSpecial.title")}</AlertTitle>
-        <AlertDescription className="text-base space-y-2 mt-1">
-          <p>{t("pauSpecial.description")}</p>
-          <p>
-            {t("pauSpecial.feedbackRequest")} <a href="mailto:info@zeinte.com" className="underline font-medium hover:text-green-800 dark:hover:text-green-300">info@zeinte.com</a>.
-          </p>
-          <p>{t("pauSpecial.tips")}</p>
-        </AlertDescription>
-      </Alert>
+      {/* REMOVED PAU Special Alert */}
 
-      {/* AdSense Ad Unit Placeholder REMOVED */}
-      {/* 
-      <div style={{ width: '100%', minHeight: '90px', backgroundColor: '#f0f0f0', border: '1px dashed #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '20px 0', padding: '10px', textAlign: 'center' }}>
-        <span style={{ color: '#999', fontSize: '0.9rem' }}>{t("adsense.placeholderDashboard")}</span>
-      </div>
-      */}
-
-      <Alert className="border-primary bg-primary/10">
-        <Info className="h-5 w-5 text-primary" />
-        <AlertTitle className="font-semibold text-primary text-lg md:text-xl">{t('dashboardPage.questionsReadyTitle')}</AlertTitle>
-        <AlertDescription className="text-primary/80">
-          {t('dashboardPage.questionsReadyDescription')}
-          <br />
-          <span className="font-medium">{t('dashboardPage.analysisSummaryLabel')}</span> {predictedData.analysisSummary.substring(0,150)}...
-          {predictedData.recurringThemes && predictedData.recurringThemes.length > 0 && (
-            <span className="block mt-1 text-sm"><span className="font-medium">{t('dashboardPage.mainThemesLabel')}</span> {predictedData.recurringThemes.join(', ')}.</span>
-          )}
-           {predictedData.potentialFocusAreas && predictedData.potentialFocusAreas.length > 0 && (
-            <span className="block mt-1 text-sm"><span className="font-medium">{t('dashboardPage.focusAreasLabel')}</span> {predictedData.potentialFocusAreas.join(', ')}.</span>
-          )}
-          {predictedData.identifiedExamPatterns && (
-            <Alert variant="default" className="mt-2 bg-primary/10 border-primary/30">
-                <Microscope className="h-4 w-4 text-primary" />
-                <AlertTitle className="text-primary text-sm">{t('dashboardPage.examPatternsIdentifiedTitle')}</AlertTitle>
-                <AlertDescription className="text-primary/70 text-xs">
-                    {predictedData.identifiedExamPatterns}
-                </AlertDescription>
-            </Alert>
-          )}
-        </AlertDescription>
-      </Alert>
+      <Accordion type="single" collapsible className="w-full border border-primary bg-primary/10 rounded-lg shadow-md">
+        <AccordionItem value="analysis-details" className="border-b-0">
+          <AccordionTrigger className="p-4 hover:no-underline text-left w-full">
+            <div className="flex items-center gap-3 w-full">
+              <Info className="h-5 w-5 text-primary shrink-0" />
+              <span className="font-semibold text-primary text-lg md:text-xl flex-grow">
+                {t('dashboardPage.questionsReadyTitle')}
+              </span>
+              {/* AccordionTrigger will add its own chevron */}
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="p-4 pt-0">
+            <div className="text-primary/80 space-y-1"> {/* Formerly AlertDescription */}
+              <p>{t('dashboardPage.questionsReadyDescription')}</p>
+              <p>
+                <span className="font-medium">{t('dashboardPage.analysisSummaryLabel')}</span> {predictedData.analysisSummary.substring(0,150)}...
+              </p>
+              {predictedData.recurringThemes && predictedData.recurringThemes.length > 0 && (
+                <p className="text-sm"><span className="font-medium">{t('dashboardPage.mainThemesLabel')}</span> {predictedData.recurringThemes.join(', ')}.</p>
+              )}
+              {predictedData.potentialFocusAreas && predictedData.potentialFocusAreas.length > 0 && (
+                <p className="text-sm"><span className="font-medium">{t('dashboardPage.focusAreasLabel')}</span> {predictedData.potentialFocusAreas.join(', ')}.</p>
+              )}
+              {predictedData.identifiedExamPatterns && (
+                <Alert variant="default" className="mt-3 bg-primary/10 border-primary/30 shadow-sm">
+                    <Microscope className="h-4 w-4 text-primary" />
+                    <AlertTitle className="text-primary text-sm font-semibold">{t('dashboardPage.examPatternsIdentifiedTitle')}</AlertTitle>
+                    <AlertDescription className="text-primary/70 text-xs">
+                        {predictedData.identifiedExamPatterns}
+                    </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mb-4">
         <div className="flex items-center gap-2">

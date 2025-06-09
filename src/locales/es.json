@@ -136,7 +136,7 @@
     "emptySubtitle": "Parece que aún no has analizado ningún documento en Zeinte. ¡Sube tus apuntes, temarios o exámenes para empezar a estudiar de forma inteligente!",
     "uploadDocsButton": "Subir Documentos Ahora a Zeinte",
     "questionsReadyTitle": "¡Preguntas Listas para Estudiar en Zeinte!",
-    "questionsReadyDescription": "Hemos analizado tus documentos, y estas son las preguntas que creemos podrían aparecer en tu examen.",
+    "questionsReadyDescription": "Hemos analizado tus documentos, y estas son las preguntas que creemos podrían aparecer en tu examen. Pulsa para ver más detalles del análisis:",
     "analysisSummaryLabel": "Resumen del análisis:",
     "mainThemesLabel": "Temas principales:",
     "focusAreasLabel": "Áreas de enfoque detectadas:",
@@ -155,12 +155,6 @@
     "loadingData": "Cargando datos de Zeinte...",
     "betaAdNoticeTitle": "¡Zeinte está en Beta!",
     "betaAdNoticeDescription": "Zeinte es actualmente 100% gratuito durante nuestra fase Beta. Para ayudarnos a cubrir los costes de servidor durante este periodo, hemos incluido algo de publicidad. Agradecemos tu comprensión y apoyo."
-  },
-  "pauSpecial": {
-    "title": "Zeinte especial PAU",
-    "description": "¡Atención estudiantes de la PAU! Durante esta convocatoria, liberamos Zeinte para que podáis usar toda la plataforma de forma gratuita e ilimitada.",
-    "feedbackRequest": "Solo os pedimos una cosa a cambio: enviadnos vuestras impresiones, sugerencias y qué mejoraríais a",
-    "tips": "Recordad ser precisos en vuestras peticiones de examen y no olvidéis subir vuestros apuntes para que la IA se más precisa. ¡Mucha suerte!"
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Pregunta Tipo Test",
@@ -321,7 +315,6 @@
     "redirecting": "Redirigiendo...",
     "betaWelcomeMessage": "¡Bienvenido/a a la Beta de Zeinte! Durante esta fase, todas las cuentas nuevas operan con beneficios ampliados del Plan Gratuito, permitiéndote explorar la mayoría de nuestras features. El Plan Pro completo con todas sus ventajas exclusivas y la pasarela de pago se activarán pronto.",
     "betaNoticeTitle": "¡Zeinte está en Beta!",
-    "betaAdNoticeTitle": "Aviso Beta de Zeinte",
     "betaAdNoticeDescription": "Zeinte se encuentra actualmente en su fase Beta y es 100% gratuito. Estamos trabajando para mejorar la plataforma y agradecemos tu comprensión y apoyo durante este periodo."
   },
   "profilePage": {
