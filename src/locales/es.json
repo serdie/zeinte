@@ -321,8 +321,8 @@
     "redirecting": "Redirigiendo...",
     "betaWelcomeMessage": "¡Bienvenido/a a la Beta de Zeinte! Durante esta fase, todas las cuentas nuevas operan con beneficios ampliados del Plan Gratuito, permitiéndote explorar la mayoría de nuestras features. El Plan Pro completo con todas sus ventajas exclusivas y la pasarela de pago se activarán pronto.",
     "betaNoticeTitle": "¡Zeinte está en Beta!",
-    "betaAdNoticeTitle": "¡Zeinte está en Beta y es Gratis!",
-    "betaAdNoticeDescription": "Zeinte es actualmente 100% gratuito durante nuestra fase Beta. Para ayudarnos a cubrir los costes de servidor durante este periodo, hemos incluido algo de publicidad. Agradecemos tu comprensión y apoyo."
+    "betaAdNoticeTitle": "Aviso Beta de Zeinte",
+    "betaAdNoticeDescription": "Zeinte se encuentra actualmente en su fase Beta y es 100% gratuito. Estamos trabajando para mejorar la plataforma y agradecemos tu comprensión y apoyo durante este periodo."
   },
   "profilePage": {
     "loadingProfile": "Cargando perfil de Zeinte...",
@@ -362,7 +362,7 @@
     "primaryInterestRequiredTitle": "Área Principal Requerida",
     "primaryInterestRequiredDescription": "Por favor, selecciona tu área de estudio principal para continuar.",
     "customPrimaryInterestRequiredTitle": "Interés Principal Personalizado Requerido",
-    "customPrimaryInterestRequiredDescription": "Si seleccionaste 'Otros' como tu interés principal, por favor especifica cuál es.",
+    "customPrimaryInterestRequiredDescription": "Si seleccionaste 'Otro' como tu interés principal, por favor especifica cuál es.",
     "configureInterestTitle": "¡Configura tu Área de Estudio Principal!",
     "configureInterestDescription": "Para personalizar tu experiencia en Zeinte, por favor, selecciona tu principal área de interés. Podrás añadir áreas secundarias después.",
     "accountInfoTitle": "Información de la Cuenta",

@@ -83,11 +83,11 @@ export default function SignupPage() {
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background to-muted/30 p-4">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-primary flex items-center justify-center gap-2">
+          <CardTitle className="text-3xl md:text-4xl font-bold text-primary flex items-center justify-center gap-2">
             <UserPlus className="h-8 w-8" />
             {t("signupPage.title")}
           </CardTitle>
-          <CardDescription>{t("signupPage.description")}</CardDescription>
+          <CardDescription className="text-base md:text-lg">{t("signupPage.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <Alert variant="default" className="bg-primary/10 border-primary/50 text-primary">

@@ -321,8 +321,8 @@
     "redirecting": "Redirecting...",
     "betaWelcomeMessage": "Welcome to Zeinte Beta! During this phase, all new accounts operate with enhanced Free Plan benefits, allowing you to explore most of our features. The full Pro Plan with all its exclusive advantages and payment gateway will be activated soon.",
     "betaNoticeTitle": "Zeinte is in Beta!",
-    "betaAdNoticeTitle": "Zeinte is in Beta and Free!",
-    "betaAdNoticeDescription": "Zeinte is currently 100% free during our Beta phase. To help us cover server costs, we've included some advertising. We appreciate your understanding and support!"
+    "betaAdNoticeTitle": "Zeinte Beta Notice",
+    "betaAdNoticeDescription": "Zeinte is currently in its Beta phase and is 100% free. We are working to improve the platform and appreciate your understanding and support during this period."
   },
   "profilePage": {
     "loadingProfile": "Loading Zeinte profile...",
