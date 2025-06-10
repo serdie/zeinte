@@ -60,6 +60,18 @@ export default function HomePage() {
               {t('homePage.startNowButton')}
             </Button>
           </Link>
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link href="/login" passHref>
+              <Button variant="outline" size="lg" className="w-full sm:w-auto text-primary border-primary hover:bg-primary/10 hover:text-primary">
+                {t('sidebar.login')}
+              </Button>
+            </Link>
+            <Link href="/signup" passHref>
+              <Button variant="outline" size="lg" className="w-full sm:w-auto text-primary border-primary hover:bg-primary/10 hover:text-primary">
+                {t('sidebar.signup')}
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -227,5 +239,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
