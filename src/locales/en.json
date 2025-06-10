@@ -42,6 +42,7 @@
     "login": "Login",
     "signup": "Sign Up",
     "logout": "Logout",
+    "support": "Support",
     "userLoading": "Loading user...",
     "userConnected": "User Connected",
     "firebaseNotConfigured": "Firebase not configured",
@@ -135,8 +136,8 @@
     "emptyTitle": "Empty Study Dashboard in Zeinte",
     "emptySubtitle": "It seems you haven't analyzed any documents yet in Zeinte. Upload your notes, syllabi, or exams to start studying intelligently!",
     "uploadDocsButton": "Upload Documents Now to Zeinte",
-    "questionsReadyTitle": "Questions Ready for Study in Zeinte!",
-    "questionsReadyDescription": "We've analyzed your documents, and these are the questions we believe might appear on your exam. Click to see more details about the analysis:",
+    "questionsReadyTitle": "Questions Ready for Study in Zeinte",
+    "questionsReadyDescription": "We've analyzed your documents, and these are the questions we believe might appear on your exam:",
     "analysisSummaryLabel": "Analysis summary:",
     "mainThemesLabel": "Main themes:",
     "focusAreasLabel": "Detected focus areas:",
@@ -154,7 +155,7 @@
     "viewProPlansButton": "View Zeinte Pro Plans",
     "loadingData": "Loading Zeinte data...",
     "betaAdNoticeTitle": "Zeinte is in Beta!",
-    "betaAdNoticeDescription": "Zeinte is currently 100% free during our Beta phase. To help us cover server costs, we've included some advertising. We appreciate your understanding and support!"
+    "betaAdNoticeDescription": "Zeinte is currently 100% free during our Beta phase. We are working to improve the platform and appreciate your understanding and support during this period."
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Multiple-Choice Question",
@@ -802,5 +803,17 @@
   "conditionalLayout": {
     "interestSetupTitle": "¡Personaliza tu Experiencia en Zeinte!",
     "interestSetupDescription": "Hemos añadido nuevas formas de adaptar Zeinte a tus necesidades. Por favor, configura tu área de estudio principal para empezar."
+  },
+  "supportForm": {
+    "title": "Contactar con Soporte de Zeinte",
+    "description": "Describe tu problema o duda y te responderemos lo antes posible. Esta función es simulada y enviará un mensaje a la consola.",
+    "emailLabel": "Tu Correo Electrónico:",
+    "problemLabel": "Describe tu problema o consulta:",
+    "problemPlaceholder": "Detalla aquí el inconveniente que estás experimentando o la pregunta que tienes...",
+    "sendButton": "Enviar Solicitud de Soporte",
+    "validationErrorTitle": "Descripción Requerida",
+    "validationErrorDescription": "Por favor, describe tu problema antes de enviar.",
+    "requestSentTitle": "Solicitud de Soporte Enviada (Simulado)",
+    "requestSentDescription": "Hemos recibido tu consulta. Nos pondremos en contacto contigo pronto. (Mensaje registrado en consola)"
   }
 }

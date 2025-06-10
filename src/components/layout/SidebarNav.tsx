@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, UploadCloud, Settings, User, Users, Home, LogIn, LogOut, UserPlus, ShieldCheck, Lightbulb, ArrowUpCircle, Edit } from 'lucide-react';
+import { BookOpenText, UploadCloud, Settings, User, Users, Home, LogIn, LogOut, UserPlus, ShieldCheck, Lightbulb, ArrowUpCircle, Edit, LifeBuoy } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -15,12 +15,15 @@ import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/contexts/I18nContext'; 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import SupportFormDialog from '@/components/support/SupportFormDialog';
 
 export default function SidebarNav() {
   const pathname = usePathname();
   const { currentUser, logout, loading, isFirebaseConfigured, isAdmin, userTier } = useAuth();
   const { toast } = useToast();
   const { t } = useI18n(); 
+  const [isSupportDialogOpen, setIsSupportDialogOpen] = useState(false);
 
   const navItems = [
     { href: '/', labelKey: 'sidebar.home', icon: Home, public: true },
@@ -46,7 +49,6 @@ export default function SidebarNav() {
       toast({ title: t('authContext.logoutErrorToastTitle'), description: result, variant: "destructive" });
     } else { 
       toast({ title: t('authContext.logoutSuccessToastTitle'), description: t('authContext.logoutSuccessToastDescription'), variant: "default" });
-      // Router will redirect via ConditionalLayout or AuthContext effect
     }
   };
 
@@ -58,6 +60,7 @@ export default function SidebarNav() {
   };
 
   return (
+    <>
     <SidebarMenu className="flex flex-col justify-between h-full p-2 space-y-2">
       <div className="space-y-1">
         {navItems.map((item) => {
@@ -156,68 +159,92 @@ export default function SidebarNav() {
           {!isFirebaseConfigured && !loading && <p className="text-xs text-destructive">{t('sidebar.firebaseNotConfigured')}</p>}
         </div>
         {currentUser && isFirebaseConfigured ? (
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={handleLogout}
-              tooltip={t('sidebar.logout')}
-              className="justify-start w-full hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              disabled={loading}
-            >
-              <LogOut className="h-5 w-5" />
-              <span className="group-data-[collapsible=icon]:hidden">
-                {t('sidebar.logout')}
-              </span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ) : !loading && isFirebaseConfigured && (
           <>
             <SidebarMenuItem>
-              <Link href={authNavItems.login.href} passHref legacyBehavior>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === authNavItems.login.href}
-                  tooltip={t(authNavItems.login.labelKey)}
-                  className={cn(
-                    "justify-start w-full",
-                    pathname === authNavItems.login.href
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
-                      : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                  )}
-                >
-                  <a>
-                    <authNavItems.login.icon className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">
-                      {t(authNavItems.login.labelKey)}
-                    </span>
-                  </a>
-                </SidebarMenuButton>
-              </Link>
+              <SidebarMenuButton
+                onClick={() => setIsSupportDialogOpen(true)}
+                tooltip={t('sidebar.support')}
+                className="justify-start w-full hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              >
+                <LifeBuoy className="h-5 w-5" />
+                <span className="group-data-[collapsible=icon]:hidden">
+                  {t('sidebar.support')}
+                </span>
+              </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <Link href={authNavItems.signup.href} passHref legacyBehavior>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === authNavItems.signup.href}
-                  tooltip={t(authNavItems.signup.labelKey)}
-                  className={cn(
-                    "justify-start w-full",
-                    pathname === authNavItems.signup.href
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
-                      : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                  )}
-                >
-                  <a>
-                    <authNavItems.signup.icon className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">
-                      {t(authNavItems.signup.labelKey)}
-                    </span>
-                  </a>
-                </SidebarMenuButton>
-              </Link>
+              <SidebarMenuButton
+                onClick={handleLogout}
+                tooltip={t('sidebar.logout')}
+                className="justify-start w-full hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                disabled={loading}
+              >
+                <LogOut className="h-5 w-5" />
+                <span className="group-data-[collapsible=icon]:hidden">
+                  {t('sidebar.logout')}
+                </span>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           </>
+        ) : (
+          !loading && isFirebaseConfigured ? (
+            <>
+              <SidebarMenuItem>
+                <Link href={authNavItems.login.href} passHref legacyBehavior>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === authNavItems.login.href}
+                    tooltip={t(authNavItems.login.labelKey)}
+                    className={cn(
+                      "justify-start w-full",
+                      pathname === authNavItems.login.href
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+                        : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    <a>
+                      <authNavItems.login.icon className="h-5 w-5" />
+                      <span className="group-data-[collapsible=icon]:hidden">
+                        {t(authNavItems.login.labelKey)}
+                      </span>
+                    </a>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link href={authNavItems.signup.href} passHref legacyBehavior>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === authNavItems.signup.href}
+                    tooltip={t(authNavItems.signup.labelKey)}
+                    className={cn(
+                      "justify-start w-full",
+                      pathname === authNavItems.signup.href
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+                        : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    <a>
+                      <authNavItems.signup.icon className="h-5 w-5" />
+                      <span className="group-data-[collapsible=icon]:hidden">
+                        {t(authNavItems.signup.labelKey)}
+                      </span>
+                    </a>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+            </>
+          ) : null // Explicitly return null if the condition is false
         )}
       </div>
     </SidebarMenu>
+    {currentUser && (
+      <SupportFormDialog
+        open={isSupportDialogOpen}
+        onOpenChange={setIsSupportDialogOpen}
+        userEmail={currentUser.email || "N/A"}
+      />
+    )}
+    </>
   );
 }
