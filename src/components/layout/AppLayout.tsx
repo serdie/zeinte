@@ -50,8 +50,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <SidebarProvider defaultOpen={!isMobile} open={isMobile ? false : undefined}>
-      {/* Changed collapsible to "none" to prevent icon-only mode on desktop */}
-      <Sidebar variant="sidebar" collapsible="none"> 
+      {/* Desktop sidebar: starts open (due to defaultOpen={!isMobile}), can be collapsed to icons */}
+      <Sidebar variant="sidebar" collapsible="icon"> 
         <SidebarHeader className="p-4">
           <Link href="/" className="flex items-center gap-2 text-sidebar-primary hover:text-sidebar-primary/90 transition-colors">
             <Brain className="h-8 w-8" />
@@ -82,6 +82,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <div className="md:hidden"> {/* This trigger is for mobile off-canvas */}
               <SidebarTrigger />
             </div>
+            {/* Desktop trigger can be added here if needed for icon mode, or rely on rail */}
             <h2 className="text-lg font-semibold text-foreground">
               {headerTitle}
             </h2>
