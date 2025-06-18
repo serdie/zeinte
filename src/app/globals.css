@@ -8,8 +8,8 @@ body {
 
 @layer base {
   :root {
-    --background: 216 33% 96.5%; /* #F0F4F8 Light Gray */
-    --foreground: 210 10% 23%; /* Darker Gray for better contrast on light gray */
+    --background: 216 33% 96.5%; /* #F0F4F8 Light Gray - Kept for neutrality */
+    --foreground: 210 10% 23%; /* Darker Gray for better contrast */
 
     --card: 0 0% 100%; /* White */
     --card-foreground: 210 10% 23%;
@@ -17,8 +17,8 @@ body {
     --popover: 0 0% 100%;
     --popover-foreground: 210 10% 23%;
 
-    --primary: 207 82% 67.3%; /* #64B5F6 Soft Blue */
-    --primary-foreground: 0 0% 100%; /* White for contrast on Soft Blue */
+    --primary: 170 77% 70%; /* Light Aqua from Z logo */
+    --primary-foreground: 170 50% 20%; /* Dark Teal for contrast on primary */
 
     --secondary: 210 25% 93%; /* Lighter gray, derived from background */
     --secondary-foreground: 210 10% 23%;
@@ -26,15 +26,15 @@ body {
     --muted: 210 25% 93%;
     --muted-foreground: 210 7% 45%; /* Softer gray for muted text */
 
-    --accent: 122 39% 49.6%; /* #4CAF50 Green */
-    --accent-foreground: 0 0% 100%; /* White for contrast on Green */
+    --accent: 176 62% 48%; /* Darker Teal from Z logo */
+    --accent-foreground: 0 0% 100%; /* White for contrast on Accent */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 210 20% 85%; /* Lighter gray for borders */
     --input: 210 20% 90%; /* Slightly darker than border for input background */
-    --ring: 207 82% 67.3%; /* Primary color for focus rings */
+    --ring: 170 77% 70%; /* New primary color for focus rings */
 
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -45,47 +45,47 @@ body {
     --radius: 0.5rem;
 
     /* Sidebar specific theme adjustments */
-    --sidebar-background: 210 20% 90%; /* A slightly darker neutral for sidebar */
-    --sidebar-foreground: 210 10% 23%; /* Dark text for readability */
+    --sidebar-background: 170 50% 94%; /* Light Aqua/Teal tint */
+    --sidebar-foreground: 210 10% 23%; 
     
-    --sidebar-primary: 207 82% 67.3%; /* Primary color for active items/branding */
-    --sidebar-primary-foreground: 0 0% 100%; /* White */
+    --sidebar-primary: 170 77% 70%; /* New Primary */
+    --sidebar-primary-foreground: 170 50% 20%; /* New Primary Foreground */
     
-    --sidebar-accent: 122 39% 49.6%; /* Accent color for hover/focus */
-    --sidebar-accent-foreground: 0 0% 100%; /* White */
+    --sidebar-accent: 176 62% 48%; /* New Accent */
+    --sidebar-accent-foreground: 0 0% 100%; 
     
-    --sidebar-border: 210 15% 80%; /* Slightly darker border for sidebar elements */
-    --sidebar-ring: 207 82% 67.3%; /* Primary color for focus rings within sidebar */
+    --sidebar-border: 170 40% 88%; /* Teal-tinted border */
+    --sidebar-ring: 170 77% 70%; /* New Primary */
   }
 
   .dark {
-    --background: 210 10% 15%; /* Dark Gray for dark mode background */
-    --foreground: 0 0% 98%; /* Light text for dark mode */
+    --background: 170 30% 15%; /* Dark Desaturated Teal */
+    --foreground: 0 0% 98%; 
 
-    --card: 210 10% 20%; /* Slightly lighter dark gray for cards */
+    --card: 170 30% 20%; 
     --card-foreground: 0 0% 98%;
 
-    --popover: 210 10% 20%;
+    --popover: 170 30% 20%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 207 82% 67.3%; /* Soft Blue remains the same or can be adjusted */
-    --primary-foreground: 0 0% 100%;
+    --primary: 170 77% 65%; /* Slightly toned down Light Aqua for dark mode */
+    --primary-foreground: 170 50% 15%; /* Darker Teal for contrast */
 
-    --secondary: 210 10% 25%; /* Darker secondary shade */
+    --secondary: 170 30% 25%; /* Darker secondary shade */
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 210 10% 25%;
+    --muted: 170 30% 25%;
     --muted-foreground: 0 0% 63.9%;
 
-    --accent: 122 39% 49.6%; /* Green accent remains the same or can be adjusted */
+    --accent: 176 62% 55%; /* Slightly lighter Accent for dark mode */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 210 10% 30%; /* Darker border */
-    --input: 210 10% 30%;
-    --ring: 207 82% 67.3%;
+    --border: 170 20% 30%; 
+    --input: 170 20% 30%;
+    --ring: 170 77% 65%; /* Ring matches new dark primary */
 
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -94,17 +94,17 @@ body {
     --chart-5: 340 75% 55%;
 
     /* Dark Sidebar specific theme adjustments */
-    --sidebar-background: 210 10% 12%; /* Even darker for sidebar */
+    --sidebar-background: 170 30% 12%; 
     --sidebar-foreground: 0 0% 95%; 
     
-    --sidebar-primary: 207 82% 67.3%; 
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 170 77% 65%; 
+    --sidebar-primary-foreground: 170 50% 15%;
     
-    --sidebar-accent: 122 39% 49.6%; 
-    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-accent: 176 62% 55%; 
+    --sidebar-accent-foreground: 0 0% 100%; 
     
-    --sidebar-border: 210 10% 25%; 
-    --sidebar-ring: 207 82% 67.3%;
+    --sidebar-border: 170 20% 25%; 
+    --sidebar-ring: 170 77% 65%;
   }
 }
 
