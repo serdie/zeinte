@@ -11,12 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, Lightbulb, CheckCircle, RefreshCw, Edit3, BookCopy, Clock, UsersIcon, BarChart3, FileText, ChevronLeft, ChevronRight, ListChecks, PackageCheck, Wand2 } from 'lucide-react';
+import { Loader2, Lightbulb, CheckCircle, RefreshCw, Edit3, BookCopy, Clock, UsersIcon, BarChart3, FileText, ChevronLeft, ChevronRight, ListChecks, PackageCheck, Wand2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/contexts/I18nContext';
 import { generateCustomCourseSyllabus, type GenerateCustomCourseSyllabusInput, type GenerateCustomCourseSyllabusOutput } from '@/ai/flows/generate-custom-course-syllabus';
 import { generateModuleContent, type GenerateModuleContentInput } from '@/ai/flows/generateModuleContent';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import Link from 'next/link';
 
 type CourseCreationStage = "define" | "review_syllabus" | "course_prep" | "course_view";
 
@@ -184,12 +185,22 @@ export default function CreateCustomCoursePage() {
 
   return (
     <div className="container mx-auto py-8 space-y-8">
+      <div className="flex justify-between items-center mb-4">
+        <CardTitle className="text-3xl flex items-center gap-3 text-primary">
+          <Wand2 className="h-8 w-8" /> 
+          {t('customCourses.createPage.title')}
+        </CardTitle>
+        <Link href="/dashboard" passHref>
+          <Button variant="outline">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {t('configurePage.backToDashboard')} 
+          </Button>
+        </Link>
+      </div>
+
       <Card className="w-full shadow-xl">
         <CardHeader>
-          <CardTitle className="text-3xl flex items-center gap-3 text-primary">
-            <Wand2 className="h-8 w-8" /> 
-            {t('customCourses.createPage.title')}
-          </CardTitle>
+          {/* CardTitle moved above Card component */}
           <CardDescription className="text-base">
             {t('customCourses.createPage.descriptionForAllUsers')} 
           </CardDescription>
