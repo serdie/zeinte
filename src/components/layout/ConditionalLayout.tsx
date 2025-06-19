@@ -1,4 +1,3 @@
-
 // src/components/layout/ConditionalLayout.tsx
 "use client";
 
@@ -18,15 +17,15 @@ interface ConditionalLayoutProps {
 const PUBLIC_PATHS = ['/', '/login', '/signup', '/verify-email'];
 const ADMIN_PATH_PREFIX = '/admin';
 const CUSTOM_COURSES_PATH_PREFIX = '/custom-courses';
-const PAYMENT_PATH_PREFIX = '/payment'; 
+const PAYMENT_PATH_PREFIX = '/payment';
 const PROFILE_PATH = '/profile';
 const PROTECTED_PATHS = [
-  '/dashboard', 
-  '/upload', 
-  '/configure', 
-  '/community', 
-  PROFILE_PATH, 
-  '/pricing', 
+  '/dashboard',
+  '/upload',
+  '/configure',
+  '/community',
+  PROFILE_PATH,
+  '/pricing',
   '/account/subscription'
 ];
 
@@ -41,19 +40,19 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
 
 
   useEffect(() => {
-    if (loading || !isFirebaseConfigured) { 
+    if (loading || !isFirebaseConfigured) {
       return;
     }
 
     const isEmailUser = currentUser?.providerData.some(p => p.providerId === 'password');
-    const isGeneralProtectedRoute = PROTECTED_PATHS.includes(pathname) || 
+    const isGeneralProtectedRoute = PROTECTED_PATHS.includes(pathname) ||
                                     pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX) ||
                                     pathname.startsWith(PAYMENT_PATH_PREFIX);
 
 
     if (currentUser && userProfileData) { // Ensure userProfileData is loaded
       if (isEmailUser && !currentUser.emailVerified && pathname !== '/verify-email') {
-        if (isGeneralProtectedRoute || pathname.startsWith(ADMIN_PATH_PREFIX)) { 
+        if (isGeneralProtectedRoute || pathname.startsWith(ADMIN_PATH_PREFIX)) {
            router.push('/verify-email');
            return;
         }
@@ -79,10 +78,10 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
 
       // Admin-specific routes
       if (pathname.startsWith(ADMIN_PATH_PREFIX) && !isAdmin) {
-        router.push('/dashboard'); 
+        router.push('/dashboard');
         return;
       }
-      
+
       // Authenticated user trying to access login/signup
       if ((pathname === '/login' || pathname === '/signup') && (currentUser.emailVerified || !isEmailUser)) {
         router.push('/dashboard');
@@ -105,23 +104,26 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
       </div>
     );
   }
-  
+
   const isAppRoute = (
-    PROTECTED_PATHS.includes(pathname) || 
-    pathname.startsWith(ADMIN_PATH_PREFIX) || 
+    PROTECTED_PATHS.includes(pathname) ||
+    pathname.startsWith(ADMIN_PATH_PREFIX) ||
     pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX) ||
-    pathname.startsWith(PAYMENT_PATH_PREFIX) 
+    pathname.startsWith(PAYMENT_PATH_PREFIX)
   );
 
-
-  const showAppLayout = currentUser && 
-                        userProfileData && // Ensure profile data is available
+  // Modified showAppLayout condition
+  const showAppLayout = currentUser &&
+                        userProfileData && // Profile data must exist
                         (currentUser.emailVerified || currentUser.providerData.some(p => p.providerId === 'google.com')) &&
-                        (userProfileData.primaryInterest || pathname === PROFILE_PATH) && // Allow access to profile page to set interest
                         isAppRoute;
+                        // The (userProfileData.primaryInterest || pathname === PROFILE_PATH) check
+                        // is primarily handled by the useEffect for redirection.
+                        // For showing AppLayout, as long as userProfileData itself exists (meaning it has loaded),
+                        // and other auth checks pass, we show the layout.
 
   if (showAppLayout) {
-     if (!currentUser) { 
+     if (!currentUser) {
         return (
          <div className="flex items-center justify-center min-h-screen bg-background">
            <p>Redirigiendo...</p>
