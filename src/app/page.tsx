@@ -8,6 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { UploadCloud, BrainCircuit, Lightbulb, Sparkles, BookOpenText, Settings, Users, CheckCircle, ArrowRight, Star, Zap, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
 import { useI18n } from '@/contexts/I18nContext'; 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const featureKeys = [
   "uploadDocs",
@@ -19,7 +20,6 @@ const featureKeys = [
   "studyCommunity"
 ];
 
-// Helper to map keys to icons
 const iconMap: { [key: string]: React.ElementType } = {
   uploadDocs: UploadCloud,
   deepAnalysis: BrainCircuit,
@@ -30,6 +30,15 @@ const iconMap: { [key: string]: React.ElementType } = {
   studyCommunity: Users
 };
 
+interface Testimonial {
+  id: string;
+  name: string;
+  roleKey: string;
+  avatarFallback: string;
+  stars: number;
+  quoteKey: string;
+  avatarHint: string;
+}
 
 export default function HomePage() {
   const { t } = useI18n();
@@ -41,6 +50,36 @@ export default function HomePage() {
     shortText: t(`features.${key}Short`),
     longText: t(`features.${key}Long`)
   }));
+
+  const testimonials: Testimonial[] = [
+    {
+      id: 'testimonial1',
+      name: 'Carlos M.',
+      roleKey: 'homePage.testimonial1Role',
+      avatarFallback: 'CM',
+      stars: 5,
+      quoteKey: 'homePage.testimonial1Quote',
+      avatarHint: 'student happy',
+    },
+    {
+      id: 'testimonial2',
+      name: 'Laura G.',
+      roleKey: 'homePage.testimonial2Role',
+      avatarFallback: 'LG',
+      stars: 5,
+      quoteKey: 'homePage.testimonial2Quote',
+      avatarHint: 'student library',
+    },
+    {
+      id: 'testimonial3',
+      name: 'David S.',
+      roleKey: 'homePage.testimonial3Role',
+      avatarFallback: 'DS',
+      stars: 5,
+      quoteKey: 'homePage.testimonial3Quote',
+      avatarHint: 'person computer',
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 text-foreground">
@@ -145,9 +184,9 @@ export default function HomePage() {
             </CardHeader>
             <CardContent className="flex-grow space-y-3">
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />{t('homePage.freeTrialFeature1')}</li>
-                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />{t('homePage.freeTrialFeature2')}</li>
-                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />{t('homePage.freeTrialFeature3')}</li>
+                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />{t('features.uploadDocsShort')}</li>
+                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />{t('features.smartPredictionShort')}</li>
+                <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />{t('features.clearExplanationsShort')}</li>
                 <li className="flex items-center"><CheckCircle className="h-5 w-5 text-green-500 mr-2" />{t('homePage.freeTrialFeature4')}</li>
               </ul>
             </CardContent>
@@ -192,6 +231,39 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      <section className="py-16 bg-muted/50 mt-12">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-semibold text-center mb-10 text-foreground">{t('homePage.testimonialsTitle')}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {testimonials.map((testimonial) => (
+              <Card key={testimonial.id} className="shadow-lg flex flex-col bg-background">
+                <CardContent className="pt-6 flex flex-col flex-grow">
+                  <div className="flex items-center mb-4">
+                    <Avatar className="h-12 w-12 mr-4 border-2 border-primary/50">
+                      <AvatarImage src={`https://placehold.co/48x48.png?text=${testimonial.avatarFallback}`} alt={testimonial.name} data-ai-hint={testimonial.avatarHint} />
+                      <AvatarFallback>{testimonial.avatarFallback}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold text-lg text-foreground">{testimonial.name}</p>
+                      <p className="text-xs text-muted-foreground">{t(testimonial.roleKey)}</p>
+                    </div>
+                  </div>
+                  <div className="flex mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className={`h-5 w-5 ${i < testimonial.stars ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                    ))}
+                  </div>
+                  <blockquote className="text-sm text-foreground/90 italic border-l-4 border-primary pl-4 py-2 flex-grow bg-primary/5 rounded-r-md">
+                    {t(testimonial.quoteKey)}
+                  </blockquote>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Call to Action Section */}
       <section className="py-20 text-center container mx-auto px-4">
         <h2 className="text-3xl font-bold mb-6 text-foreground">{t('homePage.revolutionizeStudyTitle')}</h2>
@@ -204,21 +276,6 @@ export default function HomePage() {
             {t('homePage.tryFreeButton')}
           </Button>
         </Link>
-      </section>
-
-       {/* Placeholder for Testimonials or Use Cases - future enhancement */}
-      <section className="py-12 container mx-auto px-4">
-        <h2 className="text-2xl font-semibold text-center mb-8 text-foreground opacity-50">{t('homePage.comingSoonTestimonials')}</h2>
-        <div className="flex justify-center items-center">
-            <Image 
-                src="https://placehold.co/600x300.png" 
-                alt={t('homePage.comingSoonTestimonials')}
-                width={600} 
-                height={300} 
-                className="rounded-lg opacity-60 shadow-md"
-                data-ai-hint="students celebrating graduation"
-            />
-        </div>
       </section>
       
       <footer className="text-center py-8 mt-12 border-t border-border">
