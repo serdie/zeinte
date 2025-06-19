@@ -79,6 +79,33 @@ export default function HomePage() {
       quoteKey: 'homePage.testimonial3Quote',
       avatarHint: 'person computer',
     },
+    {
+      id: 'testimonial4',
+      name: 'Sofía P.',
+      roleKey: 'homePage.testimonial4Role',
+      avatarFallback: 'SP',
+      stars: 5,
+      quoteKey: 'homePage.testimonial4Quote',
+      avatarHint: 'professional work',
+    },
+    {
+      id: 'testimonial5',
+      name: 'Miguel Ángel R.',
+      roleKey: 'homePage.testimonial5Role',
+      avatarFallback: 'MR',
+      stars: 4,
+      quoteKey: 'homePage.testimonial5Quote',
+      avatarHint: 'focused student',
+    },
+    {
+      id: 'testimonial6',
+      name: 'Isabel V.',
+      roleKey: 'homePage.testimonial6Role',
+      avatarFallback: 'IV',
+      stars: 5,
+      quoteKey: 'homePage.testimonial6Quote',
+      avatarHint: 'teacher classroom',
+    },
   ];
 
   return (
@@ -100,13 +127,13 @@ export default function HomePage() {
             </Button>
           </Link>
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/login" passHref>
-              <Button variant="outline" size="lg" className="w-full sm:w-auto text-primary border-primary hover:bg-primary/10 hover:text-primary">
+            <Link href="/login" passHref className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="w-full text-primary border-primary hover:bg-primary/10 hover:text-primary">
                 {t('sidebar.login')}
               </Button>
             </Link>
-            <Link href="/signup" passHref>
-              <Button variant="outline" size="lg" className="w-full sm:w-auto text-primary border-primary hover:bg-primary/10 hover:text-primary">
+            <Link href="/signup" passHref className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="w-full text-primary border-primary hover:bg-primary/10 hover:text-primary">
                 {t('sidebar.signup')}
               </Button>
             </Link>
