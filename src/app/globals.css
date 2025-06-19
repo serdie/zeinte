@@ -8,35 +8,34 @@ body {
 
 @layer base {
   :root {
-    --background: 216 33% 96.5%; /* #F0F4F8 Gris Claro (del PRD, para legibilidad) */
-    --foreground: 210 10% 23%; /* Gris oscuro para texto */
+    /* Base (Light Theme) */
+    --background: 0 0% 100%; /* #ffffff */
+    --foreground: 215 28% 17%; /* #1f2937 */
 
-    --card: 0 0% 100%; /* Blanco */
-    --card-foreground: 210 10% 23%;
+    --card: 0 0% 100%; /* #ffffff */
+    --card-foreground: 215 28% 17%; /* #1f2937 */
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 210 10% 23%;
+    --popover: 0 0% 100%; /* #ffffff */
+    --popover-foreground: 215 28% 17%; /* #1f2937 */
 
-    /* NUEVO PRIMARIO (Aqua/Cyan claro del logo "Z") */
-    --primary: 190 80% 70%; /* ej: hsl(190, 80%, 70%) */
-    --primary-foreground: 190 60% 20%; /* ej: hsl(190, 60%, 20%) - Azul cyan oscuro para contraste */
+    --primary: 243 75% 58%; /* #4f46e5 */
+    --primary-foreground: 0 0% 98%; /* Contrasting white for primary */
 
-    --secondary: 210 25% 93%; /* Gris más claro, derivado del fondo */
-    --secondary-foreground: 210 10% 23%;
+    --secondary: 243 75% 96%; /* Light tint of primary */
+    --secondary-foreground: 215 28% 17%; /* Main foreground for text on secondary */
 
-    --muted: 210 25% 93%;
-    --muted-foreground: 210 7% 45%; /* Gris más suave para texto muted */
+    --muted: 243 75% 95%; /* Slightly darker light tint of primary */
+    --muted-foreground: 215 28% 45%; /* Muted version of main foreground */
 
-    /* NUEVO ACENTO (Teal/Verde-azulado oscuro del logo "Z") */
-    --accent: 170 65% 45%; /* ej: hsl(170, 65%, 45%) */
-    --accent-foreground: 0 0% 100%; /* Blanco para contraste sobre el acento */
+    --accent: 265 84% 58%; /* #7c3aed */
+    --accent-foreground: 0 0% 98%; /* Contrasting white for accent */
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84.2% 60.2%; /* Keeping ShadCN default destructive */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 210 20% 85%; /* Gris claro para bordes */
-    --input: 210 20% 90%; /* Ligeramente más oscuro que el borde para fondo de input */
-    --ring: 190 80% 70%; /* Coincide con el nuevo primario */
+    --border: 243 75% 90%; /* Light tint of primary for borders */
+    --input: 243 75% 92%;  /* Slightly different light tint for input backgrounds */
+    --ring: 243 75% 58%; /* Primary color for focus rings */
 
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -46,51 +45,46 @@ body {
 
     --radius: 0.5rem;
 
-    /* Ajustes específicos para Sidebar con nueva paleta */
-    --sidebar-background: 190 60% 94%; /* Tinte del nuevo primario */
-    --sidebar-foreground: 210 10% 23%; 
-    
-    --sidebar-primary: 190 80% 70%; /* Nuevo Primario */
-    --sidebar-primary-foreground: 190 60% 20%; /* Nuevo Foreground Primario */
-    
-    --sidebar-accent: 170 65% 45%; /* Nuevo Acento */
-    --sidebar-accent-foreground: 0 0% 100%; 
-    
-    --sidebar-border: 190 50% 88%; /* Borde con tinte primario */
-    --sidebar-ring: 190 80% 70%; /* Nuevo Primario */
+    /* Sidebar specific (Light Theme) */
+    --sidebar-background: 243 75% 97%; /* Very light primary tint */
+    --sidebar-foreground: 215 28% 17%; /* Main foreground */
+    --sidebar-primary: 243 75% 58%; /* Main primary */
+    --sidebar-primary-foreground: 0 0% 98%; /* Main primary-foreground */
+    --sidebar-accent: 265 84% 58%; /* Main accent */
+    --sidebar-accent-foreground: 0 0% 98%; /* Main accent-foreground */
+    --sidebar-border: 243 75% 90%; /* Matches main border */
+    --sidebar-ring: 243 75% 58%; /* Main ring */
   }
 
   .dark {
-    /* Tema Oscuro basado en nueva paleta */
-    --background: 190 30% 15%; /* Tono del nuevo primario, oscuro y desaturado */
-    --foreground: 0 0% 98%; 
+    /* Dark Theme */
+    --background: 215 28% 17%; /* #1f2937 */
+    --foreground: 0 0% 95%; /* Light grey/off-white for text */
 
-    --card: 190 30% 20%; 
-    --card-foreground: 0 0% 98%;
+    --card: 215 28% 22%; /* Slightly lighter than background */
+    --card-foreground: 0 0% 95%;
 
-    --popover: 190 30% 20%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 215 28% 22%;
+    --popover-foreground: 0 0% 95%;
 
-    /* NUEVO PRIMARIO OSCURO */
-    --primary: 190 70% 60%; /* Ligeramente atenuado para modo oscuro */
-    --primary-foreground: 190 70% 15%; /* Más oscuro para contraste */
+    --primary: 243 75% 65%; /* Lighter Indigo for dark mode */
+    --primary-foreground: 243 75% 15%; /* Darker Indigo for contrast */
 
-    --secondary: 190 30% 25%; /* Tono secundario más oscuro */
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 215 28% 25%; /* Lighter than card, for secondary elements */
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 190 30% 25%;
-    --muted-foreground: 0 0% 63.9%;
+    --muted: 215 28% 25%;
+    --muted-foreground: 0 0% 60%; /* Muted grey for less important text */
 
-    /* NUEVO ACENTO OSCURO */
-    --accent: 170 60% 55%; /* Acento ligeramente más claro para modo oscuro */
-    --accent-foreground: 0 0% 100%;
+    --accent: 265 84% 65%; /* Lighter Purple for dark mode */
+    --accent-foreground: 0 0% 98%; /* White for contrast on accent */
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 70% 50%; /* Adjusted destructive for dark */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 190 20% 30%; 
-    --input: 190 20% 30%;
-    --ring: 190 70% 60%; /* Ring coincide con nuevo primario oscuro */
+    --border: 215 28% 30%; /* Darker border */
+    --input: 215 28% 30%; /* Same as border for input background */
+    --ring: 243 75% 65%; /* Dark primary for focus rings */
 
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -98,18 +92,15 @@ body {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
 
-    /* Ajustes específicos para Sidebar Oscuro */
-    --sidebar-background: 190 30% 12%; 
-    --sidebar-foreground: 0 0% 95%; 
-    
-    --sidebar-primary: 190 70% 60%; 
-    --sidebar-primary-foreground: 190 70% 15%;
-    
-    --sidebar-accent: 170 60% 55%; 
-    --sidebar-accent-foreground: 0 0% 100%; 
-    
-    --sidebar-border: 190 20% 25%; 
-    --sidebar-ring: 190 70% 60%;
+    /* Sidebar specific (Dark Theme) */
+    --sidebar-background: 215 28% 12%; /* Even darker than main dark background */
+    --sidebar-foreground: 0 0% 95%; /* Main dark foreground */
+    --sidebar-primary: 243 75% 65%; /* Main dark primary */
+    --sidebar-primary-foreground: 243 75% 15%; /* Main dark primary-foreground */
+    --sidebar-accent: 265 84% 65%; /* Main dark accent */
+    --sidebar-accent-foreground: 0 0% 98%; /* Main dark accent-foreground */
+    --sidebar-border: 215 28% 25%; /* Darker border for sidebar */
+    --sidebar-ring: 243 75% 65%; /* Main dark ring */
   }
 }
 
