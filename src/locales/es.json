@@ -34,7 +34,7 @@
     "home": "Inicio",
     "dashboard": "Panel de Estudio",
     "upload": "Subir Documentos",
-    "configureExam": "Configura tu examen",
+    "configureExam": "Configurar Examen",
     "community": "Comunidad",
     "createCourse": "Crear Curso IA",
     "profile": "Mi Perfil",
@@ -104,9 +104,9 @@
     "revolutionizeStudyTitle": "¿Listo para Revolucionar tu Estudio con Zeinte?",
     "revolutionizeStudySubtitle": "Deja de adivinar y empieza a prepararte con la inteligencia artificial de Zeinte (antes AdivinaExamen).",
     "tryFreeButton": "¡Probar Zeinte Gratis Ahora!",
-    "testimonialsTitle": "Lo que dicen nuestros usuarios",
-    "testimonial1Quote": "Me ha cambiado la forma de preparar mis oposiciones. La predicción de preguntas es increíblemente acertada y me ahorra muchísimo tiempo.",
-    "testimonial1Role": "Opositor a Agente Forestal",
+    "testimonialsTitle": "Lo que dicen nuestros usuarios de Zeinte",
+    "testimonial1Quote": "Ha cambiado mi forma de preparar las oposiciones. La predicción de preguntas es increíblemente acertada y me ahorra muchísimo tiempo.",
+    "testimonial1Role": "Opositor a Funcionario",
     "testimonial2Quote": "Como estudiante universitaria, me ayuda a centrarme en lo verdaderamente importante de mis apuntes. Las explicaciones de la IA son súper claras.",
     "testimonial2Role": "Estudiante de Derecho",
     "testimonial3Quote": "Antes perdía horas intentando adivinar qué podría caer en el examen. Ahora, en minutos tengo una idea clara. ¡Muy recomendable!",
@@ -147,7 +147,7 @@
     "title": "Panel de Estudio - Zeinte",
     "emptyTitle": "Panel de Estudio Vacío en Zeinte",
     "emptySubtitle": "Parece que aún no has analizado ningún documento en Zeinte. ¡Sube tus apuntes, temarios o exámenes para empezar a estudiar de forma inteligente!",
-    "uploadDocsButton": "Subir Documentos Ahora a Zeinte",
+    "uploadDocsButton": "Subir Documentos y Analizar",
     "questionsReadyTitle": "Preguntas Listas para Estudiar en Zeinte",
     "questionsReadyDescription": "Hemos analizado tus documentos, y estas son las preguntas que creemos podrían aparecer en tu examen:",
     "analysisSummaryLabel": "Resumen del análisis:",
@@ -167,7 +167,23 @@
     "viewProPlansButton": "Ver Planes Pro de Zeinte",
     "loadingData": "Cargando datos de Zeinte...",
     "betaAdNoticeTitle": "¡Zeinte está en Beta!",
-    "betaAdNoticeDescription": "Zeinte es actualmente 100% gratuito durante nuestra fase Beta. Estamos trabajando para mejorar la plataforma y agradecemos tu comprensión y apoyo durante este periodo."
+    "betaAdNoticeDescription": "Zeinte es actualmente 100% gratuito durante nuestra fase Beta. Estamos trabajando para mejorar la plataforma y agradecemos tu comprensión y apoyo durante este periodo.",
+    "welcomeTitle": "¡Hola, {{name}}!",
+    "welcomeSubtitle": "Bienvenido/a a tu panel de estudio Zeinte. ¿Qué quieres hacer hoy?",
+    "guestUser": "Estudiante",
+    "startNewAnalysisTitle": "Comenzar Nuevo Análisis",
+    "startNewAnalysisDescription": "Sube tus documentos, apuntes o exámenes pasados para que la IA genere predicciones y material de estudio.",
+    "lastAnalysisTitle": "Último Análisis Realizado",
+    "lastAnalysisDate": "Realizado el {{date}}",
+    "questionsGeneratedLabel": "Preguntas generadas:",
+    "viewAndStudyButton": "Ver Detalles y Estudiar",
+    "examHistoryTitle": "Historial de Exámenes",
+    "examHistoryDescription": "Accede a tus análisis anteriores y revisa tus sesiones de estudio. (Próximamente)",
+    "viewHistoryButton": "Ver Historial",
+    "studyStatsTitle": "Estadísticas de Estudio",
+    "studyStatsDescription": "Visualiza tu progreso, temas más estudiados y áreas de mejora. (Próximamente)",
+    "viewStatsButton": "Ver Estadísticas",
+    "quickAccessTitle": "Accesos Rápidos"
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Pregunta Tipo Test",
@@ -829,3 +845,5 @@
     "requestSentDescription": "Hemos recibido tu consulta. Nos pondremos en contacto contigo pronto. (Mensaje registrado en consola)"
   }
 }
+
+    

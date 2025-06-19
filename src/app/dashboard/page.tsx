@@ -1,172 +1,52 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import PredictedQuestionCard from '@/components/dashboard/PredictedQuestionCard';
-import AIExplanationDialog from '@/components/dashboard/AIExplanationDialog';
-import { generateAIExplanation, type GenerateAIExplanationOutput, type GenerateAIExplanationInput } from '@/ai/flows/generate-ai-explanations';
-import { analyzeDocuments, type AnalyzeDocumentsOutput } from '@/ai/flows/analyze-documents';
-import { predictExamQuestions, type PredictExamQuestionsOutput } from '@/ai/flows/predict-exam-questions';
-import { PREDICTED_DATA_KEY, EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
-import type { PredictedData, AIExplanation, PredictedQuestion, ExamConfig } from '@/types';
+import { PREDICTED_DATA_KEY } from '@/lib/localStorageKeys';
+import type { PredictedData } from '@/types';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UploadCloud, Info, BookOpenText, Loader2, RefreshCw, Microscope, Sparkles } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
+import { Loader2, UploadCloud, BookOpenText, History, BarChart3, Settings, Users, User, Lightbulb, ArrowRight, Info } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-
-const DEFAULT_NUM_QUESTIONS_REANALYSIS = "10";
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export default function DashboardPage() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
+  const { currentUser, userProfileData, loading: authLoading } = useAuth();
   const [predictedData, setPredictedData] = useState<PredictedData | null>(null);
   const [isLoadingInitialData, setIsLoadingInitialData] = useState(true);
-  const [isReAnalyzing, setIsReAnalyzing] = useState(false);
-
-  const [currentExplanation, setCurrentExplanation] = useState<AIExplanation | null>(null);
-  const [isExplaining, setIsExplaining] = useState(false);
-  const [selectedQuestionForExplanation, setSelectedQuestionForExplanation] = useState<Omit<GenerateAIExplanationInput, 'topic'> | null>(null);
-  const [isExplanationDialogOpen, setIsExplanationDialogOpen] = useState(false);
-
-  const [numQuestionsForReanalysis, setNumQuestionsForReanalysis] = useState<string>(DEFAULT_NUM_QUESTIONS_REANALYSIS);
-
-  const { toast } = useToast();
 
   useEffect(() => {
-    let defaultNumQuestions = DEFAULT_NUM_QUESTIONS_REANALYSIS;
-
-    const storedConfig = localStorage.getItem(EXAM_CONFIG_KEY);
-    if (storedConfig) {
-      try {
-        const parsedConfig: ExamConfig = JSON.parse(storedConfig);
-        if (parsedConfig.defaultNumberOfQuestions) {
-          defaultNumQuestions = parsedConfig.defaultNumberOfQuestions.toString();
-        }
-      } catch (e) { console.error("Failed to parse exam config for dashboard", e); }
-    }
-
     const storedData = localStorage.getItem(PREDICTED_DATA_KEY);
     if (storedData) {
       try {
         const parsedData: PredictedData = JSON.parse(storedData);
         setPredictedData(parsedData);
-        const requestedNumStr = parsedData.requestedNumberOfQuestions?.toString();
-        if (requestedNumStr) {
-            setNumQuestionsForReanalysis(requestedNumStr);
-        } else {
-            setNumQuestionsForReanalysis(defaultNumQuestions);
-        }
       } catch (error) {
         console.error("Failed to parse predicted data from localStorage", error);
-        localStorage.removeItem(PREDICTED_DATA_KEY);
+        localStorage.removeItem(PREDICTED_DATA_KEY); // Clear corrupted data
         setPredictedData(null);
-        setNumQuestionsForReanalysis(defaultNumQuestions);
       }
-    } else {
-        setNumQuestionsForReanalysis(defaultNumQuestions);
     }
     setIsLoadingInitialData(false);
   }, []);
 
-  const handleGetExplanation = useCallback(async (questionText: string, options: string[], correctAnswerIndex: number) => {
-    const questionContext = { questionText, options, correctAnswerIndex };
-    setSelectedQuestionForExplanation(questionContext);
-    setIsExplaining(true);
-    setIsExplanationDialogOpen(true);
-    setCurrentExplanation(null);
-
+  const formatDate = (timestamp: number) => {
     try {
-      const topic = predictedData?.recurringThemes?.[0] || predictedData?.potentialFocusAreas?.[0] || "General Topic";
-
-      const result: GenerateAIExplanationOutput = await generateAIExplanation({ ...questionContext, topic });
-      if (result && result.explanation) {
-        setCurrentExplanation({ question: questionText, explanation: result.explanation, topic });
-      } else {
-        throw new Error(t('aiExplanationDialog.noExplanation'));
-      }
+      return format(new Date(timestamp), 'PPpp', { locale: language === 'es' ? es : undefined });
     } catch (error) {
-      console.error("Error generating AI explanation:", error);
-      setCurrentExplanation(null);
-      toast({
-        title: t('common.error'),
-        description: (error instanceof Error ? error.message : t('aiExplanationDialog.noExplanation')) + " " + t('common.tryAgain'),
-        variant: "destructive",
-      });
-    } finally {
-      setIsExplaining(false);
-    }
-  }, [predictedData, toast, t]);
-
-  const handleReAnalyze = async () => {
-    if (!predictedData?.originalDocumentContent) {
-      toast({
-        title: t('fileUploadArea.toastEmptyContentTitle'),
-        description: t('fileUploadArea.toastEmptyContentDescription'),
-        variant: "destructive",
-        duration: 7000,
-      });
-      return;
-    }
-
-    setIsReAnalyzing(true);
-    let requestedNum = parseInt(numQuestionsForReanalysis, 10);
-
-    try {
-      toast({
-        title: t('uploadPage.processingDocumentToastTitle'),
-        description: t('uploadPage.processingDocumentToastDescription'),
-      });
-      const analysisResult: AnalyzeDocumentsOutput = await analyzeDocuments({ documentContent: predictedData.originalDocumentContent });
-
-      toast({
-        title: t('uploadPage.analysisCompleteToastTitle'),
-        description: t('uploadPage.analysisCompleteToastDescription'),
-      });
-      const predictionResult: PredictExamQuestionsOutput = await predictExamQuestions({
-        analysisSummary: analysisResult.summary,
-        recurringThemes: analysisResult.recurringThemes,
-        numberOfQuestions: requestedNum,
-        identifiedExamPatterns: analysisResult.identifiedExamPatterns,
-        potentialFocusAreas: analysisResult.potentialFocusAreas,
-      });
-
-      const newDataToStore: PredictedData = {
-        questions: predictionResult.questions,
-        analysisSummary: analysisResult.summary,
-        recurringThemes: analysisResult.recurringThemes,
-        timestamp: Date.now(),
-        originalDocumentContent: predictedData.originalDocumentContent,
-        requestedNumberOfQuestions: requestedNum,
-        identifiedExamPatterns: analysisResult.identifiedExamPatterns,
-        potentialFocusAreas: analysisResult.potentialFocusAreas,
-      };
-
-      localStorage.setItem(PREDICTED_DATA_KEY, JSON.stringify(newDataToStore));
-      setPredictedData(newDataToStore);
-
-      toast({
-        title: t('uploadPage.successToastTitle'),
-        description: t('dashboardPage.questionsReadyTitle'),
-        variant: "default",
-      });
-
-    } catch (error) {
-      console.error("Error during AI re-processing:", error);
-      toast({
-        title: t('uploadPage.errorProcessingToastTitle'),
-        description: (error instanceof Error ? error.message : t('uploadPage.errorProcessingToastFallback')) + " " + t('common.tryAgain'),
-        variant: "destructive",
-      });
-    } finally {
-      setIsReAnalyzing(false);
+      console.error("Error formatting date:", error);
+      return "Fecha inválida";
     }
   };
+  
+  const displayName = userProfileData?.displayName || currentUser?.displayName || currentUser?.email?.split('@')[0] || t('dashboardPage.guestUser');
 
-  if (isLoadingInitialData) {
+  if (isLoadingInitialData || authLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center p-6">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -175,122 +55,132 @@ export default function DashboardPage() {
     );
   }
 
-  if (!predictedData || !predictedData.questions || predictedData.questions.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center p-6 bg-card rounded-lg shadow-xl">
-        <BookOpenText className="h-20 w-20 text-primary mb-6" />
-        <h2 className="text-3xl md:text-4xl font-semibold text-foreground mb-3">{t('dashboardPage.emptyTitle')}</h2>
-        <p className="text-lg text-muted-foreground mb-8 max-w-md">
-          {t('dashboardPage.emptySubtitle')}
-        </p>
-        <Link href="/upload" passHref>
-          <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground text-base px-8 py-6 rounded-lg shadow-md transition-transform duration-150 ease-in-out active:scale-95">
-            <UploadCloud className="mr-3 h-6 w-6" />
-            {t('dashboardPage.uploadDocsButton')}
-          </Button>
-        </Link>
-      </div>
-    );
-  }
-
-  const questionsToDisplay = predictedData.questions;
-  
   return (
     <div className="space-y-8">
-      {/* REMOVED PAU Special Alert */}
+      <section className="mb-8">
+        <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">
+          {t('dashboardPage.welcomeTitle', { name: displayName })}
+        </h1>
+        <p className="text-lg text-muted-foreground">
+          {t('dashboardPage.welcomeSubtitle')}
+        </p>
+      </section>
 
-      <Accordion type="single" collapsible className="w-full border border-primary bg-primary/10 rounded-lg shadow-md">
-        <AccordionItem value="analysis-details" className="border-b-0">
-          <AccordionTrigger className="p-4 hover:no-underline text-left w-full">
-            <div className="flex items-center gap-3 w-full">
-              <Info className="h-5 w-5 text-primary shrink-0" />
-              <span className="font-semibold text-primary text-lg md:text-xl flex-grow">
-                {t('dashboardPage.questionsReadyTitle')}
-              </span>
-              {/* AccordionTrigger will add its own chevron */}
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="p-4 pt-0">
-            <div className="text-primary/80 space-y-1"> {/* Formerly AlertDescription */}
-              <p>{t('dashboardPage.questionsReadyDescription')}</p>
-              <p>
-                <span className="font-medium">{t('dashboardPage.analysisSummaryLabel')}</span> {predictedData.analysisSummary.substring(0,150)}...
-              </p>
-              {predictedData.recurringThemes && predictedData.recurringThemes.length > 0 && (
-                <p className="text-sm"><span className="font-medium">{t('dashboardPage.mainThemesLabel')}</span> {predictedData.recurringThemes.join(', ')}.</p>
-              )}
-              {predictedData.potentialFocusAreas && predictedData.potentialFocusAreas.length > 0 && (
-                <p className="text-sm"><span className="font-medium">{t('dashboardPage.focusAreasLabel')}</span> {predictedData.potentialFocusAreas.join(', ')}.</p>
-              )}
-              {predictedData.identifiedExamPatterns && (
-                <Alert variant="default" className="mt-3 bg-primary/10 border-primary/30 shadow-sm">
-                    <Microscope className="h-4 w-4 text-primary" />
-                    <AlertTitle className="text-primary text-sm font-semibold">{t('dashboardPage.examPatternsIdentifiedTitle')}</AlertTitle>
-                    <AlertDescription className="text-primary/70 text-xs">
-                        {predictedData.identifiedExamPatterns}
-                    </AlertDescription>
-                </Alert>
-              )}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-
-      <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mb-4">
-        <div className="flex items-center gap-2">
-          <Label htmlFor="num-questions-reanalysis-select" className="text-sm font-medium">{t('dashboardPage.numQuestionsLabel')}</Label>
-          <Select
-            value={numQuestionsForReanalysis}
-            onValueChange={setNumQuestionsForReanalysis}
-            disabled={isReAnalyzing || !predictedData?.originalDocumentContent}
-          >
-            <SelectTrigger id="num-questions-reanalysis-select" className="w-[150px] sm:w-auto">
-              <SelectValue placeholder={t('common.selectOption')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="5">5</SelectItem>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="15">15</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="25">25</SelectItem>
-              <SelectItem value="30">30</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <Button
-          onClick={handleReAnalyze}
-          disabled={isReAnalyzing || !predictedData?.originalDocumentContent}
-          variant="outline"
-          className="shadow-md w-full sm:w-auto"
-          title={t('dashboardPage.reanalyzeButton')}
-        >
-          {isReAnalyzing ? (
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          ) : (
-            <RefreshCw className="mr-2 h-5 w-5" />
-          )}
-          {t('dashboardPage.reanalyzeButton')}
-        </Button>
+      {/* AdSense Ad Unit Placeholder REMOVED */}
+      {/* 
+      <div style={{ width: '100%', minHeight: '90px', backgroundColor: '#f0f0f0', border: '1px dashed #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '20px 0', padding: '10px', textAlign: 'center' }}>
+        <span style={{ color: '#999', fontSize: '0.9rem' }}>{t("adsense.placeholderDashboard")}</span>
       </div>
-
+      */}
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {questionsToDisplay.map((q: PredictedQuestion, index) => (
-          <PredictedQuestionCard
-              key={index}
-              question={q}
-              onGetExplanation={handleGetExplanation}
-              isExplainingCurrent={isExplaining && selectedQuestionForExplanation?.questionText === q.questionText}
-          />
-          ))}
+        <Card className="shadow-lg hover:shadow-xl transition-shadow col-span-1 md:col-span-2 lg:col-span-3 bg-gradient-to-r from-primary/80 to-accent/80 text-primary-foreground">
+          <CardHeader>
+            <CardTitle className="text-2xl">{t('dashboardPage.startNewAnalysisTitle')}</CardTitle>
+            <CardDescription className="text-primary-foreground/80">{t('dashboardPage.startNewAnalysisDescription')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/upload" passHref>
+              <Button size="lg" className="bg-background text-primary hover:bg-background/90 w-full sm:w-auto text-lg py-3">
+                <UploadCloud className="mr-3 h-6 w-6" />
+                {t('dashboardPage.uploadDocsButton')}
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        {predictedData && (
+          <Card className="shadow-md hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center gap-2 text-primary">
+                <BookOpenText className="h-6 w-6" />
+                {t('dashboardPage.lastAnalysisTitle')}
+              </CardTitle>
+              <CardDescription>{t('dashboardPage.lastAnalysisDate', { date: formatDate(predictedData.timestamp) })}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <p><span className="font-semibold">{t('dashboardPage.analysisSummaryLabel')}</span> {predictedData.analysisSummary.substring(0, 100)}...</p>
+              {predictedData.recurringThemes && predictedData.recurringThemes.length > 0 && (
+                <p><span className="font-semibold">{t('dashboardPage.mainThemesLabel')}</span> {predictedData.recurringThemes.slice(0, 3).join(', ')}</p>
+              )}
+              <p><span className="font-semibold">{t('dashboardPage.questionsGeneratedLabel')}</span> {predictedData.questions?.length || 0}</p>
+            </CardContent>
+            <CardFooter>
+               <Button variant="outline" className="w-full" disabled> {/* This button is a placeholder */}
+                <ArrowRight className="mr-2 h-4 w-4" /> {t('dashboardPage.viewAndStudyButton')} ({t('common.soon')})
+              </Button>
+            </CardFooter>
+          </Card>
+        )}
+
+        <Card className="shadow-md hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2 text-primary">
+              <History className="h-6 w-6" />
+              {t('dashboardPage.examHistoryTitle')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">{t('dashboardPage.examHistoryDescription')}</p>
+          </CardContent>
+           <CardFooter>
+            <Button variant="ghost" className="w-full text-primary" disabled>
+               {t('dashboardPage.viewHistoryButton')} ({t('common.soon')})
+            </Button>
+          </CardFooter>
+        </Card>
+
+        <Card className="shadow-md hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2 text-primary">
+              <BarChart3 className="h-6 w-6" />
+              {t('dashboardPage.studyStatsTitle')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">{t('dashboardPage.studyStatsDescription')}</p>
+          </CardContent>
+          <CardFooter>
+            <Button variant="ghost" className="w-full text-primary" disabled>
+               {t('dashboardPage.viewStatsButton')} ({t('common.soon')})
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
 
-      <AIExplanationDialog
-        open={isExplanationDialogOpen}
-        onOpenChange={setIsExplanationDialogOpen}
-        question={currentExplanation?.question || selectedQuestionForExplanation?.questionText}
-        explanation={currentExplanation?.explanation || null}
-        isLoading={isExplaining && !currentExplanation}
-      />
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center text-primary">{t('dashboardPage.quickAccessTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {[
+            { href: '/configure', labelKey: 'sidebar.configureExam', icon: Settings },
+            { href: '/community', labelKey: 'sidebar.community', icon: Users },
+            { href: '/profile', labelKey: 'sidebar.profile', icon: User },
+            { href: '/custom-courses/create', labelKey: 'sidebar.createCourse', icon: Lightbulb },
+            { href: '/#pricing', labelKey: 'pricingPage.mainTitle', icon: ArrowRight },
+          ].map(item => (
+            <Link key={item.href} href={item.href} passHref>
+              <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center p-2 text-center shadow-sm hover:shadow-md hover:bg-accent/50">
+                <item.icon className="h-7 w-7 mb-1 text-primary" />
+                <span className="text-xs font-medium text-foreground">{t(item.labelKey)}</span>
+              </Button>
+            </Link>
+          ))}
+        </CardContent>
+      </Card>
+      
+       {/* Beta Ad Notice - if you want to keep it */}
+       {/* <Alert variant="default" className="mt-8 bg-blue-500/10 border-blue-500/50 text-blue-700 dark:text-blue-400">
+            <Info className="h-5 w-5" />
+            <AlertTitle>{t('dashboardPage.betaAdNoticeTitle')}</AlertTitle>
+            <AlertDescription>
+              {t('dashboardPage.betaAdNoticeDescription')}
+            </AlertDescription>
+        </Alert> */}
+
     </div>
   );
 }
+
+    
