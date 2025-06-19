@@ -13,7 +13,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import SidebarNav from './SidebarNav';
-import { Brain } from 'lucide-react';
+// import { Brain } from 'lucide-react'; // Eliminamos la importación del icono Brain
 import Link from 'next/link';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useI18n } from '@/contexts/I18nContext'; 
@@ -50,12 +50,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <SidebarProvider defaultOpen={!isMobile} open={isMobile ? false : undefined}>
-      {/* Desktop sidebar: starts open (due to defaultOpen={!isMobile}), can be collapsed to icons */}
+      {/* Desktop sidebar: starts open, can be collapsed to icons */}
       <Sidebar variant="sidebar" collapsible="icon"> 
         <SidebarHeader className="p-4">
           <Link href="/" className="flex items-center gap-2 text-sidebar-primary hover:text-sidebar-primary/90 transition-colors">
-            <Brain className="h-8 w-8" />
-            <h1 className="text-xl font-semibold group-data-[collapsible=icon]:hidden">
+            {/* Se elimina el icono <Brain /> */}
+            <h1 className="text-2xl font-semibold"> {/* Aumentamos un poco el tamaño para destacar */}
               Zeinte
             </h1>
           </Link>
