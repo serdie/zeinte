@@ -13,7 +13,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import SidebarNav from './SidebarNav';
-// import { Brain } from 'lucide-react'; // Eliminamos la importación del icono Brain
+// import { Brain } from 'lucide-react'; // Ícono Brain eliminado previamente
 import Link from 'next/link';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useI18n } from '@/contexts/I18nContext'; 
@@ -42,7 +42,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     if (currentPathname.startsWith('/admin/community-management')) return t("appLayout.adminCommunityManagementTitle");
     if (currentPathname.startsWith('/admin')) return t("appLayout.adminTitle");
     // Fallback title for other cases within AppLayout
-    return t("appLayout.defaultTitle"); // Should be "Zeinte"
+    return t("appLayout.defaultTitle"); 
   };
   
   const headerTitle = getDynamicHeaderTitle(pathname);
@@ -54,8 +54,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <Sidebar variant="sidebar" collapsible="icon"> 
         <SidebarHeader className="p-4">
           <Link href="/" className="flex items-center gap-2 text-sidebar-primary hover:text-sidebar-primary/90 transition-colors">
-            {/* Se elimina el icono <Brain /> */}
-            <h1 className="text-2xl font-semibold"> {/* Aumentamos un poco el tamaño para destacar */}
+            {/* Ícono Brain eliminado, mantenemos solo el texto */}
+            <h1 className="text-2xl font-semibold">
               Zeinte
             </h1>
           </Link>
