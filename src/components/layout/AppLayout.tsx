@@ -13,11 +13,10 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import SidebarNav from './SidebarNav';
-// import { Brain } from 'lucide-react'; // Ícono Brain eliminado previamente
 import Link from 'next/link';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useI18n } from '@/contexts/I18nContext'; 
-import LanguageSwitcher from './LanguageSwitcher'; 
+import { useI18n } from '@/contexts/I18nContext';
+import LanguageSwitcher from './LanguageSwitcher';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -41,20 +40,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
     if (currentPathname.startsWith('/admin/app-settings')) return t("appLayout.adminAppSettingsTitle");
     if (currentPathname.startsWith('/admin/community-management')) return t("appLayout.adminCommunityManagementTitle");
     if (currentPathname.startsWith('/admin')) return t("appLayout.adminTitle");
-    // Fallback title for other cases within AppLayout
-    return t("appLayout.defaultTitle"); 
+    return t("appLayout.defaultTitle");
   };
-  
-  const headerTitle = getDynamicHeaderTitle(pathname);
 
+  const headerTitle = getDynamicHeaderTitle(pathname);
 
   return (
     <SidebarProvider defaultOpen={!isMobile} open={isMobile ? false : undefined}>
-      {/* Desktop sidebar: starts open, can be collapsed to icons */}
-      <Sidebar variant="sidebar" collapsible="icon"> 
+      <Sidebar variant="sidebar" collapsible="icon"> {/* Desktop sidebar: starts open if !isMobile, collapsible to icons */}
         <SidebarHeader className="p-4">
           <Link href="/" className="flex items-center gap-2 text-sidebar-primary hover:text-sidebar-primary/90 transition-colors">
-            {/* Ícono Brain eliminado, mantenemos solo el texto */}
             <h1 className="text-2xl font-semibold">
               Zeinte
             </h1>
@@ -82,12 +77,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <div className="md:hidden"> {/* This trigger is for mobile off-canvas */}
               <SidebarTrigger />
             </div>
-            {/* Desktop trigger can be added here if needed for icon mode, or rely on rail */}
             <h2 className="text-lg font-semibold text-foreground">
               {headerTitle}
             </h2>
           </div>
-          <LanguageSwitcher /> 
+          <LanguageSwitcher />
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
           {children}
