@@ -47,7 +47,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <SidebarProvider defaultOpen={!isMobile} open={isMobile ? false : undefined}>
-      <Sidebar variant="sidebar" collapsible="icon"> {/* Desktop sidebar: starts open if !isMobile, collapsible to icons */}
+      {/* Desktop sidebar: starts open if !isMobile, NOT collapsible */}
+      <Sidebar variant="sidebar" collapsible="none" side="left"> 
         <SidebarHeader className="p-4">
           <Link href="/" className="flex items-center gap-2 text-sidebar-primary hover:text-sidebar-primary/90 transition-colors">
             <h1 className="text-2xl font-semibold">
@@ -58,7 +59,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <SidebarContent>
           <SidebarNav />
         </SidebarContent>
-        <SidebarFooter className="p-4 group-data-[collapsible=icon]:hidden">
+        <SidebarFooter className="p-4">
           <p className="text-xs text-sidebar-foreground/70">
             &copy; {new Date().getFullYear()} Search and Make S.L (CIF: B45786787) - Zeinte.
           </p>
@@ -74,7 +75,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
           <div className="flex items-center gap-2">
-            <div className="md:hidden"> {/* This trigger is for mobile off-canvas */}
+            {/* This trigger is for mobile off-canvas */}
+            <div className="md:hidden"> 
               <SidebarTrigger />
             </div>
             <h2 className="text-lg font-semibold text-foreground">
