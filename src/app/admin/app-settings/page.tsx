@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { Loader2, ShieldAlert, ArrowLeft, Settings, AlertTriangle, Save } from 'lucide-react';
@@ -20,23 +22,28 @@ interface AppSettings {
   maxTotalSizeMB: number;
   defaultAiModel?: string;
   defaultTemperature?: number;
+  maintenanceMode?: boolean;
+  allowNewSignups?: boolean;
+  proPlanMaxPdfDownloads?: number;
   updatedAt?: any;
 }
 
-const DEFAULT_MAX_FILES_UPLOAD = 30;
-const DEFAULT_MAX_TOTAL_SIZE_MB = 20; // Updated to 20MB
+const DEFAULTS = {
+  maxFilesUpload: 30,
+  maxTotalSizeMB: 20,
+  defaultAiModel: 'googleai/gemini-2.0-flash',
+  defaultTemperature: 0.7,
+  maintenanceMode: false,
+  allowNewSignups: true,
+  proPlanMaxPdfDownloads: 10,
+};
 
 export default function AdminAppSettingsPage() {
   const { currentUser, isAdmin, loading: authLoading, isFirebaseConfigured } = useAuth();
   const { toast } = useToast();
   const { t } = useI18n();
 
-  const [settings, setSettings] = useState<Partial<AppSettings>>({
-    maxFilesUpload: DEFAULT_MAX_FILES_UPLOAD,
-    maxTotalSizeMB: DEFAULT_MAX_TOTAL_SIZE_MB,
-    defaultAiModel: 'googleai/gemini-2.0-flash',
-    defaultTemperature: 0.7,
-  });
+  const [settings, setSettings] = useState<Partial<AppSettings>>(DEFAULTS);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -54,19 +61,16 @@ export default function AdminAppSettingsPage() {
         if (docSnap.exists()) {
           const data = docSnap.data() as AppSettings;
           setSettings({
-            maxFilesUpload: data.maxFilesUpload || DEFAULT_MAX_FILES_UPLOAD,
-            maxTotalSizeMB: data.maxTotalSizeMB || DEFAULT_MAX_TOTAL_SIZE_MB,
-            defaultAiModel: data.defaultAiModel || 'googleai/gemini-2.0-flash',
-            defaultTemperature: data.defaultTemperature === undefined ? 0.7 : data.defaultTemperature,
+            maxFilesUpload: data.maxFilesUpload || DEFAULTS.maxFilesUpload,
+            maxTotalSizeMB: data.maxTotalSizeMB || DEFAULTS.maxTotalSizeMB,
+            defaultAiModel: data.defaultAiModel || DEFAULTS.defaultAiModel,
+            defaultTemperature: data.defaultTemperature === undefined ? DEFAULTS.defaultTemperature : data.defaultTemperature,
+            maintenanceMode: data.maintenanceMode === undefined ? DEFAULTS.maintenanceMode : data.maintenanceMode,
+            allowNewSignups: data.allowNewSignups === undefined ? DEFAULTS.allowNewSignups : data.allowNewSignups,
+            proPlanMaxPdfDownloads: data.proPlanMaxPdfDownloads === undefined ? DEFAULTS.proPlanMaxPdfDownloads : data.proPlanMaxPdfDownloads,
           });
         } else {
-          // Initialize with defaults if not found
-          setSettings({
-            maxFilesUpload: DEFAULT_MAX_FILES_UPLOAD,
-            maxTotalSizeMB: DEFAULT_MAX_TOTAL_SIZE_MB,
-            defaultAiModel: 'googleai/gemini-2.0-flash',
-            defaultTemperature: 0.7,
-          });
+          setSettings(DEFAULTS);
         }
       } catch (error) {
         console.error("Error fetching app settings:", error);
@@ -90,6 +94,13 @@ export default function AdminAppSettingsPage() {
       [name]: type === 'number' ? Number(value) : value,
     }));
   };
+  
+  const handleSwitchChange = (name: keyof AppSettings, checked: boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      [name]: checked,
+    }));
+  };
 
   const handleSaveSettings = async (event: FormEvent) => {
     event.preventDefault();
@@ -99,7 +110,8 @@ export default function AdminAppSettingsPage() {
     }
     if (!settings.maxFilesUpload || settings.maxFilesUpload <= 0 || 
         !settings.maxTotalSizeMB || settings.maxTotalSizeMB <= 0 ||
-        (settings.defaultTemperature !== undefined && (settings.defaultTemperature < 0 || settings.defaultTemperature > 1))
+        (settings.defaultTemperature !== undefined && (settings.defaultTemperature < 0 || settings.defaultTemperature > 1)) ||
+        (settings.proPlanMaxPdfDownloads !== undefined && settings.proPlanMaxPdfDownloads < 0)
        ) {
         toast({ title: t('adminAppSettingsPage.invalidValuesToastTitle'), description: t('adminAppSettingsPage.invalidValuesToastDescription'), variant: "destructive" });
         return;
@@ -111,22 +123,18 @@ export default function AdminAppSettingsPage() {
       const settingsToSave: Partial<AppSettings> = {
         maxFilesUpload: settings.maxFilesUpload,
         maxTotalSizeMB: settings.maxTotalSizeMB,
-        defaultAiModel: settings.defaultAiModel || 'googleai/gemini-2.0-flash',
-        defaultTemperature: settings.defaultTemperature === undefined ? 0.7 : settings.defaultTemperature,
+        defaultAiModel: settings.defaultAiModel,
+        defaultTemperature: settings.defaultTemperature,
+        maintenanceMode: settings.maintenanceMode,
+        allowNewSignups: settings.allowNewSignups,
+        proPlanMaxPdfDownloads: settings.proPlanMaxPdfDownloads,
         updatedAt: serverTimestamp(),
       };
       await setDoc(settingsRef, settingsToSave, { merge: true });
       
-      let descriptionKey = 'adminAppSettingsPage.configSavedToastDescriptionAll';
-      if (Object.keys(settingsToSave).length === 3 && settingsToSave.maxFilesUpload && settingsToSave.maxTotalSizeMB && settingsToSave.updatedAt) {
-          descriptionKey = 'adminAppSettingsPage.configSavedToastDescriptionFileUploadLimits';
-      } else if (Object.keys(settingsToSave).length === 3 && settingsToSave.defaultAiModel && settingsToSave.defaultTemperature && settingsToSave.updatedAt) {
-          descriptionKey = 'adminAppSettingsPage.configSavedToastDescriptionAISettings';
-      }
-
       toast({
         title: t('adminAppSettingsPage.configSavedToastTitle'),
-        description: t(descriptionKey),
+        description: t('adminAppSettingsPage.configSavedToastDescriptionAll'),
         variant: "default",
       });
     } catch (error) {
@@ -196,67 +204,120 @@ export default function AdminAppSettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSaveSettings} className="space-y-6">
+          <form onSubmit={handleSaveSettings} className="space-y-8">
+            <fieldset className="border p-4 rounded-md space-y-4">
+                <legend className="text-lg font-medium text-primary px-1">{t('adminAppSettingsPage.maintenanceModeLegend')}</legend>
+                <div className="flex items-center space-x-4">
+                    <Switch
+                        id="maintenanceMode"
+                        checked={settings.maintenanceMode}
+                        onCheckedChange={(checked) => handleSwitchChange('maintenanceMode', checked)}
+                    />
+                    <Label htmlFor="maintenanceMode" className="flex flex-col space-y-1">
+                        <span>{t('adminAppSettingsPage.maintenanceModeLabel')}</span>
+                        <span className="font-normal leading-snug text-muted-foreground text-xs">
+                         {t('adminAppSettingsPage.maintenanceModeDescription')}
+                        </span>
+                    </Label>
+                </div>
+                 <div className="flex items-center space-x-4">
+                    <Switch
+                        id="allowNewSignups"
+                        checked={settings.allowNewSignups}
+                        onCheckedChange={(checked) => handleSwitchChange('allowNewSignups', checked)}
+                    />
+                    <Label htmlFor="allowNewSignups" className="flex flex-col space-y-1">
+                        <span>{t('adminAppSettingsPage.allowNewSignupsLabel')}</span>
+                        <span className="font-normal leading-snug text-muted-foreground text-xs">
+                         {t('adminAppSettingsPage.allowNewSignupsDescription')}
+                        </span>
+                    </Label>
+                </div>
+            </fieldset>
+
+
             <fieldset className="border p-4 rounded-md space-y-4">
               <legend className="text-lg font-medium text-primary px-1">{t('adminAppSettingsPage.fileUploadLimitsLegend')}</legend>
-              <div className="space-y-2">
-                <Label htmlFor="maxFilesUpload">{t('adminAppSettingsPage.maxFilesUploadLabel')}</Label>
-                <Input
-                  id="maxFilesUpload"
-                  name="maxFilesUpload"
-                  type="number"
-                  value={settings.maxFilesUpload || ''}
-                  onChange={handleInputChange}
-                  className="max-w-xs"
-                  min="1"
-                  required
-                />
-                <p className="text-xs text-muted-foreground">{t('adminAppSettingsPage.maxFilesUploadDescription')}</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="maxTotalSizeMB">{t('adminAppSettingsPage.maxTotalSizeMBLabel')}</Label>
-                <Input
-                  id="maxTotalSizeMB"
-                  name="maxTotalSizeMB"
-                  type="number"
-                  value={settings.maxTotalSizeMB || ''}
-                  onChange={handleInputChange}
-                  className="max-w-xs"
-                  min="1"
-                  required
-                />
-                <p className="text-xs text-muted-foreground">{t('adminAppSettingsPage.maxTotalSizeMBDescription')}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="maxFilesUpload">{t('adminAppSettingsPage.maxFilesUploadLabel')}</Label>
+                  <Input
+                    id="maxFilesUpload"
+                    name="maxFilesUpload"
+                    type="number"
+                    value={settings.maxFilesUpload || ''}
+                    onChange={handleInputChange}
+                    className="max-w-xs"
+                    min="1"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">{t('adminAppSettingsPage.maxFilesUploadDescription')}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="maxTotalSizeMB">{t('adminAppSettingsPage.maxTotalSizeMBLabel')}</Label>
+                  <Input
+                    id="maxTotalSizeMB"
+                    name="maxTotalSizeMB"
+                    type="number"
+                    value={settings.maxTotalSizeMB || ''}
+                    onChange={handleInputChange}
+                    className="max-w-xs"
+                    min="1"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">{t('adminAppSettingsPage.maxTotalSizeMBDescription')}</p>
+                </div>
               </div>
             </fieldset>
 
             <fieldset className="border p-4 rounded-md space-y-4">
               <legend className="text-lg font-medium text-primary px-1">{t('adminAppSettingsPage.aiConfigLegend')}</legend>
-              <div className="space-y-2">
-                <Label htmlFor="defaultAiModel">{t('adminAppSettingsPage.defaultAiModelLabel')}</Label>
-                <Input
-                  id="defaultAiModel"
-                  name="defaultAiModel"
-                  type="text"
-                  value={settings.defaultAiModel || 'googleai/gemini-2.0-flash'}
-                  onChange={handleInputChange}
-                  className="max-w-xs"
-                />
-                 <p className="text-xs text-muted-foreground">{t('adminAppSettingsPage.defaultAiModelDescription')}</p>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="defaultAiModel">{t('adminAppSettingsPage.defaultAiModelLabel')}</Label>
+                  <Input
+                    id="defaultAiModel"
+                    name="defaultAiModel"
+                    type="text"
+                    value={settings.defaultAiModel || 'googleai/gemini-2.0-flash'}
+                    onChange={handleInputChange}
+                    className="max-w-xs"
+                  />
+                  <p className="text-xs text-muted-foreground">{t('adminAppSettingsPage.defaultAiModelDescription')}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="defaultTemperature">{t('adminAppSettingsPage.defaultTemperatureLabel')}</Label>
+                  <Input
+                    id="defaultTemperature"
+                    name="defaultTemperature"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="1"
+                    value={settings.defaultTemperature === undefined ? '' : settings.defaultTemperature}
+                    onChange={handleInputChange}
+                    className="max-w-xs"
+                  />
+                  <p className="text-xs text-muted-foreground">{t('adminAppSettingsPage.defaultTemperatureDescription')}</p>
+                </div>
               </div>
+            </fieldset>
+
+             <fieldset className="border p-4 rounded-md space-y-4">
+              <legend className="text-lg font-medium text-primary px-1">{t('adminAppSettingsPage.proPlanFeaturesLegend')}</legend>
               <div className="space-y-2">
-                <Label htmlFor="defaultTemperature">{t('adminAppSettingsPage.defaultTemperatureLabel')}</Label>
+                <Label htmlFor="proPlanMaxPdfDownloads">{t('adminAppSettingsPage.maxPdfDownloadsLabel')}</Label>
                 <Input
-                  id="defaultTemperature"
-                  name="defaultTemperature"
+                  id="proPlanMaxPdfDownloads"
+                  name="proPlanMaxPdfDownloads"
                   type="number"
-                  step="0.1"
-                  min="0"
-                  max="1"
-                  value={settings.defaultTemperature === undefined ? '' : settings.defaultTemperature}
+                  value={settings.proPlanMaxPdfDownloads || ''}
                   onChange={handleInputChange}
                   className="max-w-xs"
+                  min="0"
+                  required
                 />
-                <p className="text-xs text-muted-foreground">{t('adminAppSettingsPage.defaultTemperatureDescription')}</p>
+                <p className="text-xs text-muted-foreground">{t('adminAppSettingsPage.maxPdfDownloadsDescription')}</p>
               </div>
             </fieldset>
             
