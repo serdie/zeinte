@@ -8,22 +8,19 @@ import FileUploadArea from '@/components/dashboard/FileUploadArea';
 import { analyzeDocuments, type AnalyzeDocumentsOutput } from '@/ai/flows/analyze-documents';
 import { predictExamQuestions, type PredictExamQuestionsOutput } from '@/ai/flows/predict-exam-questions';
 import { useToast } from "@/hooks/use-toast";
-import { PREDICTED_DATA_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY } from '@/lib/localStorageKeys';
+import { PREDICTED_DATA_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY, EXAM_HISTORY_KEY } from '@/lib/localStorageKeys';
 import type { PredictedData } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { CardTitle } from '@/components/ui/card'; // Import CardTitle
-import { db } from '@/firebase/config';
-import { doc, setDoc } from 'firebase/firestore';
-
 
 export default function UploadPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const { currentUser, userTier } = useAuth();
+  const { userTier } = useAuth();
   const isFreeUser = userTier === 'free';
   const { t } = useI18n();
 
@@ -52,7 +49,7 @@ export default function UploadPage() {
       const examTitle = analysisResult.summary.substring(0, 50) + (analysisResult.summary.length > 50 ? '...' : '');
 
       const dataToStore: PredictedData = {
-        id: newTimestamp.toString(),
+        id: newTimestamp,
         title: examTitle,
         questions: predictionResult.questions.map(q => ({
             ...q,
@@ -66,24 +63,14 @@ export default function UploadPage() {
         potentialFocusAreas: analysisResult.potentialFocusAreas,
       };
       
+      // Save to history in localStorage
+      const historyString = localStorage.getItem(EXAM_HISTORY_KEY);
+      const history: PredictedData[] = historyString ? JSON.parse(historyString) : [];
+      history.unshift(dataToStore); // Add to the beginning of the list
+      localStorage.setItem(EXAM_HISTORY_KEY, JSON.stringify(history));
+      
       // Save the current exam for immediate viewing
       localStorage.setItem(PREDICTED_DATA_KEY, JSON.stringify(dataToStore));
-
-      // Add to Firestore history if user is logged in
-      if (currentUser && db) {
-        try {
-          const examHistoryRef = doc(db, "users", currentUser.uid, "examHistory", dataToStore.id);
-          await setDoc(examHistoryRef, dataToStore);
-        } catch (error) {
-          console.error("Error saving exam to Firestore history:", error);
-          toast({
-            title: "Warning",
-            description: "Could not save exam to your persistent history. It will be available for this session only.",
-            variant: "destructive"
-          });
-        }
-      }
-
 
       if (isFreeUser) {
         localStorage.setItem(FREE_USER_LAST_GENERATION_TIMESTAMP_KEY, Date.now().toString());

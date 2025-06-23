@@ -12,14 +12,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Loader2, History, ArrowLeft, BookOpen, AlertCircle, MoreVertical, Share2, Download, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { PREDICTED_DATA_KEY } from '@/lib/localStorageKeys';
+import { PREDICTED_DATA_KEY, EXAM_HISTORY_KEY } from '@/lib/localStorageKeys';
 import type { PredictedData } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
-import { db } from '@/firebase/config';
-import { collection, query, orderBy, getDocs, doc, deleteDoc } from 'firebase/firestore';
-
 
 export default function HistoryPage() {
   const { t, language } = useI18n();
@@ -31,41 +28,25 @@ export default function HistoryPage() {
   const [examToDelete, setExamToDelete] = useState<PredictedData | null>(null);
 
   useEffect(() => {
-    const fetchHistory = async () => {
-      if (!currentUser || !db) {
-        setIsLoading(false);
-        return;
+    setIsLoading(true);
+    try {
+      const storedHistory = localStorage.getItem(EXAM_HISTORY_KEY);
+      if (storedHistory) {
+        const parsedHistory: PredictedData[] = JSON.parse(storedHistory);
+        setExamHistory(parsedHistory);
       }
-      setIsLoading(true);
-      try {
-        const historyCollectionRef = collection(db, "users", currentUser.uid, "examHistory");
-        const q = query(historyCollectionRef, orderBy("timestamp", "desc"));
-        const querySnapshot = await getDocs(q);
-        const historyData = querySnapshot.docs.map(docSnapshot => {
-            const data = docSnapshot.data();
-            return {
-                ...data,
-                id: docSnapshot.id,
-            } as PredictedData;
-        });
-        setExamHistory(historyData);
-      } catch (error) {
-        console.error("Failed to fetch exam history from Firestore:", error);
-        toast({
-          title: t('common.error'),
-          description: "Could not load exam history from the database.",
-          variant: "destructive"
-        });
-        setExamHistory([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    if (!authLoading) {
-      fetchHistory();
+    } catch (error) {
+      console.error("Failed to fetch exam history from localStorage:", error);
+      toast({
+        title: t('common.error'),
+        description: "Could not load exam history from the browser.",
+        variant: "destructive"
+      });
+      setExamHistory([]);
+    } finally {
+      setIsLoading(false);
     }
-  }, [currentUser, authLoading, toast, t, language]);
+  }, [toast, t]);
 
   const formatDate = (timestamp: number) => {
     try {
@@ -83,14 +64,12 @@ export default function HistoryPage() {
   };
 
   const handleDeleteExam = async () => {
-    if (!examToDelete || !currentUser || !db) return;
+    if (!examToDelete) return;
     
     try {
-      const examDocRef = doc(db, "users", currentUser.uid, "examHistory", examToDelete.id);
-      await deleteDoc(examDocRef);
-
       const updatedHistory = examHistory.filter(exam => exam.id !== examToDelete.id);
       setExamHistory(updatedHistory);
+      localStorage.setItem(EXAM_HISTORY_KEY, JSON.stringify(updatedHistory));
       
       toast({
         title: t('historyPage.examDeletedToastTitle'),
@@ -98,10 +77,10 @@ export default function HistoryPage() {
         variant: "default",
       });
     } catch (error) {
-       console.error("Error deleting exam from Firestore:", error);
+       console.error("Error deleting exam from localStorage:", error);
        toast({
          title: t('common.error'),
-         description: "Could not delete the exam from the database.",
+         description: "Could not delete the exam from the browser storage.",
          variant: "destructive"
        });
     } finally {
