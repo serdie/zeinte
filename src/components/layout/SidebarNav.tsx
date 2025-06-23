@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, UploadCloud, Settings, User, Users, Home, LogIn, LogOut, UserPlus, ShieldCheck, Lightbulb, ArrowUpCircle, Edit, LifeBuoy } from 'lucide-react';
+import { BookOpenText, UploadCloud, Settings, User, Users, Home, LogIn, LogOut, UserPlus, ShieldCheck, Lightbulb, ArrowUpCircle, Edit, LifeBuoy, History } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -29,6 +29,7 @@ export default function SidebarNav() {
     { href: '/', labelKey: 'sidebar.home', icon: Home, public: true },
     { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: BookOpenText, protected: true },
     { href: '/upload', labelKey: 'sidebar.upload', icon: UploadCloud, protected: true },
+    { href: '/history', labelKey: 'sidebar.history', icon: History, protected: true },
     { href: '/configure', labelKey: 'sidebar.configureExam', icon: Settings, protected: true },
     { href: '/community', labelKey: 'sidebar.community', icon: Users, protected: true },
     { href: '/custom-courses/create', labelKey: 'sidebar.createCourse', icon: Lightbulb, protected: true },

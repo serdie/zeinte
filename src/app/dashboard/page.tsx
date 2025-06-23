@@ -106,9 +106,11 @@ export default function DashboardPage() {
               <p><span className="font-semibold">{t('dashboardPage.questionsGeneratedLabel')}</span> {predictedData.questions?.length || 0}</p>
             </CardContent>
             <CardFooter>
-               <Button variant="outline" className="w-full" disabled> {/* This button is a placeholder */}
-                <ArrowRight className="mr-2 h-4 w-4" /> {t('dashboardPage.viewAndStudyButton')} ({t('common.soon')})
-              </Button>
+               <Link href="/exam/result" passHref className="w-full">
+                <Button variant="outline" className="w-full">
+                  <ArrowRight className="mr-2 h-4 w-4" /> {t('dashboardPage.viewAndStudyButton')}
+                </Button>
+              </Link>
             </CardFooter>
           </Card>
         )}
@@ -124,9 +126,11 @@ export default function DashboardPage() {
             <p className="text-muted-foreground">{t('dashboardPage.examHistoryDescription')}</p>
           </CardContent>
            <CardFooter>
-            <Button variant="ghost" className="w-full text-primary" disabled>
-               {t('dashboardPage.viewHistoryButton')} ({t('common.soon')})
-            </Button>
+            <Link href="/history" passHref className="w-full">
+              <Button variant="ghost" className="w-full text-primary">
+                 {t('dashboardPage.viewHistoryButton')}
+              </Button>
+            </Link>
           </CardFooter>
         </Card>
 
@@ -182,5 +186,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

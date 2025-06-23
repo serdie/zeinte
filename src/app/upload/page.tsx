@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -7,7 +8,7 @@ import FileUploadArea from '@/components/dashboard/FileUploadArea';
 import { analyzeDocuments, type AnalyzeDocumentsOutput } from '@/ai/flows/analyze-documents';
 import { predictExamQuestions, type PredictExamQuestionsOutput } from '@/ai/flows/predict-exam-questions';
 import { useToast } from "@/hooks/use-toast";
-import { PREDICTED_DATA_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY } from '@/lib/localStorageKeys';
+import { PREDICTED_DATA_KEY, EXAM_HISTORY_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY } from '@/lib/localStorageKeys';
 import type { PredictedData } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
@@ -44,21 +45,34 @@ export default function UploadPage() {
         identifiedExamPatterns: analysisResult.identifiedExamPatterns,
         potentialFocusAreas: analysisResult.potentialFocusAreas,
       });
+      
+      const newTimestamp = Date.now();
+      const examTitle = analysisResult.summary.substring(0, 50) + (analysisResult.summary.length > 50 ? '...' : '');
 
       const dataToStore: PredictedData = {
+        id: newTimestamp,
+        title: examTitle,
         questions: predictionResult.questions.map(q => ({
             ...q,
         })),
         analysisSummary: analysisResult.summary,
         recurringThemes: analysisResult.recurringThemes,
-        timestamp: Date.now(),
+        timestamp: newTimestamp,
         originalDocumentContent: content,
         requestedNumberOfQuestions: numQuestions,
         identifiedExamPatterns: analysisResult.identifiedExamPatterns,
         potentialFocusAreas: analysisResult.potentialFocusAreas,
       };
-
+      
+      // Save the current exam for immediate viewing
       localStorage.setItem(PREDICTED_DATA_KEY, JSON.stringify(dataToStore));
+
+      // Add to history
+      const historyString = localStorage.getItem(EXAM_HISTORY_KEY);
+      const history: PredictedData[] = historyString ? JSON.parse(historyString) : [];
+      history.unshift(dataToStore); // Add to the beginning of the array
+      localStorage.setItem(EXAM_HISTORY_KEY, JSON.stringify(history));
+
 
       if (isFreeUser) {
         localStorage.setItem(FREE_USER_LAST_GENERATION_TIMESTAMP_KEY, Date.now().toString());

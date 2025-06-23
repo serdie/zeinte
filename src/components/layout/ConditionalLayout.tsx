@@ -1,3 +1,4 @@
+
 // src/components/layout/ConditionalLayout.tsx
 "use client";
 
@@ -24,6 +25,7 @@ const PROTECTED_PATHS = [
   '/upload',
   '/configure',
   '/community',
+  '/history',
   PROFILE_PATH,
   '/pricing',
   '/account/subscription',
