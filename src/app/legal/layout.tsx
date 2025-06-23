@@ -18,7 +18,7 @@ export default function LegalLayout({
       <header className="py-4 border-b sticky top-0 bg-background/80 backdrop-blur-sm z-10">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2 text-2xl font-semibold text-primary hover:text-primary/80">
-            <Image src="/logo.png" alt="Zeinte Logo" width={32} height={32} />
+            
             <span>Zeinte</span>
           </Link>
           <Link href="/dashboard" className="text-sm text-primary hover:underline">
