@@ -1,4 +1,3 @@
-
 // "use client"; // Eliminado para permitir la exportación de metadata
 
 import type { Metadata } from 'next';
@@ -39,6 +38,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
+        <link rel="icon" href="/logo.png" sizes="any" />
         {/* Google AdSense Account Meta Tag */}
         {ADSENSE_PUBLISHER_ID && (
           <meta name="google-adsense-account" content={ADSENSE_PUBLISHER_ID} />
