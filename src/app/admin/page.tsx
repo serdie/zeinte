@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, type FormEvent, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -59,7 +59,10 @@ export default function AdminPage() {
   const [isDeletingUser, setIsDeletingUser] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc'); 
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage, setUsersPerPage] = useState(20);
 
   const fetchUsers = async () => {
     if (!isAdmin || !isFirebaseConfigured || !db) {
@@ -76,9 +79,8 @@ export default function AdminPage() {
       const querySnapshot = await getDocs(usersCollectionRef);
       const usersList = querySnapshot.docs.map(docSnapshot => ({ 
         id: docSnapshot.id, 
-        // uid: docSnapshot.data().uid || docSnapshot.id, // uid is already part of AppUserFirestoreData via AuthAppUser
         ...docSnapshot.data()
-      } as AppUser)); // Cast to the updated AppUser type
+      } as AppUser));
       setUsers(usersList);
     } catch (error: any) {
       console.error("Error fetching users:", error);
@@ -126,6 +128,22 @@ export default function AdminPage() {
     }
     return processedUsers;
   }, [users, searchTerm, sortOrder]);
+  
+  const totalPages = Math.ceil(filteredAndSortedUsers.length / usersPerPage);
+  
+  useEffect(() => {
+    // Reset to page 1 if filters change and current page becomes invalid
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [filteredAndSortedUsers.length, totalPages, currentPage]);
+
+  const paginatedUsers = useMemo(() => {
+    const indexOfLastUser = currentPage * usersPerPage;
+    const indexOfFirstUser = indexOfLastUser - usersPerPage;
+    return filteredAndSortedUsers.slice(indexOfFirstUser, indexOfLastUser);
+  }, [filteredAndSortedUsers, currentPage, usersPerPage]);
+
 
   const toggleSortOrder = () => {
     setSortOrder(prevOrder => {
@@ -258,23 +276,39 @@ export default function AdminPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-6 flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-grow">
+          <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center">
+            <div className="relative flex-grow w-full sm:w-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder={t("adminPage.searchUserPlaceholder")}
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {setSearchTerm(e.target.value); setCurrentPage(1);}}
                 className="pl-10 w-full text-sm"
               />
             </div>
-            <Button onClick={toggleSortOrder} variant="outline" className="w-full sm:w-auto">
-              {getSortIcon()}
-              <span className="ml-2">
-                {t("adminPage.sortDateLabel", { order: sortOrder === 'desc' ? t("adminPage.sortDateNewest") : sortOrder === 'asc' ? t("adminPage.sortDateOldest") : t("adminPage.sortDateNone") })}
-              </span>
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button onClick={toggleSortOrder} variant="outline" className="flex-1 sm:flex-none">
+                {getSortIcon()}
+                <span className="ml-2">
+                  {t("adminPage.sortDateLabel", { order: sortOrder === 'desc' ? t("adminPage.sortDateNewest") : sortOrder === 'asc' ? t("adminPage.sortDateOldest") : t("adminPage.sortDateNone") })}
+                </span>
+              </Button>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="users-per-page" className="text-sm shrink-0">{t('adminPage.usersPerPageLabel')}</Label>
+                <Select value={usersPerPage.toString()} onValueChange={(value) => {setUsersPerPage(Number(value)); setCurrentPage(1);}}>
+                  <SelectTrigger id="users-per-page" className="w-[80px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
 
           {isLoadingUsers ? (
@@ -287,7 +321,7 @@ export default function AdminPage() {
               <AlertTitle>{t("adminPage.errorLoadingUsersTitle")}</AlertTitle>
               <AlertDescription>{fetchError}</AlertDescription>
             </Alert>
-          ) : filteredAndSortedUsers.length === 0 ? (
+          ) : paginatedUsers.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">
               {users.length === 0 ? t("adminPage.noUsersRegistered") : t("adminPage.noUsersMatchSearch")}
             </p>
@@ -308,7 +342,7 @@ export default function AdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAndSortedUsers.map((user) => (
+                  {paginatedUsers.map((user) => (
                     <TableRow key={user.uid}>
                       <TableCell className="font-mono text-xs truncate max-w-[100px]" title={user.uid}>{user.uid}</TableCell>
                       <TableCell className="font-medium">{user.email || t("adminPage.notAvailable")}</TableCell>
@@ -345,6 +379,19 @@ export default function AdminPage() {
             </div>
           )}
         </CardContent>
+         <CardFooter className="flex items-center justify-between pt-4">
+            <span className="text-sm text-muted-foreground">
+              {t('adminPage.pageIndicator', { currentPage: currentPage, totalPages: totalPages })}
+            </span>
+            <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
+                    {t('adminPage.prevButton')}
+                </Button>
+                <Button variant="outline" onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages || totalPages === 0}>
+                    {t('adminPage.nextButton')}
+                </Button>
+            </div>
+        </CardFooter>
       </Card>
 
       {editingUser && (
