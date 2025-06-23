@@ -41,7 +41,16 @@ export default function HistoryPage() {
         const historyCollectionRef = collection(db, "users", currentUser.uid, "examHistory");
         const q = query(historyCollectionRef, orderBy("timestamp", "desc"));
         const querySnapshot = await getDocs(q);
-        const historyData = querySnapshot.docs.map(doc => doc.data() as PredictedData);
+        const historyData = querySnapshot.docs.map(docSnapshot => {
+            const data = docSnapshot.data();
+            // The document ID is the string version of the timestamp. We use it as the source of truth.
+            const docId = parseInt(docSnapshot.id, 10);
+            return {
+                ...data,
+                // Ensure the ID in the object matches the document ID from Firestore
+                id: !isNaN(docId) ? docId : (data.id || 0), 
+            } as PredictedData;
+        });
         setExamHistory(historyData);
       } catch (error) {
         console.error("Failed to fetch exam history from Firestore:", error);
@@ -59,10 +68,11 @@ export default function HistoryPage() {
     if (!authLoading) {
       fetchHistory();
     }
-  }, [currentUser, authLoading, toast]);
+  }, [currentUser, authLoading, toast, t, language]);
 
   const formatDate = (timestamp: number) => {
     try {
+       if (!timestamp || isNaN(timestamp)) return t('common.invalidDate', {defaultValue: "Invalid date"});
       return format(new Date(timestamp), 'PPpp', { locale: language === 'es' ? es : undefined });
     } catch (error) {
       console.error("Error formatting date:", error);
