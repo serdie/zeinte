@@ -1,7 +1,6 @@
 // src/app/legal/layout.tsx
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
 
 export const metadata: Metadata = {
   // El título específico será establecido por cada página legal individualmente
@@ -17,13 +16,13 @@ export default function LegalLayout({
       <header className="py-4 border-b sticky top-0 bg-background/80 backdrop-blur-sm z-10">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2 text-2xl font-semibold text-primary hover:text-primary/80">
-            <Image
+            {/* <Image
               src="/logo.png"
               alt="Zeinte Logo"
               width={28}
               height={28}
               className="rounded-full"
-            />
+            /> */}
             <span>Zeinte</span>
           </Link>
           <Link href="/dashboard" className="text-sm text-primary hover:underline">

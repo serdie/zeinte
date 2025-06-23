@@ -2,7 +2,6 @@
 "use client";
 
 import type React from 'react';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   SidebarProvider,
@@ -54,13 +53,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <Sidebar variant="sidebar" collapsible="none" side="left"> 
         <SidebarHeader className="p-4">
           <Link href="/" className="flex items-center gap-2 text-sidebar-primary hover:text-sidebar-primary/90 transition-colors">
-            <Image
+            {/* <Image
               src="/logo.png"
               alt="Zeinte Logo"
               width={32}
               height={32}
               className="rounded-full"
-            />
+            /> */}
             <h1 className="text-2xl font-semibold">
               Zeinte
             </h1>
