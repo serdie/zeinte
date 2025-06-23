@@ -17,7 +17,6 @@ import type { PredictedData } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
-import jsPDF from 'jspdf'; // Import jsPDF
 
 export default function HistoryPage() {
   const { t, language } = useI18n();
@@ -78,7 +77,7 @@ export default function HistoryPage() {
     });
   };
 
-  const handleDownloadPdf = (exam: PredictedData) => {
+  const handleDownloadPdf = async (exam: PredictedData) => {
     if (userTier === 'free') {
         toast({
             title: t('historyPage.proFeatureTitle', {defaultValue: "Pro Feature"}),
@@ -93,6 +92,7 @@ export default function HistoryPage() {
     });
 
     try {
+        const { default: jsPDF } = await import('jspdf');
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
         const margin = 15;
