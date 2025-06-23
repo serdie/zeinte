@@ -52,7 +52,7 @@ export default function UploadPage() {
       const examTitle = analysisResult.summary.substring(0, 50) + (analysisResult.summary.length > 50 ? '...' : '');
 
       const dataToStore: PredictedData = {
-        id: newTimestamp,
+        id: newTimestamp.toString(),
         title: examTitle,
         questions: predictionResult.questions.map(q => ({
             ...q,
@@ -72,7 +72,7 @@ export default function UploadPage() {
       // Add to Firestore history if user is logged in
       if (currentUser && db) {
         try {
-          const examHistoryRef = doc(db, "users", currentUser.uid, "examHistory", dataToStore.id.toString());
+          const examHistoryRef = doc(db, "users", currentUser.uid, "examHistory", dataToStore.id);
           await setDoc(examHistoryRef, dataToStore);
         } catch (error) {
           console.error("Error saving exam to Firestore history:", error);

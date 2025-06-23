@@ -43,12 +43,9 @@ export default function HistoryPage() {
         const querySnapshot = await getDocs(q);
         const historyData = querySnapshot.docs.map(docSnapshot => {
             const data = docSnapshot.data();
-            // The document ID is the string version of the timestamp. We use it as the source of truth.
-            const docId = parseInt(docSnapshot.id, 10);
             return {
                 ...data,
-                // Ensure the ID in the object matches the document ID from Firestore
-                id: !isNaN(docId) ? docId : (data.id || 0), 
+                id: docSnapshot.id,
             } as PredictedData;
         });
         setExamHistory(historyData);
@@ -89,7 +86,7 @@ export default function HistoryPage() {
     if (!examToDelete || !currentUser || !db) return;
     
     try {
-      const examDocRef = doc(db, "users", currentUser.uid, "examHistory", examToDelete.id.toString());
+      const examDocRef = doc(db, "users", currentUser.uid, "examHistory", examToDelete.id);
       await deleteDoc(examDocRef);
 
       const updatedHistory = examHistory.filter(exam => exam.id !== examToDelete.id);
@@ -354,4 +351,3 @@ export default function HistoryPage() {
     </>
   );
 }
-

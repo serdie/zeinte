@@ -15,7 +15,7 @@ export interface AnalysisDetails {
 }
 
 export interface PredictedData extends AnalysisDetails {
-  id: number; // Unique ID for the exam, usually a timestamp
+  id: string; // Unique ID for the exam, usually a timestamp as a string
   title: string; // A title for the exam to show in the history list
   questions: PredictedQuestion[];
   analysisSummary: string;
