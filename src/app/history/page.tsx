@@ -17,6 +17,7 @@ import type { PredictedData } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import jsPDF from 'jspdf'; // Import jsPDF
 
 export default function HistoryPage() {
   const { t, language } = useI18n();
@@ -77,12 +78,134 @@ export default function HistoryPage() {
     });
   };
 
-  const handleDownloadPdf = () => {
-      toast({
-        title: t('historyPage.comingSoonTitle'),
-        description: t('historyPage.downloadProFeature'),
+  const handleDownloadPdf = (exam: PredictedData) => {
+    if (userTier === 'free') {
+        toast({
+            title: t('historyPage.proFeatureTitle', {defaultValue: "Pro Feature"}),
+            description: t('historyPage.downloadProFeature'),
+        });
+        return;
+    }
+
+    toast({
+        title: t('historyPage.generatingPdfTitle', {defaultValue: "Generating PDF..."}),
+        description: t('historyPage.generatingPdfDescription', {defaultValue: "This may take a moment."}),
     });
-  }
+
+    try {
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 15;
+        const maxLineWidth = pageWidth - margin * 2;
+        let y = 20;
+
+        const checkPageBreak = (spaceNeeded: number) => {
+            if (y + spaceNeeded > doc.internal.pageSize.getHeight() - margin) {
+                doc.addPage();
+                y = margin;
+            }
+        };
+
+        // Header
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.text(exam.title, margin, y);
+        y += 10;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(`${t('historyPage.generatedOn', {defaultValue: "Generated on"})} ${formatDate(exam.timestamp)}`, margin, y);
+        y += 10;
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 10;
+        
+        // Summary
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(t('dashboardPage.analysisSummaryLabel', {defaultValue: "Analysis summary:"}), margin, y);
+        y += 8;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        const summaryLines = doc.splitTextToSize(exam.analysisSummary, maxLineWidth);
+        checkPageBreak(summaryLines.length * 7 + 5);
+        doc.text(summaryLines, margin, y);
+        y += summaryLines.length * 7 + 5;
+        
+        // Themes
+        if (exam.recurringThemes && exam.recurringThemes.length > 0) {
+            checkPageBreak(15);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(t('dashboardPage.mainThemesLabel', {defaultValue: "Main themes:"}), margin, y);
+            y += 8;
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            doc.text(exam.recurringThemes.join(', '), margin, y);
+            y += 10;
+        }
+
+        // Questions
+        checkPageBreak(20);
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text(t('historyPage.generatedQuestionsTitle', {defaultValue: "Generated Questions"}), margin, y);
+        y += 10;
+
+        exam.questions.forEach((q, index) => {
+            checkPageBreak(50); // Minimum space for a question
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            const questionLines = doc.splitTextToSize(`${index + 1}. ${q.questionText}`, maxLineWidth);
+            checkPageBreak(questionLines.length * 7 + 5);
+            doc.text(questionLines, margin, y);
+            y += questionLines.length * 7 + 5;
+
+            doc.setFont('helvetica', 'normal');
+            q.options.forEach((option, optIndex) => {
+                const isCorrect = optIndex === q.correctAnswerIndex;
+                const prefix = `${String.fromCharCode(65 + optIndex)}) `;
+                if (isCorrect) {
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(34, 139, 34); // ForestGreen
+                }
+                const optionLines = doc.splitTextToSize(prefix + option, maxLineWidth - 5);
+                checkPageBreak(optionLines.length * 6 + 2);
+                doc.text(optionLines, margin + 5, y);
+                y += optionLines.length * 6 + 2;
+                if (isCorrect) {
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(0, 0, 0); // Black
+                }
+            });
+
+            if (q.explanation) {
+                checkPageBreak(20);
+                y += 2;
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'italic');
+                const explanationLines = doc.splitTextToSize(`${t('predictedQuestionCard.viewBriefExplanation', {defaultValue: "View brief explanation of the answer"})}: ${q.explanation}`, maxLineWidth - 5);
+                checkPageBreak(explanationLines.length * 5 + 5);
+                doc.text(explanationLines, margin + 5, y);
+                y += explanationLines.length * 5 + 5;
+                doc.setFont('helvetica', 'normal');
+            }
+             y += 5;
+             if (index < exam.questions.length - 1) {
+                doc.line(margin, y, pageWidth - margin, y);
+                y+= 5;
+             }
+        });
+
+        doc.save(`${exam.title.substring(0, 25).replace(/[^a-z0-9]/gi, '_')}_zeinte_exam.pdf`);
+
+    } catch (error) {
+        console.error("Error generating PDF:", error);
+        toast({
+            title: t('common.error'),
+            description: (error instanceof Error) ? error.message : t('historyPage.pdfGenerationError', {defaultValue: "Could not generate PDF."}),
+            variant: "destructive"
+        });
+    }
+  };
 
 
   if (isLoading || authLoading) {
@@ -137,7 +260,7 @@ export default function HistoryPage() {
                         <Share2 className="mr-2 h-4 w-4" />
                         <span>{t('historyPage.shareExam')}</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleDownloadPdf}>
+                    <DropdownMenuItem onClick={() => handleDownloadPdf(exam)}>
                         <Download className="mr-2 h-4 w-4" />
                         <span>{t('historyPage.downloadPDF')}</span>
                     </DropdownMenuItem>
