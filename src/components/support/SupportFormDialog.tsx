@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, type FormEvent } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/contexts/I18nContext';
-import { Loader2, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 
 interface SupportFormDialogProps {
   open: boolean;
@@ -29,9 +29,8 @@ export default function SupportFormDialog({ open, onOpenChange, userEmail }: Sup
   const { t } = useI18n();
   const { toast } = useToast();
   const [problemDescription, setProblemDescription] = useState('');
-  const [isSending, setIsSending] = useState(false);
 
-  const handleSubmit = async (event: FormEvent) => {
+  const handleSendEmail = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     if (!problemDescription.trim()) {
       toast({
@@ -42,15 +41,12 @@ export default function SupportFormDialog({ open, onOpenChange, userEmail }: Sup
       return;
     }
 
-    setIsSending(true);
+    const subject = encodeURIComponent(`Soporte Zeinte - Consulta de ${userEmail}`);
+    const body = encodeURIComponent(problemDescription);
+    const mailtoLink = `mailto:info@zeinte.com?subject=${subject}&body=${body}`;
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    console.log('Support Request (Simulated):');
-    console.log('User Email:', userEmail);
-    console.log('Problem Description:', problemDescription);
-    console.log('This would be sent to info@zeinte.com');
+    // Open email client
+    window.location.href = mailtoLink;
 
     toast({
       title: t('supportForm.requestSentTitle'),
@@ -58,9 +54,8 @@ export default function SupportFormDialog({ open, onOpenChange, userEmail }: Sup
       variant: 'default',
     });
 
-    setIsSending(false);
-    setProblemDescription('');
     onOpenChange(false);
+    setProblemDescription('');
   };
 
   return (
@@ -70,7 +65,7 @@ export default function SupportFormDialog({ open, onOpenChange, userEmail }: Sup
           <DialogTitle className="text-2xl text-primary">{t('supportForm.title')}</DialogTitle>
           <DialogDescription>{t('supportForm.description')}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6 py-4">
+        <div className="space-y-6 py-4">
           <div className="space-y-2">
             <Label htmlFor="support-email">{t('supportForm.emailLabel')}</Label>
             <Input id="support-email" type="email" value={userEmail} disabled className="bg-muted/50" />
@@ -86,22 +81,18 @@ export default function SupportFormDialog({ open, onOpenChange, userEmail }: Sup
               required
             />
           </div>
-          <DialogFooter className="pt-4">
-            <DialogClose asChild>
-              <Button type="button" variant="outline" disabled={isSending}>
-                {t('common.cancel')}
-              </Button>
-            </DialogClose>
-            <Button type="submit" disabled={isSending} className="bg-accent hover:bg-accent/90 text-accent-foreground">
-              {isSending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="mr-2 h-4 w-4" />
-              )}
-              {t('supportForm.sendButton')}
+        </div>
+        <DialogFooter className="pt-4">
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              {t('common.cancel')}
             </Button>
-          </DialogFooter>
-        </form>
+          </DialogClose>
+          <Button onClick={handleSendEmail} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+            <Send className="mr-2 h-4 w-4" />
+            {t('supportForm.sendButton')}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

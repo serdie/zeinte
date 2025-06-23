@@ -621,7 +621,7 @@
     "firebaseConfigErrorDescription": "Firebase Firestore is not configured or available. The community management panel cannot function."
   },
   "adminAppSettingsPage": {
-    "loading": "Loading...",
+    "loading": "Cargando...",
     "accessDeniedTitle": "Access Denied",
     "accessDeniedDescription": "You do not have permission to access this section.",
     "backToDashboard": "Back to Zeinte Study Dashboard",
@@ -870,15 +870,15 @@
   },
   "supportForm": {
     "title": "Contact Zeinte Support",
-    "description": "Describe your issue or question, and we'll get back to you as soon as possible. This feature is simulated and will log a message to the console.",
+    "description": "Describe your issue or question. Upon sending, your default email application will open for you to send your message to info@zeinte.com.",
     "emailLabel": "Your Email:",
     "problemLabel": "Describe your problem or query:",
     "problemPlaceholder": "Detail the issue you're experiencing or the question you have here...",
-    "sendButton": "Send Support Request",
+    "sendButton": "Open Email to Send",
     "validationErrorTitle": "Description Required",
     "validationErrorDescription": "Please describe your problem before sending.",
-    "requestSentTitle": "Support Request Sent (Simulated)",
-    "requestSentDescription": "We have received your query. We will contact you soon. (Message logged in console)"
+    "requestSentTitle": "Redirecting to your email client",
+    "requestSentDescription": "Your email application should open. Please send the email from there to complete your request."
   },
   "examResultPage": {
     "title": "Exam Study Session",
@@ -886,5 +886,3 @@
     "backToDashboard": "Back to Dashboard"
   }
 }
-
-    

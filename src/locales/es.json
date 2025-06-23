@@ -870,15 +870,15 @@
   },
   "supportForm": {
     "title": "Contactar con Soporte de Zeinte",
-    "description": "Describe tu problema o duda y te responderemos lo antes posible. Esta función es simulada y enviará un mensaje a la consola.",
+    "description": "Describe tu problema o duda. Al enviar, se abrirá tu aplicación de correo electrónico predeterminada para que puedas mandar tu mensaje a info@zeinte.com.",
     "emailLabel": "Tu Correo Electrónico:",
     "problemLabel": "Describe tu problema o consulta:",
     "problemPlaceholder": "Detalla aquí el inconveniente que estás experimentando o la pregunta que tienes...",
-    "sendButton": "Enviar Solicitud de Soporte",
+    "sendButton": "Abrir Correo para Enviar",
     "validationErrorTitle": "Descripción Requerida",
     "validationErrorDescription": "Por favor, describe tu problema antes de enviar.",
-    "requestSentTitle": "Solicitud de Soporte Enviada (Simulado)",
-    "requestSentDescription": "Hemos recibido tu consulta. Nos pondremos en contacto contigo pronto. (Mensaje registrado en consola)"
+    "requestSentTitle": "Redirigiendo a tu cliente de correo",
+    "requestSentDescription": "Tu aplicación de correo debería abrirse. Por favor, envía el email desde allí para completar tu solicitud."
   },
   "examResultPage": {
     "title": "Sesión de Estudio de Examen",
@@ -886,5 +886,3 @@
     "backToDashboard": "Volver al Panel"
   }
 }
-
-    
