@@ -26,7 +26,8 @@ const PROTECTED_PATHS = [
   '/community',
   PROFILE_PATH,
   '/pricing',
-  '/account/subscription'
+  '/account/subscription',
+  '/exam/result'
 ];
 
 

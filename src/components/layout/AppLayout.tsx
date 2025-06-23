@@ -1,4 +1,3 @@
-
 "use client";
 
 import type React from 'react';
@@ -30,6 +29,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const getDynamicHeaderTitle = (currentPathname: string): string => {
     if (currentPathname.startsWith('/dashboard')) return t("appLayout.dashboardTitle");
     if (currentPathname.startsWith('/upload')) return t("appLayout.uploadTitle");
+    if (currentPathname.startsWith('/exam/result')) return t("appLayout.examResultTitle");
     if (currentPathname.startsWith('/configure')) return t("appLayout.configureTitle");
     if (currentPathname.startsWith('/community')) return t("appLayout.communityTitle");
     if (currentPathname.startsWith('/custom-courses')) return t("appLayout.createCourseTitle");

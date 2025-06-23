@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -71,7 +70,7 @@ export default function UploadPage() {
         variant: "default",
       });
       
-      router.push('/dashboard');
+      router.push('/exam/result');
 
     } catch (error) {
       console.error("Error during AI processing:", error);
