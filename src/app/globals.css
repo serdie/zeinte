@@ -2,11 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-}
-
 @layer base {
+  body {
+    font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  }
+
   :root {
     /* Base (Light Theme) */
     --background: 0 0% 100%; /* #ffffff */
@@ -102,9 +102,7 @@ body {
     --sidebar-border: 215 28% 25%; /* Darker border for sidebar */
     --sidebar-ring: 243 75% 65%; /* Main dark ring */
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
