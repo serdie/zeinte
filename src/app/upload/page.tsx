@@ -8,20 +8,22 @@ import FileUploadArea from '@/components/dashboard/FileUploadArea';
 import { analyzeDocuments, type AnalyzeDocumentsOutput } from '@/ai/flows/analyze-documents';
 import { predictExamQuestions, type PredictExamQuestionsOutput } from '@/ai/flows/predict-exam-questions';
 import { useToast } from "@/hooks/use-toast";
-import { PREDICTED_DATA_KEY, EXAM_HISTORY_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY } from '@/lib/localStorageKeys';
+import { PREDICTED_DATA_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY } from '@/lib/localStorageKeys';
 import type { PredictedData } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { CardTitle } from '@/components/ui/card'; // Import CardTitle
+import { db } from '@/firebase/config';
+import { doc, setDoc } from 'firebase/firestore';
 
 
 export default function UploadPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const { userTier } = useAuth();
+  const { currentUser, userTier } = useAuth();
   const isFreeUser = userTier === 'free';
   const { t } = useI18n();
 
@@ -67,11 +69,20 @@ export default function UploadPage() {
       // Save the current exam for immediate viewing
       localStorage.setItem(PREDICTED_DATA_KEY, JSON.stringify(dataToStore));
 
-      // Add to history
-      const historyString = localStorage.getItem(EXAM_HISTORY_KEY);
-      const history: PredictedData[] = historyString ? JSON.parse(historyString) : [];
-      history.unshift(dataToStore); // Add to the beginning of the array
-      localStorage.setItem(EXAM_HISTORY_KEY, JSON.stringify(history));
+      // Add to Firestore history if user is logged in
+      if (currentUser && db) {
+        try {
+          const examHistoryRef = doc(db, "users", currentUser.uid, "examHistory", dataToStore.id.toString());
+          await setDoc(examHistoryRef, dataToStore);
+        } catch (error) {
+          console.error("Error saving exam to Firestore history:", error);
+          toast({
+            title: "Warning",
+            description: "Could not save exam to your persistent history. It will be available for this session only.",
+            variant: "destructive"
+          });
+        }
+      }
 
 
       if (isFreeUser) {

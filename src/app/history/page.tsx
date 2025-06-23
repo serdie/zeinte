@@ -12,11 +12,14 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Loader2, History, ArrowLeft, BookOpen, AlertCircle, MoreVertical, Share2, Download, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-import { PREDICTED_DATA_KEY, EXAM_HISTORY_KEY } from '@/lib/localStorageKeys';
+import { PREDICTED_DATA_KEY } from '@/lib/localStorageKeys';
 import type { PredictedData } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { db } from '@/firebase/config';
+import { collection, query, orderBy, getDocs, doc, deleteDoc } from 'firebase/firestore';
+
 
 export default function HistoryPage() {
   const { t, language } = useI18n();
@@ -28,20 +31,35 @@ export default function HistoryPage() {
   const [examToDelete, setExamToDelete] = useState<PredictedData | null>(null);
 
   useEffect(() => {
-    const storedHistory = localStorage.getItem(EXAM_HISTORY_KEY);
-    if (storedHistory) {
-      try {
-        const parsedHistory: PredictedData[] = JSON.parse(storedHistory);
-        // Ensure history is sorted from newest to oldest
-        parsedHistory.sort((a, b) => b.timestamp - a.timestamp);
-        setExamHistory(parsedHistory);
-      } catch (error) {
-        console.error("Failed to parse exam history from localStorage", error);
-        setExamHistory([]);
+    const fetchHistory = async () => {
+      if (!currentUser || !db) {
+        setIsLoading(false);
+        return;
       }
+      setIsLoading(true);
+      try {
+        const historyCollectionRef = collection(db, "users", currentUser.uid, "examHistory");
+        const q = query(historyCollectionRef, orderBy("timestamp", "desc"));
+        const querySnapshot = await getDocs(q);
+        const historyData = querySnapshot.docs.map(doc => doc.data() as PredictedData);
+        setExamHistory(historyData);
+      } catch (error) {
+        console.error("Failed to fetch exam history from Firestore:", error);
+        toast({
+          title: t('common.error'),
+          description: "Could not load exam history from the database.",
+          variant: "destructive"
+        });
+        setExamHistory([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    if (!authLoading) {
+      fetchHistory();
     }
-    setIsLoading(false);
-  }, []);
+  }, [currentUser, authLoading, toast]);
 
   const formatDate = (timestamp: number) => {
     try {
@@ -57,17 +75,31 @@ export default function HistoryPage() {
     router.push('/exam/result');
   };
 
-  const handleDeleteExam = () => {
-    if (!examToDelete) return;
-    const updatedHistory = examHistory.filter(exam => exam.id !== examToDelete.id);
-    setExamHistory(updatedHistory);
-    localStorage.setItem(EXAM_HISTORY_KEY, JSON.stringify(updatedHistory));
-    toast({
-      title: t('historyPage.examDeletedToastTitle'),
-      description: t('historyPage.examDeletedToastDescription'),
-      variant: "default",
-    });
-    setExamToDelete(null);
+  const handleDeleteExam = async () => {
+    if (!examToDelete || !currentUser || !db) return;
+    
+    try {
+      const examDocRef = doc(db, "users", currentUser.uid, "examHistory", examToDelete.id.toString());
+      await deleteDoc(examDocRef);
+
+      const updatedHistory = examHistory.filter(exam => exam.id !== examToDelete.id);
+      setExamHistory(updatedHistory);
+      
+      toast({
+        title: t('historyPage.examDeletedToastTitle'),
+        description: t('historyPage.examDeletedToastDescription'),
+        variant: "default",
+      });
+    } catch (error) {
+       console.error("Error deleting exam from Firestore:", error);
+       toast({
+         title: t('common.error'),
+         description: "Could not delete the exam from the database.",
+         variant: "destructive"
+       });
+    } finally {
+      setExamToDelete(null);
+    }
   };
 
   const handleShare = () => {
@@ -312,3 +344,4 @@ export default function HistoryPage() {
     </>
   );
 }
+
