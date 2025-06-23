@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,99 +9,99 @@
   }
 
   :root {
-    /* Base (Light Theme) */
+    /* Base (Light Theme) - Orange/Yellow Palette */
     --background: 0 0% 100%; /* #ffffff */
-    --foreground: 215 28% 17%; /* #1f2937 */
+    --foreground: 224 71% 4%; /* #0a171c - A very dark, almost black blue for high contrast */
 
-    --card: 0 0% 100%; /* #ffffff */
-    --card-foreground: 215 28% 17%; /* #1f2937 */
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
 
-    --popover: 0 0% 100%; /* #ffffff */
-    --popover-foreground: 215 28% 17%; /* #1f2937 */
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
 
-    --primary: 243 75% 58%; /* #4f46e5 */
-    --primary-foreground: 0 0% 98%; /* Contrasting white for primary */
+    --primary: 28 95% 53%; /* Vibrant Orange: #f97316 */
+    --primary-foreground: 0 0% 98%; /* White for text on orange */
 
-    --secondary: 243 75% 96%; /* Light tint of primary */
-    --secondary-foreground: 215 28% 17%; /* Main foreground for text on secondary */
+    --secondary: 28 95% 95%; /* Light tint of orange */
+    --secondary-foreground: 28 95% 20%; /* Dark orange for text on light orange */
 
-    --muted: 243 75% 95%; /* Slightly darker light tint of primary */
-    --muted-foreground: 215 28% 45%; /* Muted version of main foreground */
+    --muted: 28 95% 96%; /* Very light tint of orange for muted backgrounds */
+    --muted-foreground: 224 71% 25%; /* Muted version of main foreground */
 
-    --accent: 265 84% 58%; /* #7c3aed */
-    --accent-foreground: 0 0% 98%; /* Contrasting white for accent */
+    --accent: 43 96% 56%; /* Vibrant Yellow: #fbbf24 */
+    --accent-foreground: 43 96% 10%; /* Dark brown/yellow for text on yellow */
 
-    --destructive: 0 84.2% 60.2%; /* Keeping ShadCN default destructive */
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 243 75% 90%; /* Light tint of primary for borders */
-    --input: 243 75% 92%;  /* Slightly different light tint for input backgrounds */
-    --ring: 243 75% 58%; /* Primary color for focus rings */
+    --border: 28 95% 90%; /* Light tint of orange for borders */
+    --input: 28 95% 92%;  /* Slightly different light tint for input backgrounds */
+    --ring: 28 95% 53%; /* Primary orange for focus rings */
 
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --chart-1: 28 95% 53%;
+    --chart-2: 43 96% 56%;
+    --chart-3: 15 80% 50%;
+    --chart-4: 35 90% 60%;
+    --chart-5: 50 95% 55%;
 
     --radius: 0.5rem;
 
     /* Sidebar specific (Light Theme) */
-    --sidebar-background: 243 75% 97%; /* Very light primary tint */
-    --sidebar-foreground: 215 28% 17%; /* Main foreground */
-    --sidebar-primary: 243 75% 58%; /* Main primary */
-    --sidebar-primary-foreground: 0 0% 98%; /* Main primary-foreground */
-    --sidebar-accent: 265 84% 58%; /* Main accent */
-    --sidebar-accent-foreground: 0 0% 98%; /* Main accent-foreground */
-    --sidebar-border: 243 75% 90%; /* Matches main border */
-    --sidebar-ring: 243 75% 58%; /* Main ring */
+    --sidebar-background: 28 95% 98%; /* Very light orange tint */
+    --sidebar-foreground: 224 71% 4%;
+    --sidebar-primary: 28 95% 53%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 43 96% 56%;
+    --sidebar-accent-foreground: 43 96% 10%;
+    --sidebar-border: 28 95% 90%;
+    --sidebar-ring: 28 95% 53%;
   }
 
   .dark {
-    /* Dark Theme */
-    --background: 215 28% 17%; /* #1f2937 */
+    /* Dark Theme - Orange/Yellow Palette */
+    --background: 224 71% 10%; /* #111827 - Dark blue-grey */
     --foreground: 0 0% 95%; /* Light grey/off-white for text */
 
-    --card: 215 28% 22%; /* Slightly lighter than background */
+    --card: 224 71% 15%; /* Slightly lighter than background */
     --card-foreground: 0 0% 95%;
 
-    --popover: 215 28% 22%;
+    --popover: 224 71% 15%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 243 75% 65%; /* Lighter Indigo for dark mode */
-    --primary-foreground: 243 75% 15%; /* Darker Indigo for contrast */
+    --primary: 28 90% 60%; /* Lighter/brighter Orange for dark mode */
+    --primary-foreground: 28 90% 10%; /* Dark orange for contrast */
 
-    --secondary: 215 28% 25%; /* Lighter than card, for secondary elements */
+    --secondary: 224 71% 20%; /* Lighter than card, for secondary elements */
     --secondary-foreground: 0 0% 95%;
 
-    --muted: 215 28% 25%;
+    --muted: 224 71% 20%;
     --muted-foreground: 0 0% 60%; /* Muted grey for less important text */
 
-    --accent: 265 84% 65%; /* Lighter Purple for dark mode */
-    --accent-foreground: 0 0% 98%; /* White for contrast on accent */
+    --accent: 43 90% 60%; /* Lighter/brighter Yellow for dark mode */
+    --accent-foreground: 43 90% 10%;
 
-    --destructive: 0 70% 50%; /* Adjusted destructive for dark */
+    --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 215 28% 30%; /* Darker border */
-    --input: 215 28% 30%; /* Same as border for input background */
-    --ring: 243 75% 65%; /* Dark primary for focus rings */
+    --border: 224 71% 25%; /* Darker border */
+    --input: 224 71% 25%;
+    --ring: 28 90% 60%; /* Dark primary for focus rings */
 
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --chart-1: 28 90% 60%;
+    --chart-2: 43 90% 60%;
+    --chart-3: 15 80% 60%;
+    --chart-4: 35 90% 65%;
+    --chart-5: 50 95% 60%;
 
     /* Sidebar specific (Dark Theme) */
-    --sidebar-background: 215 28% 12%; /* Even darker than main dark background */
-    --sidebar-foreground: 0 0% 95%; /* Main dark foreground */
-    --sidebar-primary: 243 75% 65%; /* Main dark primary */
-    --sidebar-primary-foreground: 243 75% 15%; /* Main dark primary-foreground */
-    --sidebar-accent: 265 84% 65%; /* Main dark accent */
-    --sidebar-accent-foreground: 0 0% 98%; /* Main dark accent-foreground */
-    --sidebar-border: 215 28% 25%; /* Darker border for sidebar */
-    --sidebar-ring: 243 75% 65%; /* Main dark ring */
+    --sidebar-background: 224 71% 8%; /* Even darker than main dark background */
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 28 90% 60%;
+    --sidebar-primary-foreground: 28 90% 10%;
+    --sidebar-accent: 43 90% 60%;
+    --sidebar-accent-foreground: 43 90% 10%;
+    --sidebar-border: 224 71% 20%;
+    --sidebar-ring: 28 90% 60%;
   }
 
   * {
