@@ -190,7 +190,18 @@
     "noHistoryDescription": "You haven't generated any exams yet. Go to the upload section to start!",
     "goToUpload": "Go to Upload",
     "generatedOn": "Generated on",
-    "studyButton": "Study Exam"
+    "studyButton": "Study Exam",
+    "shareExam": "Share exam",
+    "downloadPDF": "Download PDF",
+    "deleteExam": "Delete exam",
+    "comingSoonTitle": "Functionality not available",
+    "comingSoonDescription": "This functionality will be available soon.",
+    "downloadProFeature": "PDF download is a Pro feature. Upgrade to enjoy it!",
+    "deleteConfirmationTitle": "Are you sure you want to delete this exam?",
+    "deleteConfirmationDescription": "This action cannot be undone. The exam will be permanently deleted from your history.",
+    "deleteConfirmButton": "Yes, delete",
+    "examDeletedToastTitle": "Exam Deleted",
+    "examDeletedToastDescription": "The exam has been removed from your history."
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Multiple-Choice Question",

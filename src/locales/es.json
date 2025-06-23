@@ -190,7 +190,18 @@
     "noHistoryDescription": "Todavía no has generado ningún examen. ¡Dirígete a la sección de subida para empezar!",
     "goToUpload": "Ir a Subir",
     "generatedOn": "Generado el",
-    "studyButton": "Estudiar Examen"
+    "studyButton": "Estudiar Examen",
+    "shareExam": "Compartir examen",
+    "downloadPDF": "Descargar PDF",
+    "deleteExam": "Eliminar examen",
+    "comingSoonTitle": "Funcionalidad no disponible",
+    "comingSoonDescription": "Esta funcionalidad estará disponible próximamente.",
+    "downloadProFeature": "La descarga en PDF es una funcionalidad Pro. ¡Actualiza para disfrutarla!",
+    "deleteConfirmationTitle": "¿Estás seguro de que quieres eliminar este examen?",
+    "deleteConfirmationDescription": "Esta acción no se puede deshacer. El examen se eliminará permanentemente de tu historial.",
+    "deleteConfirmButton": "Sí, eliminar",
+    "examDeletedToastTitle": "Examen Eliminado",
+    "examDeletedToastDescription": "El examen ha sido eliminado de tu historial."
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Pregunta Tipo Test",
