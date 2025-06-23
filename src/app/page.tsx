@@ -113,7 +113,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="py-16 md:py-24 text-center bg-card shadow-lg rounded-b-xl mb-12">
         <div className="container mx-auto px-4">
-          <BrainCircuit className="h-20 w-20 text-primary mx-auto mb-6" />
+          <Image src="/logo.png" alt="Zeinte Logo" width={80} height={80} className="mx-auto mb-6" />
           <h1 className="text-4xl md:text-5xl font-bold mb-6 text-primary">
             {t('homePage.mainTitle')}
           </h1>
