@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import type React from 'react';
@@ -49,10 +48,10 @@ interface CommonExam {
 const commonExams: CommonExam[] = [
   { id: 'ucm', name: 'Universidad Complutense', category: 'Universidad', logoPlaceholder: 'https://biblioteca.ucm.es/data/cont/media/www/pag-88746//escudo.jpg', logoHint: 'university campus', keywords: 'exámenes Universidad Complutense Madrid', icon: LibraryBig },
   { id: 'uab', name: 'Universitat Autònoma BCN', category: 'Universidad', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/1/1a/Logo_uab.png', logoHint: 'modern university', keywords: 'exámenes Universitat Autònoma Barcelona', icon: LibraryBig },
-  { id: 'us', name: 'Universidad de Sevilla', category: 'Universidad', logoPlaceholder: 'https://placehold.co/80x40.png', logoHint: 'historic university', keywords: 'exámenes Universidad de Sevilla', icon: LibraryBig },
-  { id: 'admin_estado', name: 'Administrativo del Estado', category: 'Oposición', logoPlaceholder: 'https://placehold.co/60x60.png', logoHint: 'government building', keywords: 'oposición Administrativo del Estado', icon: LibraryBig },
-  { id: 'hacienda', name: 'Agente de Hacienda', category: 'Oposición', logoPlaceholder: 'https://placehold.co/60x60.png', logoHint: 'tax office', keywords: 'oposición Agente Hacienda Pública', icon: LibraryBig },
-  { id: 'agente_forestal', name: 'Agente Forestal', category: 'Oposición', logoPlaceholder: 'https://placehold.co/60x60.png', logoHint: 'forest ranger', keywords: 'oposición Agente Forestal', icon: LibraryBig },
+  { id: 'us', name: 'Universidad de Sevilla', category: 'Universidad', logoPlaceholder: 'https://e7.pngegg.com/pngimages/234/349/png-clipart-university-of-seville-master-s-degree-student-higher-education-de-gea-thumbnail.png', logoHint: 'historic university', keywords: 'exámenes Universidad de Sevilla', icon: LibraryBig },
+  { id: 'admin_estado', name: 'Administrativo del Estado', category: 'Oposición', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Logotipo_de_la_Administraci%C3%B3n_General_del_Estado.svg/768px-Logotipo_de_la_Administraci%C3%B3n_General_del_Estado.svg.png', logoHint: 'government building', keywords: 'oposición Administrativo del Estado', icon: LibraryBig },
+  { id: 'hacienda', name: 'Agente de Hacienda', category: 'Oposición', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Agencia_Tributaria.svg/339px-Agencia_Tributaria.svg.png', logoHint: 'tax office', keywords: 'oposición Agente Hacienda Pública', icon: LibraryBig },
+  { id: 'agente_forestal', name: 'Agente Forestal', category: 'Oposición', logoPlaceholder: 'https://cppm.es/wp-content/uploads/2019/05/agente-forestal.jpg', logoHint: 'forest ranger', keywords: 'oposición Agente Forestal', icon: LibraryBig },
 ];
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -442,7 +441,7 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
             alt={`Logo ${exam.name}`}
             width={category === 'Universidad' ? 60 : 40}
             height={category === 'Universidad' ? 30 : 40}
-            className="mb-2 rounded"
+            className="mb-2 rounded object-contain"
             data-ai-hint={exam.logoHint}
           />
           <span className="text-xs font-medium">{exam.name}</span>
