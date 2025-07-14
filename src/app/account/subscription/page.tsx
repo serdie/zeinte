@@ -38,7 +38,6 @@ export default function ManageSubscriptionPage() {
 
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [cancellationPending, setCancellationPending] = useState(false); // New state for pending cancellation
 
   useEffect(() => {
     if (!authLoading && currentUser && userTier !== 'pro' && userTier !== 'admin') {
@@ -48,11 +47,6 @@ export default function ManageSubscriptionPage() {
         variant: "destructive"
       });
       router.push('/pricing');
-    }
-     // Check localStorage for pending cancellation status
-    const pendingStatus = localStorage.getItem(`cancellation_pending_${currentUser?.uid}`);
-    if (pendingStatus === 'true') {
-        setCancellationPending(true);
     }
   }, [currentUser, userTier, authLoading, router, toast, t]);
   
@@ -73,24 +67,30 @@ export default function ManageSubscriptionPage() {
     }
 
     setIsCancelling(true);
-    // Simulate setting a cancellation date instead of immediate downgrade
-    // In a real app, you would call your backend to set `cancel_at_period_end = true` on the Stripe/PayPal subscription.
-    // For this simulation, we'll use localStorage to persist the pending state.
-    localStorage.setItem(`cancellation_pending_${currentUser.uid}`, 'true');
-    setCancellationPending(true);
+    
+    // This is now a real action, not a simulation.
+    const result = await updateCurrentUserTier('free');
 
-    // We don't call updateCurrentUserTier('free') anymore.
-    // The user remains 'pro' until the period "ends".
+    if (typeof result === 'string') { // It's an error message
+        toast({
+            title: t('common.error'),
+            description: result,
+            variant: "destructive",
+        });
+        setIsCancelling(false);
+        return;
+    }
     
     toast({
         title: t('subscriptionPage.cancelSuccessToastTitle'),
-        description: t('subscriptionPage.cancelPendingToastDescription'),
+        description: t('subscriptionPage.cancelSuccessToastDescription'),
         variant: "default",
         duration: 8000
     });
     
     setShowCancelConfirm(false);
     setIsCancelling(false);
+    router.push('/dashboard');
   };
 
   const getNextBillingDate = () => {
@@ -134,28 +134,18 @@ export default function ManageSubscriptionPage() {
         <CardContent className="space-y-6">
           {userTier === 'pro' && (
             <>
-              {cancellationPending ? (
-                 <Alert variant="destructive">
-                    <AlertTriangle className="h-5 w-5" />
-                    <AlertTitle>{t('subscriptionPage.cancelPendingAlertTitle')}</AlertTitle>
-                    <AlertDescription>
-                        {t('subscriptionPage.cancelPendingAlertDescription', { date: getNextBillingDate() })}
-                    </AlertDescription>
-                 </Alert>
-              ) : (
-                <Alert variant="default" className="bg-green-500/10 border-green-500/50">
-                    <Info className="h-5 w-5 text-green-700" />
-                    <AlertTitle className="text-green-700">{t('subscriptionPage.currentPlanProTitle')}</AlertTitle>
-                    <AlertDescription className="text-green-700/90">
-                    {t('subscriptionPage.currentPlanProDescription', { date: getNextBillingDate() })}
-                    </AlertDescription>
-                </Alert>
-              )}
+              <Alert variant="default" className="bg-green-500/10 border-green-500/50">
+                  <Info className="h-5 w-5 text-green-700" />
+                  <AlertTitle className="text-green-700">{t('subscriptionPage.currentPlanProTitle')}</AlertTitle>
+                  <AlertDescription className="text-green-700/90">
+                  {t('subscriptionPage.currentPlanProDescription', { date: getNextBillingDate() })}
+                  </AlertDescription>
+              </Alert>
               
               <p className="text-sm text-muted-foreground">
                 {t('subscriptionPage.cancelProInfo')}
               </p>
-              {!isSpecialUser && !cancellationPending && (
+              {!isSpecialUser && (
                 <Button 
                   variant="destructive" 
                   className="w-full text-lg py-3" 
