@@ -368,8 +368,8 @@
     "googleSuccessToastDescription": "¡Bienvenido con Google a Zeinte!",
     "loading": "Cargando...",
     "redirecting": "Redirigiendo...",
-    "betaWelcomeMessage": "¡Bienvenido/a a la Beta de Zeinte! Durante esta fase, todas las cuentas nuevas operan con beneficios ampliados del Plan Gratuito, permitiéndote explorar la mayoría de nuestras features. El Plan Pro completo con todas sus ventajas exclusivas y la pasarela de pago se activarán pronto.",
-    "betaNoticeTitle": "¡Zeinte está en Beta!"
+    "betaWelcomeMessage": "El plan pro tiene funciones ampliadas y la pasarela de pagos ya está totalmente activada.",
+    "betaNoticeTitle": "Información sobre el Plan Pro"
   },
   "profilePage": {
     "loadingProfile": "Cargando perfil de Zeinte...",
