@@ -425,9 +425,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (userEmailLower === ADMIN_EMAIL.toLowerCase() && newTier !== 'admin') {
         return t("authContext.updateTierErrorAdminLock");
     }
-    if (userEmailLower === FREE_USER_EMAIL.toLowerCase() && newTier !== 'pro') {
-        return t("authContext.updateTierErrorSpecialProLock");
-    }
 
     setLoading(true);
     try {
