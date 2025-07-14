@@ -4,24 +4,43 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, ShieldCheck, ArrowLeft, XCircle, Info, AlertTriangle } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Loader2, ShieldCheck, ArrowLeft, XCircle, Info, AlertTriangle, FileText, CheckCircle } from 'lucide-react';
 import { useAuth, ADMIN_EMAIL, FREE_USER_EMAIL } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useI18n } from '@/contexts/I18nContext';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+
+interface MockInvoice {
+  id: string;
+  date: Date;
+  amount: string;
+  status: 'Pagado' | 'Pendiente' | 'Fallido';
+}
+
+const mockInvoices: MockInvoice[] = [
+  { id: 'inv_1a2b3c4d5e', date: new Date(2024, 6, 15), amount: '9,95 €', status: 'Pagado' },
+  { id: 'inv_6f7g8h9i0j', date: new Date(2024, 5, 15), amount: '9,95 €', status: 'Pagado' },
+  { id: 'inv_k1l2m3n4o5', date: new Date(2024, 4, 15), amount: '9,95 €', status: 'Pagado' },
+];
 
 export default function ManageSubscriptionPage() {
   const { currentUser, userTier, updateCurrentUserTier, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const { t, language } = useI18n();
+
   const [isCancelling, setIsCancelling] = useState(false);
-  const { t } = useI18n();
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancellationPending, setCancellationPending] = useState(false); // New state for pending cancellation
 
   useEffect(() => {
-    // Redirect if not Pro or Admin (Admin can view but not act on their "subscription" here)
-    // Free users trying to access this page will be redirected by ConditionalLayout or here.
     if (!authLoading && currentUser && userTier !== 'pro' && userTier !== 'admin') {
       toast({
         title: t('subscriptionPage.accessDeniedTitle'),
@@ -30,15 +49,19 @@ export default function ManageSubscriptionPage() {
       });
       router.push('/pricing');
     }
+     // Check localStorage for pending cancellation status
+    const pendingStatus = localStorage.getItem(`cancellation_pending_${currentUser?.uid}`);
+    if (pendingStatus === 'true') {
+        setCancellationPending(true);
+    }
   }, [currentUser, userTier, authLoading, router, toast, t]);
-
-  const handleCancelSubscription = async () => {
+  
+  const handleConfirmCancellation = async () => {
     if (!currentUser || userTier !== 'pro') {
       toast({ title: t('common.error'), description: t('subscriptionPage.notProError'), variant: "destructive" });
       return;
     }
 
-    // Prevent special "pro" user (FREE_USER_EMAIL) from cancelling via this UI
     if (currentUser.email?.toLowerCase() === FREE_USER_EMAIL.toLowerCase()) {
         toast({
             title: t('subscriptionPage.cannotCancelSpecialProTitle'),
@@ -50,18 +73,39 @@ export default function ManageSubscriptionPage() {
     }
 
     setIsCancelling(true);
-    const result = await updateCurrentUserTier('free');
-    if (typeof result === 'string') {
-      toast({ title: t('common.error'), description: result, variant: "destructive" });
-    } else {
-      toast({
+    // Simulate setting a cancellation date instead of immediate downgrade
+    // In a real app, you would call your backend to set `cancel_at_period_end = true` on the Stripe/PayPal subscription.
+    // For this simulation, we'll use localStorage to persist the pending state.
+    localStorage.setItem(`cancellation_pending_${currentUser.uid}`, 'true');
+    setCancellationPending(true);
+
+    // We don't call updateCurrentUserTier('free') anymore.
+    // The user remains 'pro' until the period "ends".
+    
+    toast({
         title: t('subscriptionPage.cancelSuccessToastTitle'),
-        description: t('subscriptionPage.cancelSuccessToastDescription'),
+        description: t('subscriptionPage.cancelPendingToastDescription'),
         variant: "default",
-      });
-      router.push('/dashboard');
-    }
+        duration: 8000
+    });
+    
+    setShowCancelConfirm(false);
     setIsCancelling(false);
+  };
+
+  const getNextBillingDate = () => {
+    const lastInvoiceDate = mockInvoices[0]?.date || new Date();
+    const nextBillingDate = new Date(lastInvoiceDate);
+    nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+    return formatDate(nextBillingDate);
+  };
+
+  const formatDate = (date: Date) => {
+    try {
+      return format(date, 'd MMMM, yyyy', { locale: language === 'es' ? es : undefined });
+    } catch (error) {
+      return 'N/A';
+    }
   };
 
   if (authLoading || !currentUser) {
@@ -74,9 +118,9 @@ export default function ManageSubscriptionPage() {
   
   const isSpecialUser = currentUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase() || currentUser.email?.toLowerCase() === FREE_USER_EMAIL.toLowerCase();
 
-
   return (
-    <div className="container mx-auto py-12 px-4">
+    <>
+    <div className="container mx-auto py-12 px-4 space-y-8">
       <Card className="max-w-2xl mx-auto shadow-xl">
         <CardHeader>
           <CardTitle className="text-3xl text-primary flex items-center gap-2">
@@ -90,28 +134,39 @@ export default function ManageSubscriptionPage() {
         <CardContent className="space-y-6">
           {userTier === 'pro' && (
             <>
-              <Alert variant="default" className="bg-green-500/10 border-green-500/50">
-                <Info className="h-5 w-5 text-green-700" />
-                <AlertTitle className="text-green-700">{t('subscriptionPage.currentPlanProTitle')}</AlertTitle>
-                <AlertDescription className="text-green-700/90">
-                  {t('subscriptionPage.currentPlanProDescription')}
-                </AlertDescription>
-              </Alert>
+              {cancellationPending ? (
+                 <Alert variant="destructive">
+                    <AlertTriangle className="h-5 w-5" />
+                    <AlertTitle>{t('subscriptionPage.cancelPendingAlertTitle')}</AlertTitle>
+                    <AlertDescription>
+                        {t('subscriptionPage.cancelPendingAlertDescription', { date: getNextBillingDate() })}
+                    </AlertDescription>
+                 </Alert>
+              ) : (
+                <Alert variant="default" className="bg-green-500/10 border-green-500/50">
+                    <Info className="h-5 w-5 text-green-700" />
+                    <AlertTitle className="text-green-700">{t('subscriptionPage.currentPlanProTitle')}</AlertTitle>
+                    <AlertDescription className="text-green-700/90">
+                    {t('subscriptionPage.currentPlanProDescription', { date: getNextBillingDate() })}
+                    </AlertDescription>
+                </Alert>
+              )}
+              
               <p className="text-sm text-muted-foreground">
                 {t('subscriptionPage.cancelProInfo')}
               </p>
-              {!isSpecialUser && (
+              {!isSpecialUser && !cancellationPending && (
                 <Button 
                   variant="destructive" 
                   className="w-full text-lg py-3" 
-                  onClick={handleCancelSubscription}
+                  onClick={() => setShowCancelConfirm(true)}
                   disabled={isCancelling || authLoading}
                 >
-                  {isCancelling ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <XCircle className="mr-2 h-5 w-5" />}
+                  <XCircle className="mr-2 h-5 w-5" />
                   {t('subscriptionPage.cancelButton')}
                 </Button>
               )}
-              {isSpecialUser && currentUser.email?.toLowerCase() === FREE_USER_EMAIL.toLowerCase() && (
+               {isSpecialUser && currentUser.email?.toLowerCase() === FREE_USER_EMAIL.toLowerCase() && (
                  <Alert variant="default">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>{t('subscriptionPage.specialProUserTitle')}</AlertTitle>
@@ -143,19 +198,78 @@ export default function ManageSubscriptionPage() {
                 </AlertDescription>
              </Alert>
            )}
-
-          <p className="text-xs text-muted-foreground text-center pt-4">
-            {t('subscriptionPage.paymentGatewayComingSoon')}
-          </p>
         </CardContent>
-        <CardFooter>
-          <Link href="/dashboard" passHref className="w-full">
-            <Button variant="outline" className="w-full">
-              <ArrowLeft className="mr-2 h-4 w-4" /> {t('subscriptionPage.backToDashboardButton')}
-            </Button>
-          </Link>
+        <CardFooter className="flex-col gap-4 items-start">
+            <p className="text-xs text-muted-foreground text-center pt-4 w-full">
+                {t('subscriptionPage.paymentGatewayComingSoon')}
+            </p>
+             <Link href="/dashboard" passHref className="w-full">
+                <Button variant="outline" className="w-full">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> {t('subscriptionPage.backToDashboardButton')}
+                </Button>
+            </Link>
         </CardFooter>
       </Card>
+
+      {userTier === 'pro' && (
+        <Card className="max-w-2xl mx-auto shadow-xl">
+            <CardHeader>
+                <CardTitle className="text-xl flex items-center gap-2">
+                    <FileText className="h-6 w-6" />
+                    {t('subscriptionPage.invoiceHistoryTitle')}
+                </CardTitle>
+                <CardDescription>{t('subscriptionPage.invoiceHistoryDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>{t('subscriptionPage.invoiceHistoryDateHeader')}</TableHead>
+                            <TableHead>{t('subscriptionPage.invoiceHistoryAmountHeader')}</TableHead>
+                            <TableHead>{t('subscriptionPage.invoiceHistoryStatusHeader')}</TableHead>
+                            <TableHead className="text-right">{t('subscriptionPage.invoiceHistoryActionHeader')}</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {mockInvoices.map(invoice => (
+                            <TableRow key={invoice.id}>
+                                <TableCell>{formatDate(invoice.date)}</TableCell>
+                                <TableCell>{invoice.amount}</TableCell>
+                                <TableCell>
+                                    <Badge variant={invoice.status === 'Pagado' ? 'default' : 'destructive'} className={invoice.status === 'Pagado' ? 'bg-green-600/80' : ''}>
+                                        {t(`subscriptionPage.invoiceStatus${invoice.status}`)}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => alert(t('subscriptionPage.downloadInvoiceComingSoon'))}>{t('subscriptionPage.downloadInvoiceAction')}</Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+      )}
+
     </div>
+
+    <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>{t('subscriptionPage.cancelConfirmTitle')}</AlertDialogTitle>
+                <AlertDialogDescription>
+                    {t('subscriptionPage.cancelConfirmDescription', { date: getNextBillingDate() })}
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setShowCancelConfirm(false)} disabled={isCancelling}>{t('common.cancel')}</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmCancellation} className="bg-destructive hover:bg-destructive/90" disabled={isCancelling}>
+                    {isCancelling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
+                    {t('subscriptionPage.cancelConfirmButton')}
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
