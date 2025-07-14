@@ -1,4 +1,3 @@
-
 // src/app/payment/paypal/page.tsx
 "use client";
 
