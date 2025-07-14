@@ -75,6 +75,11 @@ export default function RootLayout({
           src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&disable-funding=venmo,paylater&components=hosted-buttons&currency=EUR`}
           strategy="afterInteractive"
         />
+        <Script 
+          async
+          src="https://js.stripe.com/v3/buy-button.js"
+          strategy="afterInteractive"
+        />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <I18nProvider>

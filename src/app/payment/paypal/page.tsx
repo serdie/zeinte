@@ -78,6 +78,25 @@ export default function PayPalPaymentPage() {
             </section>
           </form>
 
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">
+                O paga con Tarjeta
+              </span>
+            </div>
+          </div>
+          
+          <div className="flex justify-center">
+             <stripe-buy-button
+              buy-button-id="buy_btn_1RkiJvJ6FVppO7DR1ysEionM"
+              publishable-key="pk_live_51MKVupJ6FVppO7DRWC6XjQk9rOUM8lwsAYfE0i3ne9xq8HFXE9srMpW5TkcU1oAVQuZ2AQw7mw6h0KJszNAFmSgA00XyvsSmBd"
+             >
+            </stripe-buy-button>
+          </div>
+
 
           <Alert variant="default" className="bg-blue-500/10 border-blue-500/50 text-blue-700 dark:text-blue-400">
             <AlertTriangle className="h-4 w-4" />
