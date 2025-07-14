@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ShieldAlert, Loader2, Users, AlertTriangle, ArrowLeft, Settings, MessageSquare, Edit3, Trash2, Save, ArrowDownUp, ArrowDown, ArrowUp, Search } from 'lucide-react';
+import { ShieldAlert, Loader2, Users, AlertTriangle, ArrowLeft, Settings, MessageSquare, Edit3, Trash2, Save, ArrowDownUp, ArrowDown, ArrowUp, Search, Mail } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -466,6 +466,20 @@ export default function AdminPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-xl flex items-center">
+                <Settings className="h-5 w-5 mr-2" />
+                {t("adminPage.appGeneralConfigTitle")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">{t("adminPage.appGeneralConfigDescription")}</p>
+               <Link href="/admin/app-settings" passHref>
+                 <Button variant="outline" size="sm" className="mt-3">{t("adminPage.goToConfigButton")}</Button>
+               </Link>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center">
                 <MessageSquare className="h-5 w-5 mr-2" />
                 {t("adminPage.communityContentManagementTitle")}
               </CardTitle>
@@ -477,18 +491,18 @@ export default function AdminPage() {
               </Link>
             </CardContent>
           </Card>
-            <Card>
+           <Card>
             <CardHeader>
               <CardTitle className="text-xl flex items-center">
-                <Settings className="h-5 w-5 mr-2" />
-                {t("adminPage.appGeneralConfigTitle")}
+                <Mail className="h-5 w-5 mr-2" />
+                {t("adminPage.emailTemplatesTitle")}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">{t("adminPage.appGeneralConfigDescription")}</p>
-               <Link href="/admin/app-settings" passHref>
-                 <Button variant="outline" size="sm" className="mt-3">{t("adminPage.goToConfigButton")}</Button>
-               </Link>
+              <p className="text-sm text-muted-foreground">{t("adminPage.emailTemplatesDescription")}</p>
+              <Link href="/admin/email-templates" passHref>
+                 <Button variant="outline" size="sm" className="mt-3">{t("adminPage.goToEmailTemplatesButton")}</Button>
+              </Link>
             </CardContent>
           </Card>
         </div>

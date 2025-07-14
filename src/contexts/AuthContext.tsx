@@ -17,7 +17,7 @@ import {
   type Auth,
   type ActionCodeSettings,
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, type Firestore, getDoc, updateDoc, type DocumentData, FieldValue, increment } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, type Firestore, getDoc, updateDoc, type DocumentData, FieldValue, increment, collection } from 'firebase/firestore';
 import { auth as firebaseAuthService, googleProvider as firebaseGoogleProvider, db as firestoreDbService, isFirebaseFullyConfigured, app as firebaseAppInstance } from '@/firebase/config';
 import { useI18n } from './I18nContext';
 
@@ -67,6 +67,48 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Standalone function for email simulation
+const simulateSendEmail = async (templateName: string, recipientEmail: string, substitutions: Record<string, string>) => {
+    if (!firestoreDbService) {
+        console.warn("Firestore not available, cannot fetch email template.");
+        return;
+    }
+    try {
+        const templateRef = doc(firestoreDbService, "emailTemplates", templateName);
+        const templateSnap = await getDoc(templateRef);
+
+        if (!templateSnap.exists()) {
+            console.warn(`Email template "${templateName}" not found in Firestore.`);
+            return;
+        }
+
+        const templateData = templateSnap.data();
+        let subject = templateData.subject || "No Subject";
+        let body = templateData.body || "No Body";
+
+        // Perform substitutions
+        for (const key in substitutions) {
+            const placeholder = `{{${key}}}`;
+            const value = substitutions[key];
+            subject = subject.replace(new RegExp(placeholder, "g"), value);
+            body = body.replace(new RegExp(placeholder, "g"), value);
+        }
+
+        console.log("--- SIMULATED EMAIL ---");
+        console.log(`To: ${recipientEmail}`);
+        console.log(`Subject: ${subject}`);
+        console.log(`Body:\n${body}`);
+        console.log("-----------------------");
+        
+        // In a real app, you would replace the console.log with a call to your backend/email service
+        // For example: await sendEmailWithYourService({ to: recipientEmail, subject, html: body });
+
+    } catch (error) {
+        console.error("Error fetching or simulating email:", error);
+    }
+};
+
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -223,6 +265,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     const effectiveEmailVerified = emailVerifiedParam === undefined ? user.emailVerified : emailVerifiedParam;
+    
+    const isNewUser = !existingFirestoreData;
 
     const dataToSync: Partial<AppUserFirestoreData> = {
         uid: user.uid,
@@ -238,7 +282,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let finalUserData: AppUserFirestoreData;
 
     try {
-      if (!existingFirestoreData) {
+      if (isNewUser) {
           const newUserProfileData: AppUserFirestoreData = {
               ...dataToSync,
               createdAt: serverTimestamp(),
@@ -251,6 +295,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } as AppUserFirestoreData;
           await setDoc(userRef, newUserProfileData);
           finalUserData = newUserProfileData;
+          // Trigger welcome email simulation for new users
+          if (finalUserData.email) {
+            await simulateSendEmail('welcome_email', finalUserData.email, { userName: finalUserData.displayName || 'Usuario' });
+          }
       } else {
           const updateData: Partial<AppUserFirestoreData> = { ...dataToSync };
           if (user.email?.toLowerCase() === FREE_USER_EMAIL.toLowerCase() && tierToSave === 'pro' && forcedDisplayName === 'dginteligenciaartificial') {
@@ -440,12 +488,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return t("authContext.updateTierErrorAdminLock");
     }
 
+    const previousTier = userProfileData.tier;
+
     setLoading(true);
     try {
         const userRef = doc(firestoreDb, "users", currentUser.uid);
         await updateDoc(userRef, { tier: newTier });
         setUserTier(newTier); 
-        setUserProfileData(prev => prev ? { ...prev, tier: newTier } : null); // Update local profile data
+        const updatedProfileData = { ...userProfileData, tier: newTier };
+        setUserProfileData(updatedProfileData);
+
+        // Simulate email sending on tier change
+        if (currentUser.email) {
+            const substitutions = { userName: updatedProfileData.displayName || 'Usuario' };
+            if (previousTier === 'free' && newTier === 'pro') {
+                await simulateSendEmail('upgrade_to_pro', currentUser.email, substitutions);
+            } else if (previousTier === 'pro' && newTier === 'free') {
+                await simulateSendEmail('downgrade_to_free', currentUser.email, substitutions);
+            }
+        }
+        
         return; 
     } catch (error) {
         console.error(t("authContext.updateTierErrorFirestore"), error);
