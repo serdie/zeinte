@@ -12,9 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, FileType, Camera, Video, Image as ImageIcon } from 'lucide-react';
+import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, FileType, Camera, Video, Image as ImageIcon, CheckCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { EXAM_CONFIG_KEY } from '@/lib/localStorageKeys';
+import { EXAM_CONFIG_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY } from '@/lib/localStorageKeys';
 import type { ExamConfig } from '@/types';
 import { findExternalDocuments, type FindExternalDocumentsOutput } from '@/ai/flows/find-external-documents';
 import { extractTextFromFile, type ExtractTextFromFileInput } from '@/ai/flows/extract-text-from-file-flow';
@@ -32,6 +32,8 @@ interface FileUploadAreaProps {
 
 const DEFAULT_MAX_FILES_UPLOAD = 30;
 const DEFAULT_MAX_TOTAL_SIZE_MB = 20; // Updated to 20MB
+const MAX_QUESTIONS_FREE_USER = 5;
+const FREE_USER_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 interface CommonExam {
   id: string;
@@ -66,7 +68,8 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [numQuestions, setNumQuestions] = useState<string>("10");
   const { toast } = useToast();
-  const { isFirebaseConfigured } = useAuth();
+  const { isFirebaseConfigured, userTier } = useAuth();
+  const isFreeUser = userTier === 'free';
 
   const [appUploadLimits, setAppUploadLimits] = useState({
     maxFiles: DEFAULT_MAX_FILES_UPLOAD,
@@ -313,6 +316,19 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (isFreeUser) {
+        const lastGenTimestamp = localStorage.getItem(FREE_USER_LAST_GENERATION_TIMESTAMP_KEY);
+        if (lastGenTimestamp && (Date.now() - parseInt(lastGenTimestamp)) < FREE_USER_COOLDOWN_MS) {
+            toast({
+                title: t('dashboardPage.dailyLimitReachedTitle'),
+                description: t('dashboardPage.dailyLimitReachedDescription'),
+                variant: 'destructive',
+                duration: 7000
+            });
+            return;
+        }
+    }
+
     if (selectedFiles.length === 0 && selectedDeepSearchDocIds.length === 0) {
       toast({
         title: t('fileUploadArea.toastNoContentSelectedTitle'),
@@ -384,6 +400,14 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
       }
       
       let finalNumQuestions = parseInt(numQuestions, 10);
+      if (isFreeUser && finalNumQuestions > MAX_QUESTIONS_FREE_USER) {
+          toast({
+              title: t('fileUploadArea.toastFreeUserLimitTitle'),
+              description: t('fileUploadArea.toastFreeUserLimitDescription', { maxQuestions: MAX_QUESTIONS_FREE_USER.toString() }),
+              variant: "default"
+          });
+          finalNumQuestions = MAX_QUESTIONS_FREE_USER;
+      }
       await onAnalyze(allFilesContent, finalNumQuestions);
 
     } catch (error) {
@@ -671,10 +695,22 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
       <div className="space-y-6 p-6 border rounded-lg shadow-xl bg-card">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
             <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="num-questions-select" className="text-md font-medium">{t('dashboardPage.numQuestionsLabel')}</Label>
+                <Label htmlFor="num-questions-select" className="text-md font-medium">{t('dashboardPage.numQuestionsLabel')}{isFreeUser && <span className="text-muted-foreground text-sm">{t('fileUploadArea.finalAnalysisConfigFreeUserMaxText', {maxQuestions: MAX_QUESTIONS_FREE_USER})}</span>}</Label>
                 <Select
                     value={numQuestions}
-                    onValueChange={setNumQuestions}
+                    onValueChange={(value) => {
+                      const numValue = parseInt(value, 10);
+                      if (isFreeUser && numValue > MAX_QUESTIONS_FREE_USER) {
+                          toast({
+                              title: t('fileUploadArea.toastFreeUserLimitTitle'),
+                              description: t('fileUploadArea.toastFreeUserLimitDescription', {maxQuestions: MAX_QUESTIONS_FREE_USER}),
+                              variant: "default",
+                          });
+                          setNumQuestions(MAX_QUESTIONS_FREE_USER.toString());
+                      } else {
+                          setNumQuestions(value);
+                      }
+                    }}
                     disabled={isFinalAnalyzing || isDeepSearching || isLoadingAppSettings || isProcessingFiles}
                 >
                 <SelectTrigger id="num-questions-select" className="w-full text-base py-3">
@@ -772,5 +808,3 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
     </>
   );
 }
-
-    

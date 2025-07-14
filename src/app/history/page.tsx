@@ -101,6 +101,7 @@ export default function HistoryPage() {
         toast({
             title: t('historyPage.proFeatureTitle', {defaultValue: "Pro Feature"}),
             description: t('historyPage.downloadProFeature'),
+            variant: "destructive"
         });
         return;
     }
