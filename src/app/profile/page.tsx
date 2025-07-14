@@ -3,12 +3,12 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Mail, ShieldCheck, Save, AlertTriangle, Info, Loader2, ChevronDown, ChevronUp, CheckSquare, Square, PenLine, Edit, X } from 'lucide-react';
+import { User, Mail, ShieldCheck, Save, AlertTriangle, Info, Loader2, ChevronDown, ChevronUp, CheckSquare, Square, PenLine, Edit, X, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth, type AppUserFirestoreData } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, type FormEvent } from 'react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -20,25 +20,35 @@ import { useI18n } from '@/contexts/I18nContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { categorizedStudyInterests, type InterestCategory, type InterestOption } from '@/lib/studyInterestsData';
+import { Textarea } from '@/components/ui/textarea';
 
 const GENERAL_OTHER_INTEREST_ID = 'estudio_otro_custom_main'; // ID for the main "Other" category's custom input
 
 export default function ProfilePage() {
-  const { currentUser, userProfileData, loading, updateUserInterests, isFirebaseConfigured } = useAuth();
+  const { currentUser, userProfileData, loading, updateUserInterests, updateUserBillingInfo, isFirebaseConfigured } = useAuth();
   const { toast } = useToast();
   const { t } = useI18n();
 
+  // Editing state for interests
   const [isEditingPreferences, setIsEditingPreferences] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-
-  // States for form inputs when in edit mode
+  const [isSavingInterests, setIsSavingInterests] = useState(false);
+  
+  // Editing state for billing
+  const [isEditingBilling, setIsEditingBilling] = useState(false);
+  const [isSavingBilling, setIsSavingBilling] = useState(false);
+  
+  // States for interest form inputs
   const [editingPrimaryInterest, setEditingPrimaryInterest] = useState<string | null>(null);
   const [editingCustomPrimaryValue, setEditingCustomPrimaryValue] = useState('');
   const [isEditingPrimaryCustom, setIsEditingPrimaryCustom] = useState(false);
-  
   const [editingSecondaryInterests, setEditingSecondaryInterests] = useState<string[]>([]);
   const [editingCustomSecondaryValues, setEditingCustomSecondaryValues] = useState<Record<string, string>>({});
   
+  // States for billing form inputs
+  const [billingName, setBillingName] = useState('');
+  const [billingAddress, setBillingAddress] = useState('');
+  const [billingNif, setBillingNif] = useState('');
+
   const [activeAccordionItem, setActiveAccordionItem] = useState<string | undefined>(undefined);
 
   const translatedCategorizedInterests = useMemo(() => {
@@ -65,21 +75,27 @@ export default function ProfilePage() {
     return interestValue;
   }, [t]);
 
+  // Combined initialization function
   const initializeEditingStates = useCallback(() => {
     if (!userProfileData) {
+      // Reset interests
       setEditingPrimaryInterest(null);
       setIsEditingPrimaryCustom(false);
       setEditingCustomPrimaryValue('');
       setEditingSecondaryInterests([]);
       setEditingCustomSecondaryValues({});
+      // Reset billing
+      setBillingName('');
+      setBillingAddress('');
+      setBillingNif('');
       return;
     }
 
+    // --- Initialize Interests ---
     const profilePrimary = userProfileData.primaryInterest || null;
     let primaryRadioSelection: string | null = null;
     let isCustomP = false;
     let customPVal = '';
-
     const flatOptions = translatedCategorizedInterests.flatMap(cat => cat.options);
 
     if (profilePrimary) {
@@ -88,15 +104,14 @@ export default function ProfilePage() {
         primaryRadioSelection = profilePrimary;
         isCustomP = false;
         customPVal = '';
-      } else { // It's a custom string, or an ID of a custom entry option
+      } else {
         isCustomP = true;
-        customPVal = profilePrimary; // Assume it's the custom text itself
-        // Try to find the generic "Otros" radio button to select
+        customPVal = profilePrimary;
         const genericOtherOption = flatOptions.find(opt => opt.id === GENERAL_OTHER_INTEREST_ID) || flatOptions.find(opt => opt.isCustomEntry);
         primaryRadioSelection = genericOtherOption ? genericOtherOption.id : null;
-        if (primaryOptionMatch && primaryOptionMatch.isCustomEntry) { // If profilePrimary IS an ID of a custom entry option
-            primaryRadioSelection = profilePrimary; // Keep it selected
-            customPVal = ''; // The custom text would be handled separately or might be missing if only ID was stored
+        if (primaryOptionMatch && primaryOptionMatch.isCustomEntry) {
+            primaryRadioSelection = profilePrimary;
+            customPVal = '';
         }
       }
     }
@@ -113,11 +128,8 @@ export default function ProfilePage() {
       if (optionMatch && !optionMatch.isCustomEntry) {
         secInterestsToSet.push(secInterest);
       } else if (optionMatch && optionMatch.isCustomEntry) {
-        // This means an ID of a custom entry checkbox was saved
         secInterestsToSet.push(secInterest);
-        // We don't automatically populate its text field here, user has to re-type or it's a toggle for the "Other" category
-      } else if (!optionMatch) { // It's a custom string not matching any ID
-        // Try to associate with the first available "Otros" checkbox that doesn't already have a custom value
+      } else if (!optionMatch) {
         const availableOtherCheckbox = flatOptions.find(o => o.isCustomEntry && !customSecValuesToSet[o.id]);
         if (availableOtherCheckbox) {
           if (!secInterestsToSet.includes(availableOtherCheckbox.id)) {
@@ -125,30 +137,38 @@ export default function ProfilePage() {
           }
           customSecValuesToSet[availableOtherCheckbox.id] = secInterest;
         }
-        // If no "Otros" checkbox is available, this custom string might not appear editable directly
-        // but it's still part of profileSecondary for display.
       }
     });
     setEditingSecondaryInterests(secInterestsToSet);
     setEditingCustomSecondaryValues(customSecValuesToSet);
+    
+    // --- Initialize Billing ---
+    setBillingName(userProfileData.billingName || '');
+    setBillingAddress(userProfileData.billingAddress || '');
+    setBillingNif(userProfileData.billingNif || '');
 
   }, [userProfileData, translatedCategorizedInterests, t]);
   
   useEffect(() => {
-    if (!isEditingPreferences) {
+    if (!isEditingPreferences && !isEditingBilling) {
       initializeEditingStates();
     }
-  }, [userProfileData, isEditingPreferences, initializeEditingStates]);
-
+  }, [userProfileData, isEditingPreferences, isEditingBilling, initializeEditingStates]);
 
   const handleEditPreferencesClick = () => {
-    initializeEditingStates(); 
     setIsEditingPreferences(true);
+    setIsEditingBilling(false);
+  };
+  
+  const handleEditBillingClick = () => {
+    setIsEditingBilling(true);
+    setIsEditingPreferences(false);
   };
 
   const handleCancelEdit = () => {
-    initializeEditingStates(); 
     setIsEditingPreferences(false);
+    setIsEditingBilling(false);
+    initializeEditingStates();
   };
   
   const handlePrimaryInterestChange = (value: string) => {
@@ -156,15 +176,6 @@ export default function ProfilePage() {
     const flatOption = translatedCategorizedInterests.flatMap(c => c.options).find(o => o.id === value);
     if (flatOption?.isCustomEntry) {
       setIsEditingPrimaryCustom(true);
-      // If switching to custom, and it's the main custom input, clear its value or prefill if needed.
-      if (value === GENERAL_OTHER_INTEREST_ID && editingCustomPrimaryValue && editingPrimaryInterest !== GENERAL_OTHER_INTEREST_ID) {
-          // User switched TO the main custom input from another custom input. Keep the text.
-      } else if (value === GENERAL_OTHER_INTEREST_ID) {
-          // Switched to main custom, maybe clear it or set to userProfileData's custom if applicable
-      } else {
-          // Switched to a different "other" radio, clear the main custom value
-          // setEditingCustomPrimaryValue('');
-      }
     } else {
       setIsEditingPrimaryCustom(false);
       setEditingCustomPrimaryValue(''); 
@@ -178,7 +189,6 @@ export default function ProfilePage() {
       if (checked) {
         return isAlreadySelected ? prev : [...prev, optionId];
       } else {
-        // If unchecking an "Otros" checkbox, also clear its custom text input
         const optionDetails = translatedCategorizedInterests.flatMap(c => c.options).find(o => o.id === optionId);
         if (optionDetails?.isCustomEntry) {
           setEditingCustomSecondaryValues(prevCustom => {
@@ -219,11 +229,6 @@ export default function ProfilePage() {
         if (editingCustomSecondaryValues[id]?.trim()) {
           finalSecondaryInterestsSet.add(editingCustomSecondaryValues[id].trim());
         }
-        // Do not add the placeholder ID itself if custom text is provided and meaningful
-        // Or, if the checkbox ID itself is considered a "category" of "other"
-        // For simplicity, if an "other" checkbox is checked AND its input is filled, only custom text is saved.
-        // If "other" checkbox is checked AND input is EMPTY, then maybe the ID of checkbox is saved (e.g. "user is interested in Other Oppositions")
-        // Current: only save custom text if present.
       } else {
         finalSecondaryInterestsSet.add(id);
       }
@@ -231,7 +236,7 @@ export default function ProfilePage() {
     
     const uniqueSecondaryInterests = Array.from(finalSecondaryInterestsSet);
 
-    setIsSaving(true);
+    setIsSavingInterests(true);
     const result = await updateUserInterests(finalPrimaryInterest, uniqueSecondaryInterests);
     if (typeof result === 'string') {
       toast({ title: t('profilePage.errorSavingPreferencesToastTitle'), description: result, variant: "destructive" });
@@ -239,7 +244,25 @@ export default function ProfilePage() {
       toast({ title: t('profilePage.preferencesSavedToastTitle'), description: t('profilePage.preferencesSavedToastDescription'), variant: "default" });
       setIsEditingPreferences(false); 
     }
-    setIsSaving(false);
+    setIsSavingInterests(false);
+  };
+
+  const handleSaveBillingInfo = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!billingName.trim()) {
+      toast({ title: t('profilePage.billingNameRequiredTitle'), description: t('profilePage.billingNameRequiredDescription'), variant: "destructive" });
+      return;
+    }
+    
+    setIsSavingBilling(true);
+    const result = await updateUserBillingInfo({ billingName, billingAddress, billingNif });
+    if (typeof result === 'string') {
+      toast({ title: t('profilePage.errorSavingBillingToastTitle'), description: result, variant: "destructive" });
+    } else {
+      toast({ title: t('profilePage.billingInfoSavedToastTitle'), description: t('profilePage.billingInfoSavedToastDescription'), variant: "default" });
+      setIsEditingBilling(false);
+    }
+    setIsSavingBilling(false);
   };
 
 
@@ -256,7 +279,7 @@ export default function ProfilePage() {
     return email.substring(0, 2).toUpperCase();
   };
 
-  const renderViewMode = () => (
+  const renderInterestsViewMode = () => (
     <div className="space-y-6">
       <Card className="bg-background/30">
         <CardHeader>
@@ -300,17 +323,11 @@ export default function ProfilePage() {
           )}
         </CardContent>
       </Card>
-       <Alert variant="default" className="mt-6 bg-primary/10 border-primary/50">
-        <Info className="h-5 w-5 text-primary" />
-        <AlertDescription className="text-primary/80">
-          {t('profilePage.betaFeatureNote')}
-        </AlertDescription>
-      </Alert>
     </div>
   );
 
-  const renderEditMode = () => {
-    const saveDisabled = isSaving ||
+  const renderInterestsEditMode = () => {
+    const saveDisabled = isSavingInterests ||
         (!isEditingPrimaryCustom && !editingPrimaryInterest) ||
         (isEditingPrimaryCustom && editingPrimaryInterest === GENERAL_OTHER_INTEREST_ID && !editingCustomPrimaryValue.trim()) ||
         (isEditingPrimaryCustom && editingPrimaryInterest !== GENERAL_OTHER_INTEREST_ID && !editingCustomPrimaryValue.trim() && translatedCategorizedInterests.flatMap(c => c.options).find(o => o.id === editingPrimaryInterest)?.isCustomEntry)
@@ -421,13 +438,82 @@ export default function ProfilePage() {
           {t('profilePage.cancelButton')}
         </Button>
         <Button onClick={handleSaveInterests} disabled={saveDisabled} className="w-full sm:w-auto text-base py-3">
-          {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+          {isSavingInterests ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
           {t('profilePage.savePreferencesButton')}
         </Button>
       </div>
     </div>
     );
   };
+  
+  const renderBillingViewMode = () => (
+    <Card className="bg-background/30">
+      <CardHeader>
+        <CardTitle className="text-xl flex items-center justify-between">
+          <div className="flex items-center gap-2"><FileText className="h-5 w-5 text-primary" />{t('profilePage.billingInfoTitle')}</div>
+          <Button variant="outline" size="sm" onClick={handleEditBillingClick} className="flex items-center gap-1">
+            <Edit className="h-4 w-4" /> {t('common.edit')}
+          </Button>
+        </CardTitle>
+        <CardDescription>{t('profilePage.billingInfoDescription')}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {userProfileData?.billingName ? (
+          <>
+            <div>
+              <Label className="text-xs text-muted-foreground">{t('profilePage.billingNameLabel')}</Label>
+              <p>{userProfileData.billingName}</p>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">{t('profilePage.billingAddressLabel')}</Label>
+              <p className="whitespace-pre-line">{userProfileData.billingAddress || t('profilePage.notSet')}</p>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">{t('profilePage.billingNifLabel')}</Label>
+              <p>{userProfileData.billingNif || t('profilePage.notSet')}</p>
+            </div>
+          </>
+        ) : (
+          <p className="text-muted-foreground text-sm">{t('profilePage.noBillingInfoSet')}</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  const renderBillingEditMode = () => (
+    <Card className="bg-background/50">
+      <CardHeader>
+        <CardTitle className="text-xl flex items-center gap-2"><FileText className="h-5 w-5 text-primary" />{t('profilePage.editBillingInfoTitle')}</CardTitle>
+        <CardDescription>{t('profilePage.editBillingInfoDescription')}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSaveBillingInfo} className="space-y-4">
+          <div className="space-y-1">
+            <Label htmlFor="billingName">{t('profilePage.billingNameLabel')}</Label>
+            <Input id="billingName" value={billingName} onChange={(e) => setBillingName(e.target.value)} placeholder={t('profilePage.billingNamePlaceholder')} required />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="billingAddress">{t('profilePage.billingAddressLabel')}</Label>
+            <Textarea id="billingAddress" value={billingAddress} onChange={(e) => setBillingAddress(e.target.value)} placeholder={t('profilePage.billingAddressPlaceholder')} />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="billingNif">{t('profilePage.billingNifLabel')}</Label>
+            <Input id="billingNif" value={billingNif} onChange={(e) => setBillingNif(e.target.value)} placeholder={t('profilePage.billingNifPlaceholder')} />
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4">
+            <Button onClick={handleCancelEdit} type="button" variant="outline" className="w-full sm:w-auto text-base py-3">
+              <X className="mr-2 h-5 w-5" />
+              {t('profilePage.cancelButton')}
+            </Button>
+            <Button type="submit" disabled={isSavingBilling} className="w-full sm:w-auto text-base py-3">
+              {isSavingBilling ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+              {t('common.save')}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="container mx-auto py-8 space-y-8">
@@ -441,13 +527,16 @@ export default function ProfilePage() {
             {userProfileData?.displayName || currentUser.displayName || t('profilePage.defaultDisplayName')}
           </CardTitle>
           <CardDescription className="text-base md:text-lg text-muted-foreground">
-            {isEditingPreferences ? t('profilePage.manageInfoAndInterests') : t('profilePage.viewYourInterests')}
+            {isEditingPreferences || isEditingBilling ? t('profilePage.manageInfoAndInterests') : t('profilePage.viewYourInterests')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {!isEditingPreferences ? renderViewMode() : renderEditMode()}
+          {isEditingPreferences ? renderInterestsEditMode() : renderInterestsViewMode()}
+          <div className="my-6">
+             {isEditingBilling ? renderBillingEditMode() : renderBillingViewMode()}
+          </div>
         </CardContent>
-
+        
         <Card className="mt-6 bg-muted/30">
           <CardHeader>
               <CardTitle className="text-xl text-foreground">{t('profilePage.accountInfoTitle')}</CardTitle>
@@ -500,5 +589,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

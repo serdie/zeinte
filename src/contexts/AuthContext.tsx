@@ -41,6 +41,10 @@ export interface AppUserFirestoreData extends DocumentData {
   primaryInterest?: string | null;
   secondaryInterests?: string[];
   emailVerified?: boolean;
+  // Billing information
+  billingName?: string;
+  billingAddress?: string;
+  billingNif?: string;
 }
 
 
@@ -58,7 +62,8 @@ interface AuthContextType {
   resendVerificationEmail: () => Promise<string | void>;
   isResendingEmail: boolean;
   updateCurrentUserTier: (newTier: UserTier) => Promise<void | string>;
-  updateUserInterests: (primaryInterest: string, secondaryInterests: string[]) => Promise<void | string>; // Added
+  updateUserInterests: (primaryInterest: string, secondaryInterests: string[]) => Promise<void | string>;
+  updateUserBillingInfo: (billingInfo: { billingName: string; billingAddress: string; billingNif: string; }) => Promise<void | string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -201,6 +206,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             primaryInterest: null,
             secondaryInterests: [],
             emailVerified: user.emailVerified,
+            billingName: '',
+            billingAddress: '',
+            billingNif: '',
         };
         return placeholderData;
     }
@@ -234,10 +242,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const newUserProfileData: AppUserFirestoreData = {
               ...dataToSync,
               createdAt: serverTimestamp(),
-              primaryInterest: dataToSync.primaryInterest === undefined ? null : dataToSync.primaryInterest, // Ensure it's explicitly null if not set
+              primaryInterest: dataToSync.primaryInterest === undefined ? null : dataToSync.primaryInterest,
               secondaryInterests: dataToSync.secondaryInterests || [],
-              preferences: [], // Keep preferences if it was used, or initialize
-          } as AppUserFirestoreData; // Cast because not all fields are present yet
+              preferences: [],
+              billingName: '',
+              billingAddress: '',
+              billingNif: '',
+          } as AppUserFirestoreData;
           await setDoc(userRef, newUserProfileData);
           finalUserData = newUserProfileData;
       } else {
@@ -267,6 +278,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             primaryInterest: null, secondaryInterests: [],
             createdAt: serverTimestamp(), lastLogin: serverTimestamp(),
             emailVerified: effectiveEmailVerified,
+            billingName: '',
+            billingAddress: '',
+            billingNif: '',
         };
         return placeholderData;
     }
@@ -461,6 +475,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     }
   };
+  
+  const updateUserBillingInfo = async (billingInfo: { billingName: string; billingAddress: string; billingNif: string; }): Promise<void | string> => {
+    if (!currentUser || !firestoreDb) {
+      return t("authContext.updateBillingErrorNoUserOrDb");
+    }
+    setLoading(true);
+    try {
+      const userRef = doc(firestoreDb, "users", currentUser.uid);
+      await updateDoc(userRef, {
+        billingName: billingInfo.billingName,
+        billingAddress: billingInfo.billingAddress,
+        billingNif: billingInfo.billingNif,
+      });
+      setUserProfileData(prev => prev ? { ...prev, ...billingInfo } : null);
+      return; // Success
+    } catch (error) {
+      console.error(t("authContext.updateBillingErrorFirestore"), error);
+      return t("authContext.updateBillingErrorFirestoreMessage");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   const value = {
@@ -477,7 +513,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     resendVerificationEmail,
     isResendingEmail,
     updateCurrentUserTier,
-    updateUserInterests, // Expose new function
+    updateUserInterests,
+    updateUserBillingInfo,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

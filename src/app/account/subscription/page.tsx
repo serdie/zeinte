@@ -34,7 +34,7 @@ const mockInvoices: MockInvoice[] = [
 ];
 
 export default function ManageSubscriptionPage() {
-  const { currentUser, userTier, updateCurrentUserTier, loading: authLoading } = useAuth();
+  const { currentUser, userProfileData, userTier, updateCurrentUserTier, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const { t, language } = useI18n();
@@ -103,7 +103,7 @@ export default function ManageSubscriptionPage() {
   };
 
     const handleDownloadPdf = async (invoice: MockInvoice) => {
-    if (!currentUser) return;
+    if (!currentUser || !userProfileData) return;
     setIsDownloading(true);
     toast({
         title: t('historyPage.generatingPdfTitle', {defaultValue: "Generando PDF..."}),
@@ -143,7 +143,14 @@ export default function ManageSubscriptionPage() {
         doc.setFont('helvetica', 'bold');
         doc.text("Cliente:", pageWidth / 2, 45);
         doc.setFont('helvetica', 'normal');
-        doc.text(currentUser.email || "Usuario de Zeinte", pageWidth / 2, 51);
+        doc.text(userProfileData.billingName || currentUser.displayName || currentUser.email || "Usuario de Zeinte", pageWidth / 2, 51);
+        if (userProfileData.billingNif) {
+            doc.text(`NIF/CIF: ${userProfileData.billingNif}`, pageWidth / 2, 57);
+        }
+        if (userProfileData.billingAddress) {
+            const addressLines = doc.splitTextToSize(userProfileData.billingAddress, (pageWidth / 2) - margin);
+            doc.text(addressLines, pageWidth / 2, 63);
+        }
 
         // --- Invoice Table ---
         const tableYStart = 90;

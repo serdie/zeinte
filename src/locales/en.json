@@ -457,7 +457,23 @@
     "noPrimaryInterestSet": "You haven't set your primary study interest yet.",
     "noPrimaryInterestSetDescription": "Please click 'Change Study Preferences' to select your main area.",
     "noSecondaryInterestsSet": "You haven't added any secondary interests.",
-    "betaFeatureNote": "This customization feature is under development. Soon you'll see how Zeinte adapts even more to you!"
+    "betaFeatureNote": "This customization feature is under development. Soon you'll see how Zeinte adapts even more to you!",
+    "billingInfoTitle": "Billing Information",
+    "billingInfoDescription": "This information will be used for your invoices.",
+    "billingNameLabel": "Full Name / Company Name",
+    "billingAddressLabel": "Billing Address",
+    "billingNifLabel": "NIF / CIF / Fiscal ID",
+    "noBillingInfoSet": "You haven't set up your billing information yet. Click Edit to add it.",
+    "editBillingInfoTitle": "Edit Billing Information",
+    "editBillingInfoDescription": "Please ensure this information is accurate for your invoices.",
+    "billingNamePlaceholder": "Your full name or company name",
+    "billingAddressPlaceholder": "Street, Number, City, Postal Code, Country",
+    "billingNifPlaceholder": "Your fiscal identification number",
+    "billingNameRequiredTitle": "Full Name Required",
+    "billingNameRequiredDescription": "Please enter a name for the billing information.",
+    "errorSavingBillingToastTitle": "Error Saving Billing Info",
+    "billingInfoSavedToastTitle": "Billing Information Saved",
+    "billingInfoSavedToastDescription": "Your billing details have been updated successfully."
   },
   "configurePage": {
     "loadingConfig": "Loading Zeinte configuration...",
@@ -707,7 +723,10 @@
     "updateTierErrorFirestoreMessage": "No se pudo actualizar tu plan en la base de datos. Inténtalo de nuevo.",
     "updateInterestsErrorNoUserOrDb": "Usuario no encontrado o base de datos no disponible para actualizar intereses.",
     "updateInterestsErrorFirestore": "Error al actualizar intereses en Firestore.",
-    "updateInterestsErrorFirestoreMessage": "No se pudieron actualizar tus intereses en la base de datos. Inténtalo de nuevo."
+    "updateInterestsErrorFirestoreMessage": "No se pudieron actualizar tus intereses en la base de datos. Inténtalo de nuevo.",
+    "updateBillingErrorNoUserOrDb": "Usuario no encontrado o base de datos no disponible para actualizar los datos de facturación.",
+    "updateBillingErrorFirestore": "Error al actualizar los datos de facturación en Firestore.",
+    "updateBillingErrorFirestoreMessage": "No se pudieron actualizar tus datos de facturación. Inténtalo de nuevo."
   },
   "upgradeProAlert": {
     "title": "¡Desbloquea Funciones Pro en Zeinte!",
