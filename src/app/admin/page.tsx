@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -262,137 +263,145 @@ export default function AdminPage() {
         </AlertDescription>
       </Alert>
 
-      <Card className="w-full shadow-xl bg-card">
-        <CardHeader>
-          <CardTitle className="text-2xl flex items-center justify-between">
-            <div className="flex items-center">
-              <Users className="h-6 w-6 mr-2" />
-              {t("adminPage.userManagementTitle")}
-            </div>
-            <span className="text-sm font-normal text-muted-foreground">{t("adminPage.totalUsers", { count: users.length.toString() })}</span>
-          </CardTitle>
-          <CardDescription>
-            {t("adminPage.welcomeMessage", { email: currentUser.email || 'Admin' })}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center">
-            <div className="relative flex-grow w-full sm:w-auto">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder={t("adminPage.searchUserPlaceholder")}
-                value={searchTerm}
-                onChange={(e) => {setSearchTerm(e.target.value); setCurrentPage(1);}}
-                className="pl-10 w-full text-sm"
-              />
-            </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button onClick={toggleSortOrder} variant="outline" className="flex-1 sm:flex-none">
-                {getSortIcon()}
-                <span className="ml-2">
-                  {t("adminPage.sortDateLabel", { order: sortOrder === 'desc' ? t("adminPage.sortDateNewest") : sortOrder === 'asc' ? t("adminPage.sortDateOldest") : t("adminPage.sortDateNone") })}
-                </span>
-              </Button>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="users-per-page" className="text-sm shrink-0">{t('adminPage.usersPerPageLabel')}</Label>
-                <Select value={usersPerPage.toString()} onValueChange={(value) => {setUsersPerPage(Number(value)); setCurrentPage(1);}}>
-                  <SelectTrigger id="users-per-page" className="w-[80px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="user-management">
+          <Card className="w-full shadow-xl bg-card border-none">
+             <AccordionTrigger className="w-full hover:no-underline">
+                <CardHeader className="flex-1 p-4">
+                    <CardTitle className="text-2xl flex items-center justify-between">
+                        <div className="flex items-center">
+                            <Users className="h-6 w-6 mr-2" />
+                            {t("adminPage.userManagementTitle")}
+                        </div>
+                        <span className="text-sm font-normal text-muted-foreground mr-4">{t("adminPage.totalUsers", { count: users.length.toString() })}</span>
+                    </CardTitle>
+                    <CardDescription className="text-left">
+                        {t("adminPage.welcomeMessage", { email: currentUser.email || 'Admin' })}
+                    </CardDescription>
+                </CardHeader>
+            </AccordionTrigger>
+            <AccordionContent>
+              <CardContent className="pt-0 p-4">
+                <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center">
+                  <div className="relative flex-grow w-full sm:w-auto">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="search"
+                      placeholder={t("adminPage.searchUserPlaceholder")}
+                      value={searchTerm}
+                      onChange={(e) => {setSearchTerm(e.target.value); setCurrentPage(1);}}
+                      className="pl-10 w-full text-sm"
+                    />
+                  </div>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button onClick={toggleSortOrder} variant="outline" className="flex-1 sm:flex-none">
+                      {getSortIcon()}
+                      <span className="ml-2">
+                        {t("adminPage.sortDateLabel", { order: sortOrder === 'desc' ? t("adminPage.sortDateNewest") : sortOrder === 'asc' ? t("adminPage.sortDateOldest") : t("adminPage.sortDateNone") })}
+                      </span>
+                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="users-per-page" className="text-sm shrink-0">{t('adminPage.usersPerPageLabel')}</Label>
+                      <Select value={usersPerPage.toString()} onValueChange={(value) => {setUsersPerPage(Number(value)); setCurrentPage(1);}}>
+                        <SelectTrigger id="users-per-page" className="w-[80px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="20">20</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                          <SelectItem value="100">100</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
 
-          {isLoadingUsers ? (
-            <div className="flex items-center justify-center py-10">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" /> {t("adminPage.loadingUsers")}
-            </div>
-          ) : fetchError ? (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>{t("adminPage.errorLoadingUsersTitle")}</AlertTitle>
-              <AlertDescription>{fetchError}</AlertDescription>
-            </Alert>
-          ) : paginatedUsers.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">
-              {users.length === 0 ? t("adminPage.noUsersRegistered") : t("adminPage.noUsersMatchSearch")}
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>UID</TableHead>
-                    <TableHead>{t("adminPage.userTableEmailHeader")}</TableHead>
-                    <TableHead>{t("adminPage.userTableDisplayNameHeader")}</TableHead>
-                    <TableHead>{t("adminPage.userTableProviderHeader")}</TableHead>
-                    <TableHead>{t("adminPage.userTableTierHeader")}</TableHead>
-                    <TableHead>{t("adminPage.userTableCreationDateHeader")}</TableHead>
-                    <TableHead>{t("adminPage.userTablePrimaryInterestHeader")}</TableHead>
-                    <TableHead>{t("adminPage.userTableSecondaryInterestsHeader")}</TableHead>
-                    <TableHead className="text-right">{t("adminPage.userTableActionsHeader")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedUsers.map((user) => (
-                    <TableRow key={user.uid}>
-                      <TableCell className="font-mono text-xs truncate max-w-[100px]" title={user.uid}>{user.uid}</TableCell>
-                      <TableCell className="font-medium">{user.email || t("adminPage.notAvailable")}</TableCell>
-                      <TableCell>{user.displayName || t("adminPage.notAvailable")}</TableCell>
-                      <TableCell>{user.providerData && user.providerData.length > 0 ? user.providerData[0].providerId : user.provider || t("adminPage.notAvailable")}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          user.tier === 'admin' ? 'bg-red-500 text-white' :
-                          user.tier === 'pro' ? 'bg-green-500 text-white' :
-                          user.tier === 'free' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-700'
-                        }`}>
-                          {user.tier || t("adminPage.notAvailable")}
-                        </span>
-                      </TableCell>
-                      <TableCell>{formatFirebaseTimestamp(user.createdAt)}</TableCell>
-                      <TableCell>{user.primaryInterest || t("adminPage.notSet")}</TableCell>
-                      <TableCell>
-                        {user.secondaryInterests && user.secondaryInterests.length > 0
-                          ? user.secondaryInterests.join(', ')
-                          : t("adminPage.noneSet")}
-                      </TableCell>
-                      <TableCell className="text-right space-x-1">
-                        <Button variant="outline" size="sm" onClick={() => handleOpenEditDialog(user)} title={t("adminPage.editUserButtonTooltip")}>
-                            <Edit3 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="destructive" size="sm" onClick={() => setUserToDelete(user)} title={t("adminPage.deleteUserButtonTooltip")}>
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-         <CardFooter className="flex items-center justify-between pt-4">
-            <span className="text-sm text-muted-foreground">
-              {t('adminPage.pageIndicator', { currentPage: currentPage, totalPages: totalPages })}
-            </span>
-            <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
-                    {t('adminPage.prevButton')}
-                </Button>
-                <Button variant="outline" onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages || totalPages === 0}>
-                    {t('adminPage.nextButton')}
-                </Button>
-            </div>
-        </CardFooter>
-      </Card>
+                {isLoadingUsers ? (
+                  <div className="flex items-center justify-center py-10">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" /> {t("adminPage.loadingUsers")}
+                  </div>
+                ) : fetchError ? (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>{t("adminPage.errorLoadingUsersTitle")}</AlertTitle>
+                    <AlertDescription>{fetchError}</AlertDescription>
+                  </Alert>
+                ) : paginatedUsers.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">
+                    {users.length === 0 ? t("adminPage.noUsersRegistered") : t("adminPage.noUsersMatchSearch")}
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>UID</TableHead>
+                          <TableHead>{t("adminPage.userTableEmailHeader")}</TableHead>
+                          <TableHead>{t("adminPage.userTableDisplayNameHeader")}</TableHead>
+                          <TableHead>{t("adminPage.userTableProviderHeader")}</TableHead>
+                          <TableHead>{t("adminPage.userTableTierHeader")}</TableHead>
+                          <TableHead>{t("adminPage.userTableCreationDateHeader")}</TableHead>
+                          <TableHead>{t("adminPage.userTablePrimaryInterestHeader")}</TableHead>
+                          <TableHead>{t("adminPage.userTableSecondaryInterestsHeader")}</TableHead>
+                          <TableHead className="text-right">{t("adminPage.userTableActionsHeader")}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedUsers.map((user) => (
+                          <TableRow key={user.uid}>
+                            <TableCell className="font-mono text-xs truncate max-w-[100px]" title={user.uid}>{user.uid}</TableCell>
+                            <TableCell className="font-medium">{user.email || t("adminPage.notAvailable")}</TableCell>
+                            <TableCell>{user.displayName || t("adminPage.notAvailable")}</TableCell>
+                            <TableCell>{user.providerData && user.providerData.length > 0 ? user.providerData[0].providerId : user.provider || t("adminPage.notAvailable")}</TableCell>
+                            <TableCell>
+                              <span className={`px-2 py-1 text-xs rounded-full ${
+                                user.tier === 'admin' ? 'bg-red-500 text-white' :
+                                user.tier === 'pro' ? 'bg-green-500 text-white' :
+                                user.tier === 'free' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-700'
+                              }`}>
+                                {user.tier || t("adminPage.notAvailable")}
+                              </span>
+                            </TableCell>
+                            <TableCell>{formatFirebaseTimestamp(user.createdAt)}</TableCell>
+                            <TableCell>{user.primaryInterest || t("adminPage.notSet")}</TableCell>
+                            <TableCell>
+                              {user.secondaryInterests && user.secondaryInterests.length > 0
+                                ? user.secondaryInterests.join(', ')
+                                : t("adminPage.noneSet")}
+                            </TableCell>
+                            <TableCell className="text-right space-x-1">
+                              <Button variant="outline" size="sm" onClick={() => handleOpenEditDialog(user)} title={t("adminPage.editUserButtonTooltip")}>
+                                  <Edit3 className="h-4 w-4" />
+                              </Button>
+                              <Button variant="destructive" size="sm" onClick={() => setUserToDelete(user)} title={t("adminPage.deleteUserButtonTooltip")}>
+                                  <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter className="flex items-center justify-between pt-4 p-4">
+                  <span className="text-sm text-muted-foreground">
+                    {t('adminPage.pageIndicator', { currentPage: currentPage, totalPages: totalPages })}
+                  </span>
+                  <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
+                          {t('adminPage.prevButton')}
+                      </Button>
+                      <Button variant="outline" onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages || totalPages === 0}>
+                          {t('adminPage.nextButton')}
+                      </Button>
+                  </div>
+              </CardFooter>
+            </AccordionContent>
+          </Card>
+        </AccordionItem>
+      </Accordion>
 
       {editingUser && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -462,7 +471,7 @@ export default function AdminPage() {
 
       <div className="mt-10 space-y-6">
         <h2 className="text-2xl font-semibold text-foreground border-b pb-2">{t("adminPage.otherCMSTitle")}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-xl flex items-center">
