@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "761748449636",
+    "project_id": "adivinaexamen",
+    "storage_bucket": "adivinaexamen.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:761748449636:android:3c364d38685f51f9763271",
+        "android_client_info": {
+          "package_name": "com.searchandmake.zeinte"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "761748449636-s2sfmtobqdnpnkbl7nlemquapridkeo7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCghDiCrD50L6qghGfvhPho6_jWQTSNT1Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "761748449636-s2sfmtobqdnpnkbl7nlemquapridkeo7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
