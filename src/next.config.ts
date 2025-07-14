@@ -47,11 +47,39 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'www.universidata.es',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'justicia.fsc.ccoo.es',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'encrypted-tbn0.gstatic.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'm.media-amazon.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+          protocol: 'https',
+          hostname: 'www.diemy.es',
+          port: '',
+          pathname: '/wp-content/uploads/**',
+      },
     ],
   },
-  experimental: {
-    serverComponentsExternalPackages: ['sharp', 'onnxruntime-node'],
-  },
+  serverExternalPackages: ['sharp', 'onnxruntime-node'],
   webpack(config) {
     config.externals.push({
       'sharp': 'commonjs sharp',
@@ -59,17 +87,7 @@ const nextConfig: NextConfig = {
     })
     return config
   },
-  
-  // This is required to allow video files from external sources
-  remotePatterns: [
-      {
-          protocol: 'https',
-          hostname: 'www.diemy.es',
-          port: '',
-          pathname: '/wp-content/uploads/**',
-      },
-  ],
-
 };
 
 export default nextConfig;
+
