@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageSwitcher from './LanguageSwitcher';
+import { ThemeToggle } from './ThemeToggle';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -92,7 +93,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
               {headerTitle}
             </h2>
           </div>
-          <LanguageSwitcher />
+          <div className="flex items-center gap-4">
+            <LanguageSwitcher />
+            <ThemeToggle />
+          </div>
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
           {children}

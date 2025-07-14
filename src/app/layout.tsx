@@ -8,6 +8,7 @@ import ConditionalLayout from '@/components/layout/ConditionalLayout';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/contexts/AuthContext';
 import { I18nProvider } from '@/contexts/I18nContext';
+import { ThemeProvider } from '@/contexts/ThemeProvider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -36,7 +37,7 @@ export default function RootLayout({
 }) {
 
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
         
@@ -82,13 +83,20 @@ export default function RootLayout({
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <I18nProvider>
-          <AuthProvider>
-            <ConditionalLayout>
-              {children}
-            </ConditionalLayout>
-          </AuthProvider>
-        </I18nProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <I18nProvider>
+            <AuthProvider>
+              <ConditionalLayout>
+                {children}
+              </ConditionalLayout>
+            </AuthProvider>
+          </I18nProvider>
+        </ThemeProvider>
         <Toaster />
       </body>
     </html>
