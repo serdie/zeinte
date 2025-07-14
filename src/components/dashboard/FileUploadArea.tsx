@@ -50,15 +50,15 @@ const commonExams: CommonExam[] = [
   { id: 'ucm', name: 'Universidad Complutense', category: 'Universidad', logoPlaceholder: 'https://biblioteca.ucm.es/data/cont/media/www/pag-88746//escudo.jpg', logoHint: 'university campus', keywords: 'exámenes Universidad Complutense Madrid', icon: LibraryBig },
   { id: 'uab', name: 'Universitat Autònoma BCN', category: 'Universidad', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/1/1a/Logo_uab.png', logoHint: 'modern university', keywords: 'exámenes Universitat Autònoma Barcelona', icon: LibraryBig },
   { id: 'us', name: 'Universidad de Sevilla', category: 'Universidad', logoPlaceholder: 'https://e7.pngegg.com/pngimages/234/349/png-clipart-university-of-seville-master-s-degree-student-higher-education-de-gea-thumbnail.png', logoHint: 'historic university', keywords: 'exámenes Universidad de Sevilla', icon: LibraryBig },
-  { id: 'uam', name: 'Universidad Autónoma Madrid', category: 'Universidad', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/4/4b/Logo_de_la_Universidad_Aut%C3%B3noma_de_Madrid.svg', logoHint: 'university science', keywords: 'exámenes Universidad Autónoma Madrid', icon: LibraryBig },
-  { id: 'uc3m', name: 'Universidad Carlos III', category: 'Universidad', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/a/aa/Logo_UC3M.svg', logoHint: 'university logo', keywords: 'exámenes Universidad Carlos III Madrid', icon: LibraryBig },
-  { id: 'upv', name: 'Universitat Politècnica València', category: 'Universidad', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/c/ca/Logo_UPV.svg', logoHint: 'polytechnic university', keywords: 'exámenes Universidad Politécnica de Valencia', icon: LibraryBig },
+  { id: 'uam', name: 'Universidad Autónoma Madrid', category: 'Universidad', logoPlaceholder: 'https://www.universidata.es/sites/default/files/styles/group_medium/public/uam_0.png?itok=x5ldAQ-Z', logoHint: 'university science', keywords: 'exámenes Universidad Autónoma Madrid', icon: LibraryBig },
+  { id: 'uc3m', name: 'Universidad Carlos III', category: 'Universidad', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Logo_UC3M.svg/1200px-Logo_UC3M.svg.png', logoHint: 'university logo', keywords: 'exámenes Universidad Carlos III Madrid', icon: LibraryBig },
+  { id: 'upv', name: 'Universitat Politècnica València', category: 'Universidad', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/8/85/UPV_Logo.png', logoHint: 'polytechnic university', keywords: 'exámenes Universidad Politécnica de Valencia', icon: LibraryBig },
   { id: 'admin_estado', name: 'Administrativo del Estado', category: 'Oposición', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Logotipo_de_la_Administraci%C3%B3n_General_del_Estado.svg/768px-Logotipo_de_la_Administraci%C3%B3n_General_del_Estado.svg.png', logoHint: 'government building', keywords: 'oposición Administrativo del Estado', icon: LibraryBig },
   { id: 'hacienda', name: 'Agente de Hacienda', category: 'Oposición', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Agencia_Tributaria.svg/339px-Agencia_Tributaria.svg.png', logoHint: 'tax office', keywords: 'oposición Agente Hacienda Pública', icon: LibraryBig },
   { id: 'agente_forestal', name: 'Agente Forestal', category: 'Oposición', logoPlaceholder: 'https://larioja.org/medio-ambiente/en/econoticias/econoticias-2015/04_agentesforestales.files/627201-distintivo_agentesforestale.jpg?width=249&height=230', logoHint: 'forest ranger', keywords: 'oposición Agente Forestal', icon: LibraryBig },
-  { id: 'justicia', name: 'Justicia (Auxilio/Tramitación)', category: 'Oposición', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/9/91/Escudo_del_Ministerio_de_Justicia.svg', logoHint: 'justice scale', keywords: 'oposición justicia auxilio judicial tramitación procesal', icon: LibraryBig },
-  { id: 'policia', name: 'Policía Nacional (Escala Básica)', category: 'Oposición', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/f/f8/Escudo_del_Cuerpo_Nacional_de_Polic%C3%ADa.svg', logoHint: 'police badge', keywords: 'oposición Policía Nacional Escala Básica', icon: LibraryBig },
-  { id: 'guardia_civil', name: 'Guardia Civil (Cabos y Guardias)', category: 'Oposición', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/b/b3/Emblema_de_la_Guardia_Civil.svg', logoHint: 'military emblem', keywords: 'oposición Guardia Civil', icon: LibraryBig },
+  { id: 'justicia', name: 'Justicia (Auxilio/Tramitación)', category: 'Oposición', logoPlaceholder: 'https://justicia.fsc.ccoo.es/8a31eebe95ee55457de0bfeb72ef668e000050.jpg', logoHint: 'justice scale', keywords: 'oposición justicia auxilio judicial tramitación procesal', icon: LibraryBig },
+  { id: 'policia', name: 'Policía Nacional (Escala Básica)', category: 'Oposición', logoPlaceholder: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRjaieg2d3EWkj8EzVUy6bagcA3Vy3QDkz7nQ&s', logoHint: 'police badge', keywords: 'oposición Policía Nacional Escala Básica', icon: LibraryBig },
+  { id: 'guardia_civil', name: 'Guardia Civil (Cabos y Guardias)', category: 'Oposición', logoPlaceholder: 'https://m.media-amazon.com/images/I/514S91YWWDL._UF894,1000_QL80_.jpg', logoHint: 'military emblem', keywords: 'oposición Guardia Civil', icon: LibraryBig },
 ];
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -447,6 +447,7 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
                     <CarouselItem key={exam.id} className="md:basis-1/2 lg:basis-1/3">
                         <div className="p-1">
                             <Button
+                                type="button"
                                 variant="outline"
                                 className="h-auto p-4 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md w-full"
                                 onClick={() => handleCommonExamClick(exam)}
@@ -467,8 +468,8 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
                     </CarouselItem>
                 ))}
             </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
+            <CarouselPrevious type="button" />
+            <CarouselNext type="button" />
         </Carousel>
     );
 };
