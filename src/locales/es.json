@@ -193,10 +193,8 @@
     "shareExam": "Compartir examen",
     "downloadPDF": "Descargar PDF",
     "deleteExam": "Eliminar examen",
-    "comingSoonTitle": "Funcionalidad no disponible",
-    "comingSoonDescription": "Esta funcionalidad estará disponible próximamente.",
-    "downloadProFeature": "La descarga en PDF es una funcionalidad Pro. ¡Actualiza para disfrutarla!",
     "proFeatureTitle": "Funcionalidad Pro",
+    "downloadProFeature": "La descarga en PDF es una funcionalidad Pro. ¡Actualiza para disfrutarla!",
     "generatingPdfTitle": "Generando PDF...",
     "generatingPdfDescription": "Esto puede tardar un momento.",
     "pdfGenerationError": "No se pudo generar el PDF.",
@@ -205,7 +203,15 @@
     "deleteConfirmationDescription": "Esta acción no se puede deshacer. El examen se eliminará permanentemente de tu historial.",
     "deleteConfirmButton": "Sí, eliminar",
     "examDeletedToastTitle": "Examen Eliminado",
-    "examDeletedToastDescription": "El examen ha sido eliminado de tu historial."
+    "examDeletedToastDescription": "El examen ha sido eliminado de tu historial.",
+    "sharePreparingFileTitle": "Preparando archivo para compartir...",
+    "sharePreparingFileDescription": "Generando el PDF para compartir. Por favor, espera.",
+    "shareTitle": "Examen de Estudio de Zeinte: {{examTitle}}",
+    "shareText": "¡Mira este examen que he generado con Zeinte!",
+    "shareSuccessTitle": "Compartido con éxito",
+    "shareNotSupportedTitle": "Compartir no Soportado",
+    "shareNotSupportedDescription": "Tu navegador no soporta compartir archivos directamente. Por favor, descarga el PDF y compártelo manualmente.",
+    "shareErrorDescription": "Ocurrió un error al intentar compartir el archivo."
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Pregunta Tipo Test",
@@ -937,8 +943,7 @@
     "invoiceStatusPagado": "Pagado",
     "invoiceStatusPendiente": "Pendiente",
     "invoiceStatusFallido": "Fallido",
-    "downloadInvoiceAction": "Descargar",
-    "downloadInvoiceComingSoon": "La descarga de facturas estará disponible pronto."
+    "downloadInvoiceAction": "Descargar"
   },
   "paymentPage": {
     "title": "Completa tu Suscripción a Zeinte Pro",
