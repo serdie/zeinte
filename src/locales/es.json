@@ -91,7 +91,7 @@
     "freeTrialFeature1": "Análisis de documentos.",
     "freeTrialFeature2": "Predicción de preguntas.",
     "freeTrialFeature3": "Explicaciones con IA.",
-    "freeTrialFeature4": "Acceso a la Comunidad (simulada).",
+    "freeTrialFeature4": "Acceso a la Comunidad (próximamente).",
     "startFreeTrialButton": "Comenzar con Plan Gratuito",
     "proPlanTitle": "Plan Pro",
     "proPlanDescription": "Desbloquea todas las funcionalidades de Zeinte.",
@@ -143,8 +143,8 @@
     "customConfigTitle": "Configuración Personalizada",
     "customConfigShort": "Adapta la generación de exámenes en Zeinte a tus necesidades (número de preguntas).",
     "customConfigLong": "Ajusta el número de preguntas tipo test por defecto que quieres que se generen en Zeinte. Estos valores se usarán a menos que los modifiques al momento de la generación.",
-    "studyCommunityTitle": "Comunidad de Estudio Zeinte (Simulada)",
-    "studyCommunityShort": "Explora foros y aprende de otros en la comunidad Zeinte (simulación actual).",
+    "studyCommunityTitle": "Comunidad de Estudio Zeinte (Próximamente)",
+    "studyCommunityShort": "Explora foros y aprende de otros en la comunidad Zeinte (próximamente).",
     "studyCommunityLong": "Accede a nuestra sección de comunidad Zeinte donde encontrarás foros de discusión simulados con temas relevantes para diversas oposiciones y estudios. En el futuro, podrás interactuar y compartir tus propias experiencias.",
     "knowMore": "Saber más..."
   },
@@ -505,7 +505,7 @@
     "tryOtherKeywords": "Intenta con otras palabras clave o revisa la ortografía.",
     "messagesInTopicTitle": "Mensajes en este tema:",
     "replyInTopicButton": "Responder en este Tema",
-    "footerDisclaimer": "Recuerda: La creación de temas y respuestas está simulada. ¡En el futuro podrás participar activamente en la comunidad Zeinte!",
+    "footerDisclaimer": "Recuerda: La creación de temas y respuestas será posible próximamente. ¡Podrás participar activamente en la comunidad Zeinte en el futuro!",
     "anonymousUser": "Usuario Anónimo",
     "likes": "{{count}} Me gusta",
     "reply": "Responder"
