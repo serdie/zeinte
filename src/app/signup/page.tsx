@@ -97,13 +97,6 @@ export default function SignupPage() {
               {t("signupPage.betaWelcomeMessage")}
             </AlertDescription>
           </Alert>
-           <Alert variant="default" className="bg-blue-500/10 border-blue-500/50 text-blue-700 dark:bg-blue-700/20 dark:text-blue-400 dark:border-blue-600">
-            <AlertTriangle className="h-5 w-5" />
-            <AlertTitle>{t("signupPage.betaAdNoticeTitle")}</AlertTitle>
-            <AlertDescription>
-             {t("signupPage.betaAdNoticeDescription")}
-            </AlertDescription>
-          </Alert>
           {!isFirebaseConfigured && (
             <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />

@@ -163,8 +163,6 @@
     "dailyLimitReachedTitle": "Límite Diario Alcanzado en Zeinte",
     "dailyLimitReachedDescription": "Has alcanzado el límite de un examen gratuito por día en Zeinte. Para generar más exámenes y acceder a todas las funcionalidades avanzadas, considera actualizar a nuestro Plan Pro.",
     "loadingData": "Cargando datos de Zeinte...",
-    "betaAdNoticeTitle": "¡Zeinte está en Beta!",
-    "betaAdNoticeDescription": "Zeinte es actualmente 100% gratuito durante nuestra fase Beta. Estamos trabajando para mejorar la plataforma y agradecemos tu comprensión y apoyo durante este periodo.",
     "welcomeTitle": "¡Hola, {{name}}!",
     "welcomeSubtitle": "Bienvenido/a a tu panel de estudio Zeinte. ¿Qué quieres hacer hoy?",
     "guestUser": "Estudiante",
@@ -371,8 +369,7 @@
     "loading": "Cargando...",
     "redirecting": "Redirigiendo...",
     "betaWelcomeMessage": "¡Bienvenido/a a la Beta de Zeinte! Durante esta fase, todas las cuentas nuevas operan con beneficios ampliados del Plan Gratuito, permitiéndote explorar la mayoría de nuestras features. El Plan Pro completo con todas sus ventajas exclusivas y la pasarela de pago se activarán pronto.",
-    "betaNoticeTitle": "¡Zeinte está en Beta!",
-    "betaAdNoticeDescription": "Zeinte se encuentra actualmente en su fase Beta y es 100% gratuito. Estamos trabajando para mejorar la plataforma y agradecemos tu comprensión y apoyo durante este periodo."
+    "betaNoticeTitle": "¡Zeinte está en Beta!"
   },
   "profilePage": {
     "loadingProfile": "Cargando perfil de Zeinte...",
@@ -723,10 +720,6 @@
     "cookiesPolicy": "Política de Cookies",
     "legalNotice": "Aviso Legal y Condiciones de Uso",
     "disclaimerText": "Zeinte es una herramienta de ayuda al estudio basada en inteligencia artificial. Los resultados y predicciones generados son para fines orientativos y no garantizan el éxito en ningún examen. El usuario es responsable del uso de la información proporcionada. Search and Make S.L. no se hace responsable de errores, omisiones o interpretaciones del contenido generado. Nos reservamos el derecho de modificar la aplicación y sus funcionalidades en cualquier momento. Los datos de uso se recopilan de forma anónima para mejorar la aplicación."
-  },
-  "adsense": {
-    "placeholderDashboard": "Espacio Publicitario (ej. Banner Panel de Estudio)",
-    "placeholderCommunity": "Espacio Publicitario (ej. Anuncio Comunidad)"
   },
   "customCourses": {
     "createPage": {

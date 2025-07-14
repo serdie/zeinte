@@ -163,8 +163,6 @@
     "dailyLimitReachedTitle": "Daily Limit Reached in Zeinte",
     "dailyLimitReachedDescription": "You have reached the limit of one free exam per day in Zeinte. To generate more exams and access all advanced features, consider upgrading to our Pro Plan.",
     "loadingData": "Loading Zeinte data...",
-    "betaAdNoticeTitle": "Zeinte is in Beta!",
-    "betaAdNoticeDescription": "Zeinte is currently 100% free during our Beta phase. We are working to improve the platform and appreciate your understanding and support during this period.",
     "welcomeTitle": "Hello, {{name}}!",
     "welcomeSubtitle": "Welcome to your Zeinte study dashboard. What would you like to do today?",
     "guestUser": "Student",
@@ -371,8 +369,7 @@
     "loading": "Loading...",
     "redirecting": "Redirecting...",
     "betaWelcomeMessage": "Welcome to Zeinte Beta! During this phase, all new accounts operate with enhanced Free Plan benefits, allowing you to explore most of our features. The full Pro Plan with all its exclusive advantages and payment gateway will be activated soon.",
-    "betaNoticeTitle": "Zeinte is in Beta!",
-    "betaAdNoticeDescription": "Zeinte is currently in its Beta phase and is 100% free. We are working to improve the platform and appreciate your understanding and support during this period."
+    "betaNoticeTitle": "Zeinte is in Beta!"
   },
   "profilePage": {
     "loadingProfile": "Loading Zeinte profile...",
@@ -723,10 +720,6 @@
     "cookiesPolicy": "Política de Cookies",
     "legalNotice": "Aviso Legal y Condiciones de Uso",
     "disclaimerText": "Zeinte es una herramienta de ayuda al estudio basada en inteligencia artificial. Los resultados y predicciones generados son para fines orientativos y no garantizan el éxito en ningún examen. El usuario es responsable del uso de la información proporcionada. Search and Make S.L. no se hace responsable de errores, omisiones o interpretaciones del contenido generado. Nos reservamos el derecho de modificar la aplicación y sus funcionalidades en cualquier momento. Los datos de uso se recopilan de forma anónima para mejorar la aplicación."
-  },
-  "adsense": {
-    "placeholderDashboard": "Espacio Publicitario (ej. Banner Panel de Estudio)",
-    "placeholderCommunity": "Espacio Publicitario (ej. Anuncio Comunidad)"
   },
   "customCourses": {
     "createPage": {

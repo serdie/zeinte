@@ -26,34 +26,18 @@ export const metadata: Metadata = {
 };
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
-const ADSENSE_PUBLISHER_ID = process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID;
 const PAYPAL_CLIENT_ID = "BAAASJSFHovFUl_DSeEP5Nzj6wZc-PyTvey8e7JrWbmrQ-L0yuE1YNQC4EQ7ObltYWufkQUkLmvE_gJX_0";
 
 export default function RootLayout({
   children,
-  params,
-  searchParams,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-  params: any,
-  searchParams: any,
-}>) {
+}) {
 
   return (
     <html lang="es">
       <head>
         <link rel="icon" href="/logo.png" sizes="any" />
-        {ADSENSE_PUBLISHER_ID && (
-          <meta name="google-adsense-account" content={ADSENSE_PUBLISHER_ID} />
-        )}
-        {ADSENSE_PUBLISHER_ID && (
-          <Script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_PUBLISHER_ID}`}
-            strategy="afterInteractive"
-            crossOrigin="anonymous"
-          />
-        )}
         {GA_MEASUREMENT_ID && (
           <>
             <Script

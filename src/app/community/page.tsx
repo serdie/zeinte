@@ -88,14 +88,6 @@ export default function CommunityPage() {
             </Button>
           </div>
 
-          {/* AdSense Ad Unit Placeholder REMOVED */}
-          {/* 
-          <div style={{ width: '100%', minHeight: '90px', backgroundColor: '#f0f0f0', border: '1px dashed #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '20px 0', padding: '10px', textAlign: 'center' }}>
-            <span style={{ color: '#999', fontSize: '0.9rem' }}>{t("adsense.placeholderCommunity")}</span>
-          </div>
-          */}
-
-
           {filteredTopics.length === 0 && searchTerm && (
             <div className="text-center py-10 text-muted-foreground">
               <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />

@@ -65,13 +65,6 @@ export default function DashboardPage() {
           {t('dashboardPage.welcomeSubtitle')}
         </p>
       </section>
-
-      {/* AdSense Ad Unit Placeholder REMOVED */}
-      {/* 
-      <div style={{ width: '100%', minHeight: '90px', backgroundColor: '#f0f0f0', border: '1px dashed #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '20px 0', padding: '10px', textAlign: 'center' }}>
-        <span style={{ color: '#999', fontSize: '0.9rem' }}>{t("adsense.placeholderDashboard")}</span>
-      </div>
-      */}
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="shadow-lg hover:shadow-xl transition-shadow col-span-1 md:col-span-2 lg:col-span-3 bg-gradient-to-r from-primary/80 to-accent/80 text-primary-foreground">
@@ -173,15 +166,6 @@ export default function DashboardPage() {
           ))}
         </CardContent>
       </Card>
-      
-       {/* Beta Ad Notice - if you want to keep it */}
-       {/* <Alert variant="default" className="mt-8 bg-blue-500/10 border-blue-500/50 text-blue-700 dark:text-blue-400">
-            <Info className="h-5 w-5" />
-            <AlertTitle>{t('dashboardPage.betaAdNoticeTitle')}</AlertTitle>
-            <AlertDescription>
-              {t('dashboardPage.betaAdNoticeDescription')}
-            </AlertDescription>
-        </Alert> */}
 
     </div>
   );
