@@ -116,7 +116,7 @@ export default function ManageSubscriptionPage() {
     );
   }
   
-  const isSpecialUser = currentUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase() || currentUser.email?.toLowerCase() === FREE_USER_EMAIL.toLowerCase();
+  const isSpecialUser = currentUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   return (
     <>
@@ -156,13 +156,21 @@ export default function ManageSubscriptionPage() {
                   {t('subscriptionPage.cancelButton')}
                 </Button>
               )}
-               {isSpecialUser && currentUser.email?.toLowerCase() === FREE_USER_EMAIL.toLowerCase() && (
+               {isSpecialUser && (
                  <Alert variant="default">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>{t('subscriptionPage.specialProUserTitle')}</AlertTitle>
                     <AlertDescription>{t('subscriptionPage.specialProUserDescription')}</AlertDescription>
                  </Alert>
               )}
+               {currentUser.email?.toLowerCase() === FREE_USER_EMAIL.toLowerCase() && (
+                 <Alert variant="default">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>{t('subscriptionPage.specialProUserTitle')}</AlertTitle>
+                    <AlertDescription>{t('subscriptionPage.specialProUserDescription')}</AlertDescription>
+                 </Alert>
+              )}
+
             </>
           )}
 
