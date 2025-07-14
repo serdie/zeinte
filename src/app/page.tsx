@@ -111,8 +111,19 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 text-foreground">
       {/* Hero Section */}
-      <section className="py-16 md:py-24 text-center bg-card shadow-lg rounded-b-xl mb-12">
-        <div className="container mx-auto px-4">
+      <section className="relative py-16 md:py-24 text-center bg-card shadow-lg rounded-b-xl mb-12 overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full z-0">
+            <video 
+                src="https://www.diemy.es/wp-content/uploads/2025/07/Video_Generado_para_Zeinte.mp4" 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+                className="w-full h-full object-cover opacity-20"
+            ></video>
+            <div className="absolute top-0 left-0 w-full h-full bg-background/30"></div>
+        </div>
+        <div className="container mx-auto px-4 relative z-10">
           
           <h1 className="text-4xl md:text-5xl font-bold mb-6 text-primary">
             {t('homePage.mainTitle')}
