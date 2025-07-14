@@ -11,15 +11,18 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ShieldAlert, Loader2, Users, AlertTriangle, ArrowLeft, Settings, MessageSquare, Edit3, Trash2, Save, ArrowDownUp, ArrowDown, ArrowUp, Search, Mail } from 'lucide-react';
+import { ShieldAlert, Loader2, Users, AlertTriangle, ArrowLeft, Settings, MessageSquare, Edit3, Trash2, Save, ArrowDownUp, ArrowDown, ArrowUp, Search, Mail, LineChart, Ticket, BarChartHorizontal } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { db } from '@/firebase/config';
 import { collection, getDocs, Timestamp, type DocumentData, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import type { UserTier, AppUserFirestoreData as AuthAppUser } from '@/contexts/AuthContext'; // Import AppUserFirestoreData
+import type { UserTier, AppUserFirestoreData as AuthAppUser } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
+import { useAppMetrics } from '@/hooks/useAppMetrics';
+import StatCard from '@/components/admin/StatCard';
+
 
 // Update AppUser to correctly include fields from AuthAppUser
 interface AppUser extends AuthAppUser {
@@ -46,6 +49,7 @@ export default function AdminPage() {
   const { currentUser, isAdmin, loading: authLoading, isFirebaseConfigured } = useAuth();
   const { toast } = useToast();
   const { t } = useI18n();
+  const { metrics, loading: metricsLoading } = useAppMetrics();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -254,14 +258,37 @@ export default function AdminPage() {
           <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />{t("adminPage.backToDashboard")}</Button>
         </Link>
       </div>
-      
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>{t("adminPage.deleteUserDisclaimerTitle")}</AlertTitle>
-        <AlertDescription>
-          {t("adminPage.deleteUserDisclaimerDescription")}
-        </AlertDescription>
-      </Alert>
+
+       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard 
+              title={t('adminPage.keyMetricsTotalUsers')} 
+              value={metrics.totalUsers.toString()} 
+              icon={Users}
+              isLoading={metricsLoading}
+              description={t('adminPage.keyMetricsTotalUsersDesc')}
+          />
+          <StatCard 
+              title={t('adminPage.keyMetricsActive24h')} 
+              value={"N/D"} // Placeholder
+              icon={LineChart}
+              isLoading={metricsLoading}
+              description={t('adminPage.keyMetricsActive24hDesc')}
+          />
+          <StatCard 
+              title={t('adminPage.keyMetricsProUsers')} 
+              value={"N/D"} // Placeholder
+              icon={Users}
+              isLoading={metricsLoading}
+              description={t('adminPage.keyMetricsProUsersDesc')}
+          />
+           <StatCard 
+              title={t('adminPage.keyMetricsTotalAnalyses')} 
+              value={"N/D"} // Placeholder
+              icon={BarChartHorizontal}
+              isLoading={metricsLoading}
+              description={t('adminPage.keyMetricsTotalAnalysesDesc')}
+          />
+      </div>
 
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="user-management">
@@ -386,9 +413,12 @@ export default function AdminPage() {
                 )}
               </CardContent>
               <CardFooter className="flex items-center justify-between pt-4 p-4">
-                  <span className="text-sm text-muted-foreground">
-                    {t('adminPage.pageIndicator', { currentPage: currentPage, totalPages: totalPages })}
-                  </span>
+                   <Alert variant="destructive" className="flex-1 text-xs mr-4">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        {t("adminPage.deleteUserDisclaimerDescription")}
+                      </AlertDescription>
+                    </Alert>
                   <div className="flex gap-2">
                       <Button variant="outline" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
                           {t('adminPage.prevButton')}
@@ -516,6 +546,47 @@ export default function AdminPage() {
           </Card>
         </div>
       </div>
+      
+       <div className="mt-10 space-y-6">
+          <h2 className="text-2xl font-semibold text-foreground border-b pb-2">{t("adminPage.additionalModulesTitle")}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center">
+                      <LineChart className="h-5 w-5 mr-2 text-primary" />
+                      {t('adminPage.analyticsModuleTitle')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground">{t('adminPage.analyticsModuleDescription')}</p>
+                    <Button variant="outline" size="sm" className="mt-3" disabled>
+                        {t('common.soon')}
+                    </Button>
+                </CardContent>
+                <CardFooter>
+                  <p className="text-xs text-muted-foreground">{t('adminPage.analyticsModuleFooter')}</p>
+                </CardFooter>
+            </Card>
+             <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center">
+                      <Ticket className="h-5 w-5 mr-2 text-primary" />
+                      {t('adminPage.discountsModuleTitle')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground">{t('adminPage.discountsModuleDescription')}</p>
+                    <Button variant="outline" size="sm" className="mt-3" disabled>
+                       {t('adminPage.generateDiscountButton')}
+                    </Button>
+                </CardContent>
+                <CardFooter>
+                  <p className="text-xs text-muted-foreground">{t('adminPage.discountsModuleFooter')}</p>
+                </CardFooter>
+            </Card>
+          </div>
+       </div>
+
     </div>
   );
 }
