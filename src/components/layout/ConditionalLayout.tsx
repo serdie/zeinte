@@ -1,15 +1,13 @@
-
 // src/components/layout/ConditionalLayout.tsx
 "use client";
 
 import { usePathname, useRouter } from 'next/navigation';
-import type React from 'react';
-import { useEffect, useState } from 'react'; // Added useState
+import React, { useEffect, useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast'; // Added useToast
-import { useI18n } from '@/contexts/I18nContext'; // Added useI18n
+import { useToast } from '@/hooks/use-toast';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface ConditionalLayoutProps {
   children: React.ReactNode;
@@ -34,7 +32,7 @@ const PROTECTED_PATHS = [
 
 
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
-  const pathname = usePathname();
+  const pathname = usePathname(); // Corrected: usePathname() directly returns the string.
   const router = useRouter();
   const { currentUser, userProfileData, loading, isFirebaseConfigured, isAdmin } = useAuth(); // Get userProfileData
   const { toast } = useToast();
