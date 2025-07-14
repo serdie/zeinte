@@ -7,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Loader2, ShieldCheck, ArrowLeft, XCircle, Info, AlertTriangle, FileText, CheckCircle } from 'lucide-react';
-import { useAuth, ADMIN_EMAIL, FREE_USER_EMAIL } from '@/contexts/AuthContext';
+import { useAuth, ADMIN_EMAIL } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -54,16 +54,6 @@ export default function ManageSubscriptionPage() {
     if (!currentUser || userTier !== 'pro') {
       toast({ title: t('common.error'), description: t('subscriptionPage.notProError'), variant: "destructive" });
       return;
-    }
-
-    if (currentUser.email?.toLowerCase() === FREE_USER_EMAIL.toLowerCase()) {
-        toast({
-            title: t('subscriptionPage.cannotCancelSpecialProTitle'),
-            description: t('subscriptionPage.cannotCancelSpecialProDescription'),
-            variant: "default",
-            duration: 7000,
-        });
-        return;
     }
 
     setIsCancelling(true);
@@ -157,13 +147,6 @@ export default function ManageSubscriptionPage() {
                 </Button>
               )}
                {isSpecialUser && (
-                 <Alert variant="default">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>{t('subscriptionPage.specialProUserTitle')}</AlertTitle>
-                    <AlertDescription>{t('subscriptionPage.specialProUserDescription')}</AlertDescription>
-                 </Alert>
-              )}
-               {currentUser.email?.toLowerCase() === FREE_USER_EMAIL.toLowerCase() && (
                  <Alert variant="default">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>{t('subscriptionPage.specialProUserTitle')}</AlertTitle>
