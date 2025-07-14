@@ -1,9 +1,8 @@
-// "use client"; // Eliminado para permitir la exportación de metadata
 
-import React from 'react'; // Import React
+import React from 'react';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import Script from 'next/script'; // Import Next.js Script component
+import Script from 'next/script';
 import './globals.css';
 import ConditionalLayout from '@/components/layout/ConditionalLayout';
 import { Toaster } from "@/components/ui/toaster";
@@ -20,33 +19,33 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-// La exportación de metadata es válida porque este es un Server Component.
 export const metadata: Metadata = {
-  metadataBase: new URL('https://zeinte.com'), // Added metadataBase
+  metadataBase: new URL('https://zeinte.com'),
   title: 'Zeinte - Tu Aliado Inteligente para Exámenes',
-  description: 'Con Zeinte (antes AdivinaExamen), analiza documentos y predice preguntas de examen con IA.',
+  description: 'Con Zeinte, analiza documentos y predice preguntas de examen con IA.',
 };
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 const ADSENSE_PUBLISHER_ID = process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID;
-const PAYPAL_CLIENT_ID = "BAAASJSFHovFUl_DSeEP5Nzj6wZc-PyTvey8e7JrWbmrQ-L0yuE1YNQC4EQ7ObltYWufkQUkLmvE_gJX_0"; // Your PayPal Client ID
+const PAYPAL_CLIENT_ID = "BAAASJSFHovFUl_DSeEP5Nzj6wZc-PyTvey8e7JrWbmrQ-L0yuE1YNQC4EQ7ObltYWufkQUkLmvE_gJX_0";
 
 export default function RootLayout({
   children,
+  params,
+  searchParams,
 }: Readonly<{
   children: React.ReactNode;
+  params: any,
+  searchParams: any,
 }>) {
 
   return (
     <html lang="es">
       <head>
         <link rel="icon" href="/logo.png" sizes="any" />
-        {/* Google AdSense Account Meta Tag */}
         {ADSENSE_PUBLISHER_ID && (
           <meta name="google-adsense-account" content={ADSENSE_PUBLISHER_ID} />
         )}
-
-        {/* Google AdSense Script */}
         {ADSENSE_PUBLISHER_ID && (
           <Script
             async
@@ -55,8 +54,6 @@ export default function RootLayout({
             crossOrigin="anonymous"
           />
         )}
-
-        {/* Google Analytics Scripts */}
         {GA_MEASUREMENT_ID && (
           <>
             <Script
@@ -79,15 +76,13 @@ export default function RootLayout({
             />
           </>
         )}
-
-        {/* PayPal SDK Script */}
         <Script
           src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&components=hosted-buttons&disable-funding=venmo&currency=EUR`}
           strategy="afterInteractive"
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <I18nProvider> {/* Envuelve AuthProvider (y por tanto todo lo demás) con I18nProvider */}
+        <I18nProvider>
           <AuthProvider>
             <ConditionalLayout>
               {children}

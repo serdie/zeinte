@@ -1,5 +1,5 @@
 
-# Zeinte (formerly AdivinaExamen)
+# Zeinte
 
 This is Zeinte, a NextJS starter application built in Firebase Studio. Zeinte helps users analyze documents and predict exam questions using AI.
 
