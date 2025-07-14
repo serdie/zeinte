@@ -20,11 +20,51 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://zeinte.com';
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://zeinte.com'),
-  title: 'Zeinte - Tu Aliado Inteligente para Exámenes',
-  description: 'Con Zeinte, analiza documentos y predice preguntas de examen con IA.',
+  metadataBase: new URL(APP_URL),
+  title: {
+    default: 'AdivinaExamen - Prepara Exámenes con Inteligencia Artificial',
+    template: '%s - AdivinaExamen',
+  },
+  description: 'Con AdivinaExamen, analiza temarios, apuntes y exámenes anteriores para predecir preguntas clave con IA. Optimiza tu estudio y aprueba tus oposiciones y exámenes universitarios.',
+  keywords: ['preparar exámenes', 'oposiciones', 'IA para estudiar', 'inteligencia artificial', 'predecir preguntas examen', 'aprobar exámenes', 'selectividad', 'MIR', 'universidad', 'herramienta de estudio'],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    title: 'AdivinaExamen - Tu Aliado Inteligente para Exámenes',
+    description: 'Transforma tus apuntes en una ventaja competitiva. Sube tus documentos y deja que nuestra IA te ayude a enfocar tu estudio en lo que de verdad importa.',
+    url: APP_URL,
+    siteName: 'AdivinaExamen',
+    images: [
+      {
+        url: `${APP_URL}/og-image.png`, // IMPORTANT: Create this image and place it in the /public folder
+        width: 1200,
+        height: 630,
+        alt: 'Estudia de forma inteligente con AdivinaExamen',
+      },
+    ],
+    locale: 'es_ES',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AdivinaExamen - Prepara Exámenes con IA',
+    description: 'Optimiza tu estudio para oposiciones y exámenes universitarios. Sube tus apuntes y deja que la IA prediga las preguntas.',
+    // images: [`${APP_URL}/twitter-image.png`], // Optional: a specific image for Twitter
+  },
 };
+
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 const PAYPAL_CLIENT_ID = "BAAASJSFHovFUl_DSeEP5Nzj6wZc-PyTvey8e7JrWbmrQ-L0yuE1YNQC4EQ7ObltYWufkQUkLmvE_gJX_0";

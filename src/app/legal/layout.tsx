@@ -1,3 +1,4 @@
+
 // src/app/legal/layout.tsx
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -18,12 +19,12 @@ export default function LegalLayout({
           <Link href="/" className="flex items-center gap-2 text-2xl font-semibold text-primary hover:text-primary/80">
             {/* <Image
               src="/logo.png"
-              alt="Zeinte Logo"
+              alt="AdivinaExamen Logo"
               width={28}
               height={28}
               className="rounded-full"
             /> */}
-            <span>Zeinte</span>
+            <span>AdivinaExamen</span>
           </Link>
           <Link href="/dashboard" className="text-sm text-primary hover:underline">
             Volver al Panel
@@ -35,7 +36,7 @@ export default function LegalLayout({
       </main>
       <footer className="text-center py-6 mt-auto border-t border-border">
         <p className="text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} Search and Make S.L. (CIF: B45786787) - Zeinte. Todos los derechos reservados.
+          &copy; {new Date().getFullYear()} Search and Make S.L. (CIF: B45786787) - AdivinaExamen. Todos los derechos reservados.
         </p>
         <div className="mt-2 space-x-4 text-xs text-muted-foreground">
           <Link href="/legal/terms" className="hover:text-primary">Aviso Legal y Condiciones de Uso</Link>

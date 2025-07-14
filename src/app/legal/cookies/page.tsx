@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const metadata: Metadata = {
-  title: 'Política de Cookies - Zeinte',
-  description: 'Información sobre el uso de cookies en Zeinte.',
+  title: 'Política de Cookies - AdivinaExamen',
+  description: 'Información sobre el uso de cookies en AdivinaExamen.',
 };
 
 export default function CookiesPolicyPage() {
@@ -19,7 +19,7 @@ export default function CookiesPolicyPage() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 text-foreground/90 prose prose-sm sm:prose-base max-w-none">
-        <p>Esta Política de Cookies describe qué son las cookies, cómo Zeinte las utiliza, y tus opciones respecto a su uso.</p>
+        <p>Esta Política de Cookies describe qué son las cookies, cómo AdivinaExamen las utiliza, y tus opciones respecto a su uso.</p>
 
         <section aria-labelledby="que-son-cookies">
           <h2 id="que-son-cookies" className="text-xl font-semibold text-foreground mt-4 mb-2">¿Qué son las cookies?</h2>
@@ -77,5 +77,3 @@ export default function CookiesPolicyPage() {
     </Card>
   );
 }
-
-    

@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidad - Zeinte',
-  description: 'Información sobre cómo Zeinte recopila, utiliza y protege tus datos personales.',
+  title: 'Política de Privacidad - AdivinaExamen',
+  description: 'Información sobre cómo AdivinaExamen recopila, utiliza y protege tus datos personales.',
 };
 
 export default function PrivacyPolicyPage() {
@@ -19,7 +19,7 @@ export default function PrivacyPolicyPage() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 text-foreground/90 prose prose-sm sm:prose-base max-w-none">
-        <p>En Zeinte, nos tomamos muy en serio la privacidad de nuestros usuarios. Esta Política de Privacidad describe cómo recopilamos, utilizamos y divulgamos tu información personal cuando utilizas nuestra aplicación Zeinte. Al utilizar la aplicación, aceptas la recopilación y el uso de la información de acuerdo con esta política.</p>
+        <p>En AdivinaExamen, nos tomamos muy en serio la privacidad de nuestros usuarios. Esta Política de Privacidad describe cómo recopilamos, utilizamos y divulgamos tu información personal cuando utilizas nuestra aplicación AdivinaExamen. Al utilizar la aplicación, aceptas la recopilación y el uso de la información de acuerdo con esta política.</p>
 
         <section aria-labelledby="datos-recopilamos">
           <h2 id="datos-recopilamos" className="text-xl font-semibold text-foreground mt-4 mb-2">1. Datos que Recopilamos</h2>
@@ -130,5 +130,3 @@ export default function PrivacyPolicyPage() {
     </Card>
   );
 }
-
-    
