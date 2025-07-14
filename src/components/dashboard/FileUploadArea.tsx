@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type React from 'react';
@@ -47,7 +48,7 @@ interface CommonExam {
 
 const commonExams: CommonExam[] = [
   { id: 'ucm', name: 'Universidad Complutense', category: 'Universidad', logoPlaceholder: 'https://biblioteca.ucm.es/data/cont/media/www/pag-88746//escudo.jpg', logoHint: 'university campus', keywords: 'exámenes Universidad Complutense Madrid', icon: LibraryBig },
-  { id: 'uab', name: 'Universitat Autònoma BCN', category: 'Universidad', logoPlaceholder: 'https://placehold.co/80x40.png', logoHint: 'modern university', keywords: 'exámenes Universitat Autònoma Barcelona', icon: LibraryBig },
+  { id: 'uab', name: 'Universitat Autònoma BCN', category: 'Universidad', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/1/1a/Logo_uab.png', logoHint: 'modern university', keywords: 'exámenes Universitat Autònoma Barcelona', icon: LibraryBig },
   { id: 'us', name: 'Universidad de Sevilla', category: 'Universidad', logoPlaceholder: 'https://placehold.co/80x40.png', logoHint: 'historic university', keywords: 'exámenes Universidad de Sevilla', icon: LibraryBig },
   { id: 'admin_estado', name: 'Administrativo del Estado', category: 'Oposición', logoPlaceholder: 'https://placehold.co/60x60.png', logoHint: 'government building', keywords: 'oposición Administrativo del Estado', icon: LibraryBig },
   { id: 'hacienda', name: 'Agente de Hacienda', category: 'Oposición', logoPlaceholder: 'https://placehold.co/60x60.png', logoHint: 'tax office', keywords: 'oposición Agente Hacienda Pública', icon: LibraryBig },
