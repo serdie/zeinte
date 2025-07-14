@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -17,6 +18,7 @@ import { generateAIExplanation, type GenerateAIExplanationInput } from '@/ai/flo
 import AIExplanationDialog from '@/components/dashboard/AIExplanationDialog';
 import { UpgradeProAlert } from '@/components/ui/upgrade-pro-alert';
 import { predictExamQuestions } from '@/ai/flows/predict-exam-questions';
+import AdSenseUnit from '@/components/ads/AdSenseUnit';
 
 const MAX_QUESTIONS_FREE_USER = 5;
 const FREE_USER_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -170,6 +172,7 @@ export default function ExamResultPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+            <AdSenseUnit adSlot="YOUR_AD_SLOT_ID_FOR_EXAM_RESULTS" className="mb-6" />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                 <Alert variant="default" className="bg-muted">
                     <BrainCircuit className="h-4 w-4" />

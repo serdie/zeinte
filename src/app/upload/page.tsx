@@ -15,6 +15,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { CardTitle } from '@/components/ui/card'; // Import CardTitle
+import AdSenseUnit from '@/components/ads/AdSenseUnit';
 
 export default function UploadPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -49,7 +50,7 @@ export default function UploadPage() {
       const examTitle = analysisResult.summary.substring(0, 50) + (analysisResult.summary.length > 50 ? '...' : '');
 
       const dataToStore: PredictedData = {
-        id: newTimestamp,
+        id: newTimestamp.toString(), // Ensure ID is a string
         title: examTitle,
         questions: predictionResult.questions.map(q => ({
             ...q,
@@ -109,6 +110,7 @@ export default function UploadPage() {
           </Button>
         </Link>
       </div>
+      <AdSenseUnit adSlot="YOUR_AD_SLOT_ID_FOR_UPLOAD" className="mb-8" />
       <FileUploadArea onAnalyze={handleAnalyze} isLoading={isLoading} />
     </div>
   );

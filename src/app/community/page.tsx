@@ -10,6 +10,7 @@ import { Users, MessageSquare, CornerDownRight, ThumbsUp, Eye, Search, Newspaper
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useI18n } from '@/contexts/I18nContext';
+import AdSenseUnit from '@/components/ads/AdSenseUnit';
 
 // Helper to get a user (can be expanded if users are stored separately)
 const getMockUser = (userId: string): MockUser => {
@@ -87,6 +88,8 @@ export default function CommunityPage() {
               <MessageSquare className="h-5 w-5 mr-2" /> {t('communityPage.newTopicButton')}
             </Button>
           </div>
+          
+          <AdSenseUnit adSlot="YOUR_AD_SLOT_ID_FOR_COMMUNITY" className="mb-6" />
 
           {filteredTopics.length === 0 && searchTerm && (
             <div className="text-center py-10 text-muted-foreground">

@@ -18,6 +18,7 @@ import { generateCustomCourseSyllabus, type GenerateCustomCourseSyllabusInput, t
 import { generateModuleContent, type GenerateModuleContentInput } from '@/ai/flows/generateModuleContent';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
+import AdSenseUnit from '@/components/ads/AdSenseUnit';
 
 type CourseCreationStage = "define" | "review_syllabus" | "course_prep" | "course_view";
 
@@ -207,6 +208,8 @@ export default function CreateCustomCoursePage() {
         </CardHeader>
 
         <CardContent className="space-y-6">
+          <AdSenseUnit adSlot="YOUR_AD_SLOT_ID_FOR_CUSTOM_COURSES" className="mb-6" />
+
           {stage === "define" && (
             <form onSubmit={handleGenerateSyllabus} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

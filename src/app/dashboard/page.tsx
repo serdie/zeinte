@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import AdSenseUnit from '@/components/ads/AdSenseUnit';
 
 export default function DashboardPage() {
   const { t, language } = useI18n();
@@ -144,6 +145,8 @@ export default function DashboardPage() {
           </CardFooter>
         </Card>
       </div>
+
+      <AdSenseUnit adSlot="YOUR_AD_SLOT_ID_FOR_DASHBOARD" className="my-8" />
 
       <Card className="shadow-lg">
         <CardHeader>
