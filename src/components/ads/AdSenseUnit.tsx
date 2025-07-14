@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useEffect, usePathname } from 'react';
+import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface AdSenseUnitProps {
