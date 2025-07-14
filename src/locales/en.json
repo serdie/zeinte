@@ -859,7 +859,9 @@
     "backToPricing": "Volver a Precios",
     "alreadyProTitle": "Ya Estás Suscrito",
     "alreadyProDescription": "Tu cuenta ya es Pro o Admin. Puedes gestionar tu suscripción o ir al panel de estudio.",
-    "goToDashboard": "Ir al Panel de Estudio"
+    "goToDashboard": "Ir al Panel de Estudio",
+    "buyNowButton": "Comprar ahora",
+    "poweredBy": "Tecnología de "
   },
   "conditionalLayout": {
     "interestSetupTitle": "¡Personaliza tu Experiencia en Zeinte!",
