@@ -72,7 +72,7 @@ export default function RootLayout({
           </>
         )}
         <Script
-          src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&components=hosted-buttons&disable-funding=venmo,paylater&currency=EUR`}
+          src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&disable-funding=venmo,paylater&components=hosted-buttons&currency=EUR`}
           strategy="afterInteractive"
         />
       </head>
