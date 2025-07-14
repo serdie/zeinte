@@ -79,7 +79,7 @@ const simulateSendEmail = async (templateName: string, recipientEmail: string, s
         const templateSnap = await getDoc(templateRef);
 
         if (!templateSnap.exists()) {
-            console.warn(`Email template "${templateName}" not found in Firestore.`);
+            console.warn(`Email template "${templateName}" not found in Firestore. You may need to create it in the admin panel.`);
             return;
         }
 

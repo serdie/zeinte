@@ -67,6 +67,7 @@
     "adminTitle": "Panel de Administración - Zeinte",
     "adminAppSettingsTitle": "Configuración de Aplicación - Zeinte",
     "adminCommunityManagementTitle": "Gestión de Comunidad - Zeinte",
+    "adminEmailTemplatesTitle": "Gestión de Plantillas de Correo - Zeinte",
     "pricingTitle": "Planes y Precios - Zeinte",
     "paypalPaymentTitle": "Pago con PayPal - Zeinte",
     "subscriptionManagementTitle": "Gestionar Suscripción - Zeinte"
@@ -570,7 +571,10 @@
     "appGeneralConfigDescription": "Ajustes globales de la aplicación, parámetros de IA, gestión de planes (futuro), etc.",
     "goToConfigButton": "Ir a Configuración",
     "notSet": "No establecido",
-    "noneSet": "Ninguno"
+    "noneSet": "Ninguno",
+    "emailTemplatesTitle": "Plantillas de Correo",
+    "emailTemplatesDescription": "Gestiona los correos transaccionales automáticos.",
+    "goToEmailTemplatesButton": "Gestionar Plantillas"
   },
   "adminCommunityManagementPage": {
     "loading": "Cargando...",
@@ -680,6 +684,42 @@
     "proPlanFeaturesLegend": "Características del Plan Pro (Conceptual)",
     "maxPdfDownloadsLabel": "Descargas PDF/mes (Pro):",
     "maxPdfDownloadsDescription": "Límite de descargas de PDF para usuarios Pro."
+  },
+  "adminEmailTemplatesPage": {
+    "title": "Gestión de Plantillas de Correo",
+    "templatesListTitle": "Plantillas de Correo Electrónico",
+    "templatesListDescription": "Crea y edita las plantillas para los correos automáticos de la aplicación.",
+    "newTemplateButton": "Nueva Plantilla",
+    "importantNoteTitle": "Nota Importante sobre el Envío de Correos",
+    "importantNoteDescription": "Este panel te permite gestionar el CONTENIDO de los correos. El ENVÍO real de estos correos debe ser implementado en el backend (ej. con Firebase Cloud Functions) que se disparen en eventos como el registro de un usuario o un cambio de plan. Actualmente, el envío está SIMULADO y aparecerá en la consola del desarrollador.",
+    "loadingTemplates": "Cargando plantillas...",
+    "noTemplatesFound": "No se encontraron plantillas de correo. Crea una para empezar.",
+    "tableHeaderId": "ID de Plantilla",
+    "tableHeaderSubject": "Asunto",
+    "tableHeaderDescription": "Descripción",
+    "tableHeaderLastUpdated": "Última Actualización",
+    "editTemplateTitle": "Editar Plantilla de Correo",
+    "createTemplateTitle": "Crear Nueva Plantilla de Correo",
+    "dialogDescription": "Define el contenido de este correo automático.",
+    "templateIdLabel": "ID de Plantilla (único)",
+    "templateIdPlaceholder": "ej: welcome_email, upgrade_to_pro",
+    "templateIdDescription": "Identificador único (sin espacios, usar guiones bajos).",
+    "templateInternalDescLabel": "Descripción Interna",
+    "descriptionPlaceholder": "Descripción interna de cuándo se usa este correo.",
+    "subjectLabel": "Asunto del Correo",
+    "subjectPlaceholder": "Ej: ¡Bienvenido a Zeinte!",
+    "bodyLabel": "Cuerpo del Correo (HTML/Texto)",
+    "bodyPlaceholder": "Escribe aquí el contenido del correo. Usa {{userName}} para el nombre del usuario.",
+    "placeholdersInfo": "Puedes usar placeholders como {{userName}} que serán reemplazados por el valor real.",
+    "deleteConfirmTitle": "¿Eliminar Plantilla?",
+    "deleteConfirmDescription": "Estás a punto de eliminar la plantilla '{{templateId}}'. Esta acción no se puede deshacer. El sistema no podrá enviar este correo automático si se elimina.",
+    "errorLoadingTemplates": "No se pudieron cargar las plantillas de correo.",
+    "allFieldsRequired": "Todos los campos son obligatorios.",
+    "invalidTemplateId": "El ID de la plantilla solo puede contener letras minúsculas, números y guiones bajos.",
+    "templateSavedSuccess": "La plantilla de correo ha sido guardada correctamente.",
+    "errorSavingTemplate": "No se pudo guardar la plantilla de correo.",
+    "templateDeletedSuccess": "La plantilla ha sido eliminada.",
+    "errorDeletingTemplate": "No se pudo eliminar la plantilla."
   },
   "languageSwitcher": {
     "selectLanguage": "Seleccionar Idioma"

@@ -37,10 +37,24 @@ interface EmailTemplate {
   lastUpdated?: Timestamp;
 }
 
+const formatFirestoreTimestamp = (timestamp: Timestamp | { seconds: number, nanoseconds: number } | undefined, locale: string): string => {
+  if (!timestamp) return 'N/A';
+  let date: Date;
+  if (timestamp instanceof Timestamp) {
+    date = timestamp.toDate();
+  } else if (timestamp && typeof (timestamp as {seconds: number}).seconds === 'number') {
+    date = new Date((timestamp as {seconds: number}).seconds * 1000);
+  } else {
+    return 'Fecha inválida';
+  }
+  return date.toLocaleString(locale, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+};
+
+
 export default function AdminEmailTemplatesPage() {
   const { currentUser, isAdmin, loading: authLoading, isFirebaseConfigured } = useAuth();
   const { toast } = useToast();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,7 +75,7 @@ export default function AdminEmailTemplatesPage() {
     setIsLoading(true);
     try {
       const templatesCollectionRef = collection(db, "emailTemplates");
-      const q = query(templatesCollectionRef, orderBy("id"));
+      const q = query(templatesCollectionRef, orderBy("lastUpdated", "desc"));
       const querySnapshot = await getDocs(q);
       const templatesList = querySnapshot.docs.map(docSnapshot => ({
         id: docSnapshot.id,
@@ -77,8 +91,10 @@ export default function AdminEmailTemplatesPage() {
   };
 
   useEffect(() => {
-    if (isFirebaseConfigured && isAdmin && db) {
+    if (isFirebaseConfigured && isAdmin) {
       fetchTemplates();
+    } else {
+        setIsLoading(false);
     }
   }, [isFirebaseConfigured, isAdmin]);
 
@@ -203,21 +219,21 @@ export default function AdminEmailTemplatesPage() {
       </div>
       
       <Card className="w-full shadow-lg">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <CardTitle className="text-xl">{t('adminEmailTemplatesPage.templatesListTitle')}</CardTitle>
               <CardDescription>
                 {t('adminEmailTemplatesPage.templatesListDescription')}
               </CardDescription>
             </div>
-            <Button onClick={() => handleOpenDialog(null)}>
+            <Button onClick={() => handleOpenDialog(null)} className="w-full sm:w-auto">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 {t('adminEmailTemplatesPage.newTemplateButton')}
             </Button>
         </CardHeader>
         <CardContent>
-             <Alert variant="default" className="mb-4">
-                <AlertTriangle className="h-4 w-4" />
+             <Alert variant="default" className="mb-4 bg-primary/10 border-primary/50 text-primary">
+                <AlertTriangle className="h-4 w-4 text-primary" />
                 <AlertTitle>{t('adminEmailTemplatesPage.importantNoteTitle')}</AlertTitle>
                 <AlertDescription>
                  {t('adminEmailTemplatesPage.importantNoteDescription')}
@@ -237,6 +253,7 @@ export default function AdminEmailTemplatesPage() {
                     <TableHead>{t('adminEmailTemplatesPage.tableHeaderId')}</TableHead>
                     <TableHead>{t('adminEmailTemplatesPage.tableHeaderSubject')}</TableHead>
                     <TableHead>{t('adminEmailTemplatesPage.tableHeaderDescription')}</TableHead>
+                    <TableHead>{t('adminEmailTemplatesPage.tableHeaderLastUpdated')}</TableHead>
                     <TableHead className="text-right">{t('common.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -246,6 +263,7 @@ export default function AdminEmailTemplatesPage() {
                       <TableCell className="font-mono text-xs">{template.id}</TableCell>
                       <TableCell className="font-medium max-w-xs truncate" title={template.subject}>{template.subject}</TableCell>
                       <TableCell className="text-muted-foreground max-w-sm truncate" title={template.description}>{template.description}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs">{formatFirestoreTimestamp(template.lastUpdated, language)}</TableCell>
                       <TableCell className="text-right space-x-1">
                         <Button variant="outline" size="sm" onClick={() => handleOpenDialog(template)} title={t('common.edit')}>
                           <Edit3 className="h-4 w-4" />
@@ -270,22 +288,24 @@ export default function AdminEmailTemplatesPage() {
     </div>
     
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
                 <DialogTitle>{editingTemplate ? t('adminEmailTemplatesPage.editTemplateTitle') : t('adminEmailTemplatesPage.createTemplateTitle')}</DialogTitle>
                 <DialogDescription>
                     {t('adminEmailTemplatesPage.dialogDescription')}
                 </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSaveTemplate} className="space-y-4 py-4">
-                <div className="space-y-1">
-                    <Label htmlFor="templateId">{t('adminEmailTemplatesPage.templateIdLabel')}</Label>
-                    <Input id="templateId" value={templateId} onChange={(e) => setTemplateId(e.target.value)} placeholder="e.g. welcome_email" required disabled={!!editingTemplate} />
-                    <p className="text-xs text-muted-foreground">{t('adminEmailTemplatesPage.templateIdDescription')}</p>
-                </div>
-                 <div className="space-y-1">
-                    <Label htmlFor="description">{t('common.description')}</Label>
-                    <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t('adminEmailTemplatesPage.descriptionPlaceholder')} required />
+            <form onSubmit={handleSaveTemplate} className="space-y-6 py-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                        <Label htmlFor="templateId">{t('adminEmailTemplatesPage.templateIdLabel')}</Label>
+                        <Input id="templateId" value={templateId} onChange={(e) => setTemplateId(e.target.value)} placeholder={t('adminEmailTemplatesPage.templateIdPlaceholder')} required disabled={!!editingTemplate} />
+                        <p className="text-xs text-muted-foreground">{t('adminEmailTemplatesPage.templateIdDescription')}</p>
+                    </div>
+                     <div className="space-y-1">
+                        <Label htmlFor="description">{t('adminEmailTemplatesPage.templateInternalDescLabel')}</Label>
+                        <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t('adminEmailTemplatesPage.descriptionPlaceholder')} required />
+                    </div>
                 </div>
                 <div className="space-y-1">
                     <Label htmlFor="subject">{t('adminEmailTemplatesPage.subjectLabel')}</Label>
