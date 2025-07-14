@@ -51,7 +51,7 @@ const commonExams: CommonExam[] = [
   { id: 'us', name: 'Universidad de Sevilla', category: 'Universidad', logoPlaceholder: 'https://e7.pngegg.com/pngimages/234/349/png-clipart-university-of-seville-master-s-degree-student-higher-education-de-gea-thumbnail.png', logoHint: 'historic university', keywords: 'exámenes Universidad de Sevilla', icon: LibraryBig },
   { id: 'admin_estado', name: 'Administrativo del Estado', category: 'Oposición', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Logotipo_de_la_Administraci%C3%B3n_General_del_Estado.svg/768px-Logotipo_de_la_Administraci%C3%B3n_General_del_Estado.svg.png', logoHint: 'government building', keywords: 'oposición Administrativo del Estado', icon: LibraryBig },
   { id: 'hacienda', name: 'Agente de Hacienda', category: 'Oposición', logoPlaceholder: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Agencia_Tributaria.svg/339px-Agencia_Tributaria.svg.png', logoHint: 'tax office', keywords: 'oposición Agente Hacienda Pública', icon: LibraryBig },
-  { id: 'agente_forestal', name: 'Agente Forestal', category: 'Oposición', logoPlaceholder: 'https://cppm.es/wp-content/uploads/2019/05/agente-forestal.jpg', logoHint: 'forest ranger', keywords: 'oposición Agente Forestal', icon: LibraryBig },
+  { id: 'agente_forestal', name: 'Agente Forestal', category: 'Oposición', logoPlaceholder: 'https://larioja.org/medio-ambiente/en/econoticias/econoticias-2015/04_agentesforestales.files/627201-distintivo_agentesforestale.jpg?width=249&height=230', logoHint: 'forest ranger', keywords: 'oposición Agente Forestal', icon: LibraryBig },
 ];
 
 function formatBytes(bytes: number, decimals = 2) {
