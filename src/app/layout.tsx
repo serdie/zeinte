@@ -1,5 +1,6 @@
 // "use client"; // Eliminado para permitir la exportación de metadata
 
+import React from 'react'; // Import React
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import Script from 'next/script'; // Import Next.js Script component
@@ -35,6 +36,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="es">
       <head>
