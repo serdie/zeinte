@@ -46,7 +46,7 @@ interface CommonExam {
 }
 
 const commonExams: CommonExam[] = [
-  { id: 'ucm', name: 'Universidad Complutense', category: 'Universidad', logoPlaceholder: 'https://placehold.co/80x40.png', logoHint: 'university campus', keywords: 'exámenes Universidad Complutense Madrid', icon: LibraryBig },
+  { id: 'ucm', name: 'Universidad Complutense', category: 'Universidad', logoPlaceholder: 'https://biblioteca.ucm.es/data/cont/media/www/pag-88746//escudo.jpg', logoHint: 'university campus', keywords: 'exámenes Universidad Complutense Madrid', icon: LibraryBig },
   { id: 'uab', name: 'Universitat Autònoma BCN', category: 'Universidad', logoPlaceholder: 'https://placehold.co/80x40.png', logoHint: 'modern university', keywords: 'exámenes Universitat Autònoma Barcelona', icon: LibraryBig },
   { id: 'us', name: 'Universidad de Sevilla', category: 'Universidad', logoPlaceholder: 'https://placehold.co/80x40.png', logoHint: 'historic university', keywords: 'exámenes Universidad de Sevilla', icon: LibraryBig },
   { id: 'admin_estado', name: 'Administrativo del Estado', category: 'Oposición', logoPlaceholder: 'https://placehold.co/60x60.png', logoHint: 'government building', keywords: 'oposición Administrativo del Estado', icon: LibraryBig },
@@ -403,7 +403,7 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
       if (isFreeUser && finalNumQuestions > MAX_QUESTIONS_FREE_USER) {
           toast({
               title: t('fileUploadArea.toastFreeUserLimitTitle'),
-              description: t('fileUploadArea.toastFreeUserLimitDescription', { maxQuestions: MAX_QUESTIONS_FREE_USER.toString() }),
+              description: t('fileUploadArea.toastFreeUserLimitDescription', {maxQuestions: MAX_QUESTIONS_FREE_USER.toString()}),
               variant: "default"
           });
           finalNumQuestions = MAX_QUESTIONS_FREE_USER;
