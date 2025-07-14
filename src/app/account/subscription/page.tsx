@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, ShieldCheck, ArrowLeft, XCircle, Info, AlertTriangle, FileText, CheckCircle } from 'lucide-react';
+import { Loader2, ShieldCheck, ArrowLeft, XCircle, Info, AlertTriangle, FileText, CheckCircle, Download } from 'lucide-react';
 import { useAuth, ADMIN_EMAIL } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -22,12 +22,15 @@ interface MockInvoice {
   date: Date;
   amount: string;
   status: 'Pagado' | 'Pendiente' | 'Fallido';
+  description: string;
+  price: string;
+  total: string;
 }
 
 const mockInvoices: MockInvoice[] = [
-  { id: 'inv_1a2b3c4d5e', date: new Date(2024, 6, 15), amount: '9,95 €', status: 'Pagado' },
-  { id: 'inv_6f7g8h9i0j', date: new Date(2024, 5, 15), amount: '9,95 €', status: 'Pagado' },
-  { id: 'inv_k1l2m3n4o5', date: new Date(2024, 4, 15), amount: '9,95 €', status: 'Pagado' },
+  { id: 'inv_1a2b3c4d5e', date: new Date(2024, 6, 15), amount: '9,95 €', status: 'Pagado', description: 'Suscripción Zeinte Pro - Julio 2024', price: '8,22 €', total: '9,95 €' },
+  { id: 'inv_6f7g8h9i0j', date: new Date(2024, 5, 15), amount: '9,95 €', status: 'Pagado', description: 'Suscripción Zeinte Pro - Junio 2024', price: '8,22 €', total: '9,95 €' },
+  { id: 'inv_k1l2m3n4o5', date: new Date(2024, 4, 15), amount: '9,95 €', status: 'Pagado', description: 'Suscripción Zeinte Pro - Mayo 2024', price: '8,22 €', total: '9,95 €' },
 ];
 
 export default function ManageSubscriptionPage() {
@@ -38,6 +41,8 @@ export default function ManageSubscriptionPage() {
 
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
 
   useEffect(() => {
     if (!authLoading && currentUser && userTier !== 'pro' && userTier !== 'admin') {
@@ -55,10 +60,9 @@ export default function ManageSubscriptionPage() {
       toast({ title: t('common.error'), description: t('subscriptionPage.notProError'), variant: "destructive" });
       return;
     }
-
+    
     setIsCancelling(true);
     
-    // This is now a real action, not a simulation.
     const result = await updateCurrentUserTier('free');
 
     if (typeof result === 'string') { // It's an error message
@@ -98,6 +102,104 @@ export default function ManageSubscriptionPage() {
     }
   };
 
+    const handleDownloadPdf = async (invoice: MockInvoice) => {
+    if (!currentUser) return;
+    setIsDownloading(true);
+    toast({
+        title: t('historyPage.generatingPdfTitle', {defaultValue: "Generando PDF..."}),
+        description: t('historyPage.generatingPdfDescription', {defaultValue: "Esto puede tardar un momento."}),
+    });
+
+    try {
+        const { default: jsPDF } = await import('jspdf');
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 15;
+        const maxLineWidth = pageWidth - margin * 2;
+
+        // --- Header ---
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(22);
+        doc.text("FACTURA", pageWidth / 2, 20, { align: 'center' });
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Factura #: ${invoice.id}`, pageWidth - margin, 20, { align: 'right' });
+        doc.text(`Fecha: ${formatDate(invoice.date)}`, pageWidth - margin, 26, { align: 'right' });
+
+        // --- Company & Client Info ---
+        doc.line(margin, 35, pageWidth - margin, 35);
+        
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text("Vendedor:", margin, 45);
+        doc.setFont('helvetica', 'normal');
+        doc.text("SEARCH AND MAKE S.L.", margin, 51);
+        doc.text("NIF: B45786787", margin, 57);
+        doc.text("Calle Conquistadores 8, 45500", margin, 63);
+        doc.text("Torrijos, Toledo, España", margin, 69);
+        doc.text("info@zeinte.com", margin, 75);
+
+        doc.setFont('helvetica', 'bold');
+        doc.text("Cliente:", pageWidth / 2, 45);
+        doc.setFont('helvetica', 'normal');
+        doc.text(currentUser.email || "Usuario de Zeinte", pageWidth / 2, 51);
+
+        // --- Invoice Table ---
+        const tableYStart = 90;
+        doc.setFont('helvetica', 'bold');
+        doc.text("Descripción", margin, tableYStart);
+        doc.text("Precio", pageWidth - margin - 50, tableYStart, { align: 'right' });
+        doc.text("Total", pageWidth - margin, tableYStart, { align: 'right' });
+        doc.line(margin, tableYStart + 3, pageWidth - margin, tableYStart + 3);
+
+        doc.setFont('helvetica', 'normal');
+        let currentY = tableYStart + 10;
+        doc.text(invoice.description, margin, currentY);
+        doc.text(invoice.price, pageWidth - margin - 50, currentY, { align: 'right' });
+        doc.text(invoice.total, pageWidth - margin, currentY, { align: 'right' });
+        
+        // --- Totals ---
+        currentY += 20;
+        doc.line(pageWidth / 2, currentY, pageWidth - margin, currentY);
+        currentY += 7;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text("Subtotal:", pageWidth / 2, currentY);
+        doc.text(invoice.price, pageWidth - margin, currentY, { align: 'right' });
+        currentY += 7;
+
+        doc.text("IVA (21%):", pageWidth / 2, currentY);
+        const subtotal = parseFloat(invoice.price.replace(',', '.').replace(' €',''));
+        const iva = (subtotal * 0.21).toFixed(2);
+        doc.text(`${iva.replace('.',',')} €`, pageWidth - margin, currentY, { align: 'right' });
+        currentY += 7;
+
+        doc.setFontSize(14);
+        doc.text("TOTAL:", pageWidth / 2, currentY);
+        doc.text(invoice.total, pageWidth - margin, currentY, { align: 'right' });
+        
+        // --- Footer ---
+        doc.setFontSize(10);
+        doc.setTextColor(150);
+        doc.text("Gracias por su confianza en Zeinte.", pageWidth / 2, doc.internal.pageSize.getHeight() - 20, { align: 'center' });
+
+
+        doc.save(`factura_${invoice.id}.pdf`);
+
+    } catch (error) {
+        console.error("Error generating PDF:", error);
+        toast({
+            title: t('common.error'),
+            description: (error instanceof Error) ? error.message : t('historyPage.pdfGenerationError', {defaultValue: "Could not generate PDF."}),
+            variant: "destructive"
+        });
+    } finally {
+        setIsDownloading(false);
+    }
+  };
+
+
   if (authLoading || !currentUser) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
@@ -106,7 +208,7 @@ export default function ManageSubscriptionPage() {
     );
   }
   
-  const isSpecialUser = currentUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isSpecialAdminUser = currentUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   return (
     <>
@@ -135,7 +237,7 @@ export default function ManageSubscriptionPage() {
               <p className="text-sm text-muted-foreground">
                 {t('subscriptionPage.cancelProInfo')}
               </p>
-              {!isSpecialUser && (
+              {!isSpecialAdminUser && (
                 <Button 
                   variant="destructive" 
                   className="w-full text-lg py-3" 
@@ -146,7 +248,7 @@ export default function ManageSubscriptionPage() {
                   {t('subscriptionPage.cancelButton')}
                 </Button>
               )}
-               {isSpecialUser && (
+               {isSpecialAdminUser && (
                  <Alert variant="default">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>{t('subscriptionPage.specialProUserTitle')}</AlertTitle>
@@ -222,7 +324,10 @@ export default function ManageSubscriptionPage() {
                                     </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => alert(t('subscriptionPage.downloadInvoiceComingSoon'))}>{t('subscriptionPage.downloadInvoiceAction')}</Button>
+                                    <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => handleDownloadPdf(invoice)} disabled={isDownloading}>
+                                        {isDownloading ? <Loader2 className="h-4 w-4 animate-spin"/> : <Download className="h-4 w-4 mr-1"/>}
+                                        {t('subscriptionPage.downloadInvoiceAction')}
+                                    </Button>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -239,7 +344,7 @@ export default function ManageSubscriptionPage() {
             <AlertDialogHeader>
                 <AlertDialogTitle>{t('subscriptionPage.cancelConfirmTitle')}</AlertDialogTitle>
                 <AlertDialogDescription>
-                    {t('subscriptionPage.cancelConfirmDescription', { date: getNextBillingDate() })}
+                    {t('subscriptionPage.cancelConfirmDescription')}
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
