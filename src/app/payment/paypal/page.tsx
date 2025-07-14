@@ -22,126 +22,72 @@ const PAYPAL_HOSTED_BUTTON_ID = "TFTJY83J7D78U";
 const PAYPAL_CONTAINER_ID = "paypal-container-" + PAYPAL_HOSTED_BUTTON_ID;
 
 export default function PayPalPaymentPage() {
-  const { currentUser, userTier, updateCurrentUserTier, loading: authLoading } = useAuth();
+  const { currentUser, userTier, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useI18n();
 
-  const [isPayPalButtonRendered, setIsPayPalButtonRendered] = useState(false);
-  const [isSimulating, setIsSimulating] = useState(false);
+  const [isButtonLoading, setIsButtonLoading] = useState(true);
   const paypalContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (authLoading) return;
-
-    if (!currentUser) {
-      router.push('/login'); // Should be handled by ConditionalLayout, but as a fallback
-      return;
-    }
-
-    if (userTier === 'pro' || userTier === 'admin') {
-      router.push('/dashboard'); // Already subscribed
+    if (authLoading || !currentUser || userTier === 'pro' || userTier === 'admin') {
       return;
     }
 
     const container = paypalContainerRef.current;
-    let isMounted = true;
+    if (!container) return;
 
-    if (!container || !window.paypal || !window.paypal.HostedButtons) {
-      if (container && container.innerHTML !== '' && !container.querySelector('iframe[name^="__paypal_buttons__"]')) container.innerHTML = `<div class="flex items-center justify-center text-sm text-muted-foreground p-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>${t('paymentPage.payPalButtonLoading')}</div>`;
-      if (isPayPalButtonRendered && isMounted) setIsPayPalButtonRendered(false);
-      return;
-    }
-    
-    const buttonAlreadyInDOM = container.querySelector('iframe[name^="__paypal_buttons__"]');
+    // Check if PayPal SDK script has loaded
+    if (window.paypal && window.paypal.HostedButtons) {
+        // Clear any previous content (like loading indicator)
+        container.innerHTML = '';
 
-    if (!buttonAlreadyInDOM) {
-      if (isMounted && isPayPalButtonRendered) setIsPayPalButtonRendered(false); // Reset if state is stale
-
-      container.innerHTML = `<div class="flex items-center justify-center text-sm text-muted-foreground p-2"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>${t('paymentPage.payPalButtonLoading')}</div>`;
-
-      window.paypal.HostedButtons({
-        hostedButtonId: PAYPAL_HOSTED_BUTTON_ID,
-      }).render(`#${PAYPAL_CONTAINER_ID}`)
-      .then(() => {
-        if (isMounted) {
-            if (paypalContainerRef.current && paypalContainerRef.current.id === PAYPAL_CONTAINER_ID) {
-                 // SDK might replace the loading message.
+        window.paypal.HostedButtons({
+            hostedButtonId: PAYPAL_HOSTED_BUTTON_ID,
+        }).render(`#${PAYPAL_CONTAINER_ID}`)
+        .then(() => {
+            setIsButtonLoading(false);
+        })
+        .catch((error: any) => {
+            console.error("PayPal Hosted Button render() failed:", error);
+            toast({
+                title: t('common.error'),
+                description: t('paymentPage.payPalButtonError'),
+                variant: "destructive",
+                duration: 7000,
+            });
+            if (container) {
+                container.innerHTML = `<p class="text-xs text-center text-destructive py-2">${t('paymentPage.payPalButtonError')}</p>`;
             }
-            setIsPayPalButtonRendered(true);
-        }
-      })
-      .catch((error: any) => {
-        console.error("PayPal Hosted Button render() failed:", error);
-        if (isMounted) {
-          toast({
-            title: t('common.error'),
-            description: t('paymentPage.payPalButtonError'),
-            variant: "destructive",
-            duration: 7000,
-          });
-          if (paypalContainerRef.current && paypalContainerRef.current.id === PAYPAL_CONTAINER_ID) {
-              paypalContainerRef.current.innerHTML = `<p class="text-xs text-center text-destructive py-2">${t('paymentPage.payPalButtonError')}</p>`;
-          }
-          setIsPayPalButtonRendered(false);
-        }
-      });
-    } else if (buttonAlreadyInDOM && !isPayPalButtonRendered && isMounted) {
-        setIsPayPalButtonRendered(true);
-    }
-    
-    return () => {
-      isMounted = false;
-      if (paypalContainerRef.current) {
-         paypalContainerRef.current.innerHTML = '';
-      }
-    };
-  }, [currentUser, userTier, authLoading, router, toast, t, isPayPalButtonRendered]);
-
-  const handleSimulatePayment = async () => {
-    if (!currentUser) return;
-    setIsSimulating(true);
-    const result = await updateCurrentUserTier('pro');
-    if (typeof result === 'string') {
-      toast({ title: t('common.error'), description: result, variant: "destructive" });
+            setIsButtonLoading(false);
+        });
     } else {
-      toast({
-        title: t('pricingPage.subscriptionSuccessToastTitle'),
-        description: t('pricingPage.subscriptionSuccessToastDescription'),
-        variant: "default",
-      });
+        // If SDK is not ready, keep showing loading.
+        // A more advanced implementation might use a script loader with a callback.
+        // For now, this handles the initial state.
+        setIsButtonLoading(true);
+    }
+  }, [authLoading, currentUser, userTier, toast, t]);
+  
+  // Redirect logic
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!currentUser) {
+      router.push('/login');
+    } else if (userTier === 'pro' || userTier === 'admin') {
       router.push('/dashboard');
     }
-    setIsSimulating(false);
-  };
+  }, [authLoading, currentUser, userTier, router]);
 
-  if (authLoading || (!currentUser && !authLoading)) {
+  if (authLoading || !currentUser || userTier === 'pro' || userTier === 'admin') {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
-
-  if (currentUser && (userTier === 'pro' || userTier === 'admin')) {
-    return (
-      <div className="container mx-auto py-12 px-4 text-center">
-        <Card className="max-w-md mx-auto">
-            <CardHeader>
-                <ShieldCheck className="h-12 w-12 text-green-500 mx-auto mb-3" />
-                <CardTitle>{t('paymentPage.alreadyProTitle')}</CardTitle>
-                <CardDescription>{t('paymentPage.alreadyProDescription')}</CardDescription>
-            </CardHeader>
-            <CardFooter>
-                <Link href="/dashboard" className="w-full">
-                    <Button className="w-full">{t('paymentPage.goToDashboard')}</Button>
-                </Link>
-            </CardFooter>
-        </Card>
-      </div>
-    );
-  }
-
 
   return (
     <div className="container mx-auto py-12 px-4">
@@ -158,10 +104,14 @@ export default function PayPalPaymentPage() {
           <div 
             ref={paypalContainerRef} 
             id={PAYPAL_CONTAINER_ID} 
-            className="w-full flex justify-center min-h-[100px] items-center" // Ensure min height for loading state
+            className="w-full flex justify-center min-h-[100px] items-center"
           >
-            {/* PayPal button will render here by the SDK via useEffect. */}
-            {/* Initial loading message is handled inside useEffect */}
+            {isButtonLoading && (
+              <div className="flex items-center justify-center text-sm text-muted-foreground p-2">
+                <Loader2 className="animate-spin h-5 w-5 mr-2" />
+                {t('paymentPage.payPalButtonLoading')}
+              </div>
+            )}
           </div>
 
           <Alert variant="default" className="bg-blue-500/10 border-blue-500/50 text-blue-700 dark:text-blue-400">
@@ -171,20 +121,7 @@ export default function PayPalPaymentPage() {
             </AlertDescription>
           </Alert>
 
-          {/* Simulated Payment Button for Testing */}
-          <Button
-            onClick={handleSimulatePayment}
-            disabled={isSimulating || authLoading}
-            className="w-full bg-secondary hover:bg-secondary/80 text-secondary-foreground"
-            variant="outline"
-          >
-            {isSimulating ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <CheckCircle className="mr-2 h-4 w-4" />
-            )}
-            {isSimulating ? t('paymentPage.simulatingPayment') : t('paymentPage.simulatePaymentButton')}
-          </Button>
+          {/* Simulated Payment Button REMOVED */}
           
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row justify-between items-center">
