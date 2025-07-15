@@ -19,23 +19,21 @@ import { generateModuleContent, type GenerateModuleContentInput } from '@/ai/flo
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
 import AdSenseUnit from '@/components/ads/AdSenseUnit';
+import { useRouter } from 'next/navigation';
+import type { DetailedCourse, CourseModule } from '@/types';
+import { CURRENT_COURSE_DATA_KEY, COURSE_HISTORY_KEY } from '@/lib/localStorageKeys';
 
 type CourseCreationStage = "define" | "review_syllabus" | "course_prep" | "course_view";
 
-interface CourseModule {
-  title: string;
-  content: string | null;
-  status: 'pending' | 'generating' | 'completed' | 'failed';
+interface InProgressCourse extends DetailedCourse {
+    currentModuleIndex: number;
 }
-interface DetailedCourse {
-  courseTitleSuggestion: string;
-  estimatedDuration: string;
-  modules: CourseModule[];
-}
+
 
 export default function CreateCustomCoursePage() {
   const { t } = useI18n();
   const { toast } = useToast();
+  const router = useRouter();
 
   const [stage, setStage] = useState<CourseCreationStage>("define");
   const [isLoading, setIsLoading] = useState(false); // General loading for syllabus generation
@@ -52,6 +50,22 @@ export default function CreateCustomCoursePage() {
   const [detailedCourseData, setDetailedCourseData] = useState<DetailedCourse | null>(null);
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
   const [generationProgress, setGenerationProgress] = useState(0); // For overall course content generation
+
+  // Effect to load current course from local storage on mount
+  useEffect(() => {
+    const savedCourseData = localStorage.getItem(CURRENT_COURSE_DATA_KEY);
+    if (savedCourseData) {
+        try {
+            const parsedData: InProgressCourse = JSON.parse(savedCourseData);
+            setDetailedCourseData(parsedData);
+            setCurrentModuleIndex(parsedData.currentModuleIndex || 0);
+            setStage("course_view");
+        } catch (e) {
+            console.error("Error parsing saved course data", e);
+            localStorage.removeItem(CURRENT_COURSE_DATA_KEY);
+        }
+    }
+  }, []);
 
   const handleGenerateSyllabus = async (event?: FormEvent) => {
     event?.preventDefault();
@@ -93,12 +107,32 @@ export default function CreateCustomCoursePage() {
     }
   };
 
+  const saveCourseToHistory = (course: DetailedCourse) => {
+    try {
+        const historyString = localStorage.getItem(COURSE_HISTORY_KEY);
+        const history: DetailedCourse[] = historyString ? JSON.parse(historyString) : [];
+        // Avoid duplicates by checking ID
+        const existingIndex = history.findIndex(h => h.id === course.id);
+        if (existingIndex > -1) {
+            history[existingIndex] = course; // Update existing
+        } else {
+            history.unshift(course); // Add new to the beginning
+        }
+        localStorage.setItem(COURSE_HISTORY_KEY, JSON.stringify(history));
+    } catch (e) {
+        console.error("Failed to save course to history", e);
+        toast({ title: "Error", description: "Could not save course to history.", variant: "destructive" });
+    }
+  };
+
+
   const handleAcceptAndPrepareCourse = async () => {
     if (!generatedSyllabus) return;
 
     setIsPreparingCourse(true);
     setStage("course_prep");
     setGenerationProgress(0);
+    const newTimestamp = Date.now();
 
     const initialModules: CourseModule[] = generatedSyllabus.syllabusItems.map(title => ({
       title,
@@ -107,9 +141,17 @@ export default function CreateCustomCoursePage() {
     }));
 
     const courseDataToBuild: DetailedCourse = {
+      id: newTimestamp.toString(),
+      timestamp: newTimestamp,
       courseTitleSuggestion: generatedSyllabus.courseTitleSuggestion,
       estimatedDuration: generatedSyllabus.estimatedDuration,
       modules: initialModules,
+      originalInput: {
+        courseTopic,
+        courseLevel: courseLevel as "Principiante" | "Intermedio" | "Avanzado",
+        courseGoals: courseGoals || undefined,
+        targetAudience: targetAudience || undefined,
+      }
     };
     setDetailedCourseData(courseDataToBuild); 
 
@@ -146,7 +188,15 @@ export default function CreateCustomCoursePage() {
         modules: prev!.modules.map((m, idx) => idx === i ? updatedModules[updatedModules.length-1] : m),
       }));
     }
-        
+    
+    const finalCourseData: DetailedCourse = {
+        ...courseDataToBuild,
+        modules: updatedModules,
+    };
+    
+    setDetailedCourseData(finalCourseData);
+    saveCourseToHistory(finalCourseData);
+
     setIsPreparingCourse(false);
     setCurrentModuleIndex(0);
     setStage("course_view");
@@ -158,6 +208,7 @@ export default function CreateCustomCoursePage() {
   };
   
   const startOver = () => {
+    localStorage.removeItem(CURRENT_COURSE_DATA_KEY);
     setStage("define");
     setCourseTopic("");
     setCourseLevel("");
@@ -173,12 +224,18 @@ export default function CreateCustomCoursePage() {
 
   const navigateModule = (direction: 'next' | 'prev') => {
     if (!detailedCourseData) return;
+    let newIndex = currentModuleIndex;
     if (direction === 'next' && currentModuleIndex < detailedCourseData.modules.length - 1) {
-      setCurrentModuleIndex(prev => prev + 1);
+        newIndex = currentModuleIndex + 1;
     } else if (direction === 'prev' && currentModuleIndex > 0) {
-      setCurrentModuleIndex(prev => prev + 1);
+        newIndex = currentModuleIndex - 1;
     }
+    setCurrentModuleIndex(newIndex);
+    // Save progress
+    const dataToSave: InProgressCourse = { ...detailedCourseData, currentModuleIndex: newIndex };
+    localStorage.setItem(CURRENT_COURSE_DATA_KEY, JSON.stringify(dataToSave));
   };
+
 
   const currentVisualProgress = detailedCourseData?.modules.length 
     ? ((currentModuleIndex + 1) / detailedCourseData.modules.length) * 100 
@@ -304,7 +361,7 @@ export default function CreateCustomCoursePage() {
                 </CardContent>
               </Card>
 
-              <div className="flex flex-col gap-4 justify-center items-center pt-4 max-w-sm mx-auto">
+              <div className="flex flex-col gap-3 justify-center items-center pt-4 max-w-sm mx-auto">
                 <Button onClick={handleAcceptAndPrepareCourse} className="w-full text-md py-3 px-6 bg-primary hover:bg-primary/90" disabled={isPreparingCourse}>
                   {isPreparingCourse ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <PackageCheck className="mr-2 h-5 w-5" />}
                   {t('customCourses.createPage.acceptAndPrepareButton')}

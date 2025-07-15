@@ -36,3 +36,27 @@ export interface ExamConfig {
   defaultNumberOfQuestions: number;
   // defaultExamType: ExamType; // Removed
 }
+
+
+// --- Custom Course Types ---
+
+export interface CourseModule {
+  title: string;
+  content: string | null;
+  status: 'pending' | 'generating' | 'completed' | 'failed';
+}
+
+export interface DetailedCourse {
+  id: string; // Unique ID for the course
+  timestamp: number; // Creation timestamp
+  courseTitleSuggestion: string;
+  estimatedDuration: string;
+  modules: CourseModule[];
+  // Store the original input for context or re-generation
+  originalInput: {
+      courseTopic: string;
+      courseLevel: "Principiante" | "Intermedio" | "Avanzado";
+      courseGoals?: string;
+      targetAudience?: string;
+  }
+}

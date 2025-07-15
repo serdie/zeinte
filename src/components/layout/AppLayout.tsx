@@ -32,6 +32,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     if (currentPathname.startsWith('/dashboard')) return t("appLayout.dashboardTitle");
     if (currentPathname.startsWith('/upload')) return t("appLayout.uploadTitle");
     if (currentPathname.startsWith('/exam/result')) return t("appLayout.examResultTitle");
+    if (currentPathname.startsWith('/history/courses')) return t("appLayout.courseHistoryTitle");
     if (currentPathname.startsWith('/history')) return t("appLayout.historyTitle");
     if (currentPathname.startsWith('/configure')) return t("appLayout.configureTitle");
     if (currentPathname.startsWith('/community')) return t("appLayout.communityTitle");

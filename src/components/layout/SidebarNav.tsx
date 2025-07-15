@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, UploadCloud, Settings, User, Users, Home, LogIn, LogOut, UserPlus, ShieldCheck, Lightbulb, ArrowUpCircle, Edit, LifeBuoy, History } from 'lucide-react';
+import { BookOpenText, UploadCloud, Settings, User, Users, Home, LogIn, LogOut, UserPlus, ShieldCheck, Lightbulb, ArrowUpCircle, Edit, LifeBuoy, History, GraduationCap } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -30,6 +30,7 @@ export default function SidebarNav() {
     { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: BookOpenText, protected: true },
     { href: '/upload', labelKey: 'sidebar.upload', icon: UploadCloud, protected: true },
     { href: '/history', labelKey: 'sidebar.history', icon: History, protected: true },
+    { href: '/history/courses', labelKey: 'sidebar.courseHistory', icon: GraduationCap, protected: true },
     { href: '/configure', labelKey: 'sidebar.configureExam', icon: Settings, protected: true },
     { href: '/community', labelKey: 'sidebar.community', icon: Users, protected: true },
     { href: '/custom-courses/create', labelKey: 'sidebar.createCourse', icon: Lightbulb, protected: true },
@@ -73,11 +74,11 @@ export default function SidebarNav() {
               <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === item.href || (item.href === '/custom-courses/create' && pathname.startsWith('/custom-courses'))}
+                  isActive={pathname === item.href || (item.href === '/custom-courses/create' && pathname.startsWith('/custom-courses')) || (item.href === '/history/courses' && pathname.startsWith('/history/courses'))}
                   tooltip={label}
                   className={cn(
                     "justify-start w-full",
-                    (pathname === item.href || (item.href === '/custom-courses/create' && pathname.startsWith('/custom-courses')))
+                    (pathname === item.href || (item.href === '/custom-courses/create' && pathname.startsWith('/custom-courses')) || (item.href === '/history/courses' && pathname.startsWith('/history/courses')))
                       ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90" 
                       : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
