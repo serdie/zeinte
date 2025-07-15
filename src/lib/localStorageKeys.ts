@@ -7,3 +7,8 @@ export const EXAM_CONFIG_KEY = 'adivinaExamen_examConfig';
 
 // Free User Tier Keys
 export const FREE_USER_LAST_GENERATION_TIMESTAMP_KEY = 'adivinaExamen_freeTierLastGenerationTimestamp';
+
+// Tutorial Key
+export const TUTORIAL_COMPLETED_KEY = 'zeinte_tutorial_completed';
+
+    

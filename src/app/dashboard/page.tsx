@@ -3,23 +3,25 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { PREDICTED_DATA_KEY } from '@/lib/localStorageKeys';
+import { PREDICTED_DATA_KEY, TUTORIAL_COMPLETED_KEY } from '@/lib/localStorageKeys';
 import type { PredictedData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, UploadCloud, BookOpenText, History, BarChart3, Settings, Users, User, Lightbulb, ArrowRight, Info } from 'lucide-react';
+import { Loader2, UploadCloud, BookOpenText, History, BarChart3, Settings, Users, User, Lightbulb, ArrowRight, Info, HelpCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import AdSenseUnit from '@/components/ads/AdSenseUnit';
+import InteractiveTutorial, { type TutorialStep } from '@/components/common/InteractiveTutorial';
 
 export default function DashboardPage() {
   const { t, language } = useI18n();
   const { currentUser, userProfileData, loading: authLoading } = useAuth();
   const [predictedData, setPredictedData] = useState<PredictedData | null>(null);
   const [isLoadingInitialData, setIsLoadingInitialData] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
     const storedData = localStorage.getItem(PREDICTED_DATA_KEY);
@@ -33,8 +35,24 @@ export default function DashboardPage() {
         setPredictedData(null);
       }
     }
+    
+    // Check if tutorial has been completed
+    const tutorialCompleted = localStorage.getItem(TUTORIAL_COMPLETED_KEY);
+    if (!tutorialCompleted) {
+      setShowTutorial(true);
+    }
+    
     setIsLoadingInitialData(false);
   }, []);
+
+  const handleTutorialComplete = () => {
+    localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true');
+    setShowTutorial(false);
+  };
+  
+  const handleReplayTutorial = () => {
+    setShowTutorial(true);
+  };
 
   const formatDate = (timestamp: number) => {
     try {
@@ -47,6 +65,34 @@ export default function DashboardPage() {
   
   const displayName = userProfileData?.displayName || currentUser?.displayName || currentUser?.email?.split('@')[0] || t('dashboardPage.guestUser');
 
+  const tutorialSteps: TutorialStep[] = [
+    {
+      title: t('tutorial.step1Title', { name: displayName }),
+      content: t('tutorial.step1Content'),
+      icon: Lightbulb,
+    },
+    {
+      title: t('tutorial.step2Title'),
+      content: t('tutorial.step2Content'),
+      icon: UploadCloud,
+    },
+    {
+      title: t('tutorial.step3Title'),
+      content: t('tutorial.step3Content'),
+      icon: History,
+    },
+    {
+      title: t('tutorial.step4Title'),
+      content: t('tutorial.step4Content'),
+      icon: User,
+    },
+    {
+      title: t('tutorial.step5Title'),
+      content: t('tutorial.step5Content'),
+      icon: Info,
+    }
+  ];
+
   if (isLoadingInitialData || authLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center p-6">
@@ -57,14 +103,28 @@ export default function DashboardPage() {
   }
 
   return (
+    <>
+    {currentUser && (
+        <InteractiveTutorial
+            isOpen={showTutorial}
+            onClose={handleTutorialComplete}
+            steps={tutorialSteps}
+        />
+    )}
     <div className="space-y-8">
-      <section className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">
-          {t('dashboardPage.welcomeTitle', { name: displayName })}
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          {t('dashboardPage.welcomeSubtitle')}
-        </p>
+      <section className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">
+            {t('dashboardPage.welcomeTitle', { name: displayName })}
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            {t('dashboardPage.welcomeSubtitle')}
+          </p>
+        </div>
+         <Button variant="outline" size="sm" onClick={handleReplayTutorial} className="hidden sm:flex">
+            <HelpCircle className="mr-2 h-4 w-4" />
+            {t('dashboardPage.replayTutorialButton')}
+        </Button>
       </section>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -171,5 +231,8 @@ export default function DashboardPage() {
       </Card>
 
     </div>
+    </>
   );
 }
+
+    
