@@ -995,14 +995,14 @@
     "step1Title": "¡Bienvenido/a a Zeinte, {{name}}!",
     "step1Content": "¡Hola! Soy tu asistente de estudio IA.\n\nEstoy aquí para ayudarte a analizar tus apuntes y a prepararte para tus exámenes de una forma mucho más inteligente.\n\nVamos a ver rápidamente cómo funciona.",
     "step2Title": "1. Sube tus Documentos",
-    "step2Content": "Todo empieza en la sección 'Subir Documentos'.\n\nAllí podrás añadir tus apuntes, temarios, exámenes de otros años... cualquier cosa que necesites estudiar. Yo leeré todo y extraeré lo importante.",
-    "step3Title": "2. Revisa tu Historial",
-    "step3Content": "Cada vez que analices documentos, se creará una nueva 'Sesión de Estudio' que se guardará en tu 'Historial de Exámenes'.\n\nPuedes volver a ellas siempre que quieras para repasar.",
-    "step4Title": "3. Personaliza tu Perfil",
-    "step4Content": "En 'Mi Perfil' puedes contarnos un poco sobre tus intereses de estudio.\n\nEsto nos ayudará en el futuro a darte recomendaciones y contenido mucho más personalizado. ¡Échale un vistazo!",
-    "step5Title": "¡Todo Listo para Empezar!",
-    "step5Content": "Ya está, ¡así de fácil! Ahora estás listo para empezar a estudiar de forma más eficiente.\n\nSi necesitas volver a ver este tutorial, busca el botón de ayuda en el panel de estudio."
+    "step2Content": "Todo empieza en la sección 'Subir Documentos'.\n\nAllí podrás añadir tus apuntes, temarios, exámenes de otros años... ¡o incluso pedir a la IA que busque apuntes en internet por ti! ✨",
+    "step3Title": "2. Crea un Curso a Medida",
+    "step3Content": "¿Necesitas organizar tu estudio? Ve a 'Crear Curso IA'.\n\nDile a la IA qué quieres aprender y te generará un temario completo para ti. ¡Una forma genial de estructurar tu preparación!",
+    "step4Title": "3. Revisa tu Historial",
+    "step4Content": "Cada vez que analices documentos, se creará una nueva 'Sesión de Estudio' que se guardará en tu 'Historial de Exámenes'.\n\nPuedes volver a ellas siempre que quieras para repasar.",
+    "step5Title": "4. Personaliza tu Perfil",
+    "step5Content": "En 'Mi Perfil' puedes contarnos un poco sobre tus intereses de estudio.\n\nEsto nos ayudará en el futuro a darte recomendaciones y contenido mucho más personalizado. ¡Échale un vistazo!",
+    "step6Title": "¡Todo Listo para Empezar!",
+    "step6Content": "Ya está, ¡así de fácil! Ahora estás listo para empezar a estudiar de forma más eficiente.\n\nSi necesitas volver a ver este tutorial, busca el botón de ayuda en el panel de estudio."
   }
 }
-
-    

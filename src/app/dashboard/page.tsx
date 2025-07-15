@@ -79,16 +79,21 @@ export default function DashboardPage() {
     {
       title: t('tutorial.step3Title'),
       content: t('tutorial.step3Content'),
-      icon: History,
+      icon: Lightbulb,
     },
     {
       title: t('tutorial.step4Title'),
       content: t('tutorial.step4Content'),
-      icon: User,
+      icon: History,
     },
     {
       title: t('tutorial.step5Title'),
       content: t('tutorial.step5Content'),
+      icon: User,
+    },
+    {
+      title: t('tutorial.step6Title'),
+      content: t('tutorial.step6Content'),
       icon: Info,
     }
   ];
@@ -235,4 +240,3 @@ export default function DashboardPage() {
   );
 }
 
-    
