@@ -34,6 +34,7 @@ import {
   FieldValue
 } from 'firebase/firestore';
 import { seedInitialForumData } from '@/lib/firestoreSeedData'; // Import the seeding function
+import { useI18n } from '@/contexts/I18nContext';
 
 interface FirestoreTimestamp {
   seconds: number;
@@ -61,7 +62,7 @@ interface ForumPost {
   likes: number;
 }
 
-const formatFirestoreTimestamp = (timestamp: Timestamp | FirestoreTimestamp | Date | undefined): string => {
+const formatFirestoreTimestamp = (timestamp: Timestamp | FirestoreTimestamp | Date | undefined, locale: string): string => {
   if (!timestamp) return 'N/A';
   let date: Date;
   if (timestamp instanceof Timestamp) {
@@ -73,13 +74,14 @@ const formatFirestoreTimestamp = (timestamp: Timestamp | FirestoreTimestamp | Da
   } else {
     return 'Fecha inválida';
   }
-  return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 
 
 export default function AdminCommunityManagementPage() {
   const { currentUser, isAdmin, loading: authLoading, isFirebaseConfigured } = useAuth();
   const { toast } = useToast();
+  const { t, language } = useI18n();
 
   const [topics, setTopics] = useState<ForumTopic[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<ForumTopic | null>(null);
@@ -109,21 +111,21 @@ export default function AdminCommunityManagementPage() {
 
   const handleSeedData = async () => {
     if (!db || !isAdmin) {
-      toast({ title: "Error", description: "No autorizado o DB no configurada.", variant: "destructive" });
+      toast({ title: t('adminCommunityManagementPage.seedDataErrorConfig'), variant: "destructive" });
       return;
     }
     if (seedUserUids.admin.startsWith('REPLACE_') || seedUserUids.free.startsWith('REPLACE_') || seedUserUids.pro.startsWith('REPLACE_')) {
       toast({ title: "Error de Configuración de Siembra", description: "Debes reemplazar los UIDs placeholder en AdminCommunityManagementPage.tsx y en firestoreSeedData.ts antes de sembrar datos.", variant: "destructive", duration: 10000 });
-      setSeedStatusMessage("Error: UIDs placeholder no reemplazados.");
+      setSeedStatusMessage(t('adminCommunityManagementPage.seedDataErrorUIDPlaceholder'));
       return;
     }
     setIsSeeding(true);
-    setSeedStatusMessage("Sembrando datos iniciales...");
+    setSeedStatusMessage(t('adminCommunityManagementPage.seedDataStatusSeeding'));
     const result = await seedInitialForumData(db, seedUserUids);
     setSeedStatusMessage(result);
-    toast({ title: "Resultado de Siembra de Datos", description: result, duration: 7000 });
+    toast({ title: t('adminCommunityManagementPage.seedDataToastTitle'), description: result, duration: 7000 });
     setIsSeeding(false);
-    if (result.startsWith('Successfully')) {
+    if (result.startsWith('Successfully') || result.startsWith('Datos iniciales')) {
       fetchTopics(); // Refresh topics list
     }
   };
@@ -203,12 +205,12 @@ export default function AdminCommunityManagementPage() {
       ) || [];
       setSelectedTopic(prev => prev ? { ...prev, posts: updatedPosts } : null);
 
-      toast({ title: "Mensaje Actualizado", description: "El contenido del mensaje ha sido modificado en Firestore.", variant: "default" });
+      toast({ title: t('adminCommunityManagementPage.postUpdatedToastTitle'), description: t('adminCommunityManagementPage.postUpdatedToastDescription'), variant: "default" });
       setIsEditPostDialogOpen(false);
       setEditingPost(null);
     } catch (error) {
       console.error("Error updating post:", error);
-      toast({ title: "Error al Actualizar", description: "No se pudo actualizar el mensaje.", variant: "destructive" });
+      toast({ title: t('adminCommunityManagementPage.errorUpdatingPostToastTitle'), description: t('adminCommunityManagementPage.errorUpdatingPostToastDescription'), variant: "destructive" });
     }
   };
   
@@ -228,10 +230,10 @@ export default function AdminCommunityManagementPage() {
       setSelectedTopic(prev => prev ? { ...prev, posts: updatedPosts, postCount: prev.postCount -1 } : null);
       setTopics(prevTopics => prevTopics.map(t => t.id === selectedTopic.id ? {...t, postCount: t.postCount -1} : t));
 
-      toast({ title: "Mensaje Eliminado", description: "El mensaje ha sido eliminado de Firestore.", variant: "destructive" });
+      toast({ title: t('adminCommunityManagementPage.postDeletedToastTitle'), description: t('adminCommunityManagementPage.postDeletedToastDescription'), variant: "destructive" });
     } catch (error) {
       console.error("Error deleting post:", error);
-      toast({ title: "Error al Eliminar", description: "No se pudo eliminar el mensaje.", variant: "destructive" });
+      toast({ title: t('adminCommunityManagementPage.errorDeletingPostToastTitle'), description: t('adminCommunityManagementPage.errorDeletingPostToastDescription'), variant: "destructive" });
     } finally {
       setPostToDelete(null);
     }
@@ -252,31 +254,31 @@ export default function AdminCommunityManagementPage() {
       await batch.commit();
       setTopics(prevTopics => prevTopics.filter(topic => topic.id !== topicToDelete.id));
       
-      toast({ title: "Tema Eliminado", description: "El tema y sus mensajes han sido eliminados de Firestore.", variant: "destructive" });
+      toast({ title: t('adminCommunityManagementPage.topicDeletedToastTitle'), description: t('adminCommunityManagementPage.topicDeletedToastDescription'), variant: "destructive" });
       if (selectedTopic && selectedTopic.id === topicToDelete.id) {
           setIsPostsDialogOpen(false);
           setSelectedTopic(null);
       }
     } catch (error) {
       console.error("Error deleting topic and its posts:", error);
-      toast({ title: "Error al Eliminar Tema", description: "No se pudo eliminar el tema y sus mensajes.", variant: "destructive" });
+      toast({ title: t('adminCommunityManagementPage.errorDeletingTopicToastTitle'), description: t('adminCommunityManagementPage.errorDeletingTopicToastDescription'), variant: "destructive" });
     } finally {
       setTopicToDelete(null);
     }
   };
 
   if (authLoading || isLoadingTopics) {
-    return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /> <span className="ml-3 text-lg">Cargando...</span></div>;
+    return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /> <span className="ml-3 text-lg">{t('adminCommunityManagementPage.loading')}</span></div>;
   }
 
   if (!currentUser || !isAdmin) {
     return (
       <div className="container mx-auto py-8 text-center">
         <ShieldAlert className="h-16 w-16 text-destructive mx-auto mb-4" />
-        <h1 className="text-2xl font-bold text-destructive mb-2">Acceso Denegado</h1>
-        <p className="text-muted-foreground">No tienes permisos para acceder a esta sección.</p>
+        <h1 className="text-2xl font-bold text-destructive mb-2">{t('adminCommunityManagementPage.accessDeniedTitle')}</h1>
+        <p className="text-muted-foreground">{t('adminCommunityManagementPage.accessDeniedDescription')}</p>
         <Link href="/dashboard" passHref className="mt-6 inline-block">
-            <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />Volver al Panel de Estudio</Button>
+            <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />{t('adminCommunityManagementPage.backToDashboard')}</Button>
         </Link>
       </div>
     );
@@ -287,14 +289,14 @@ export default function AdminCommunityManagementPage() {
         <div className="container mx-auto py-10 px-4">
             <Alert variant="destructive" className="mb-6">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Error de Configuración de Firebase</AlertTitle>
+                <AlertTitle>{t('adminCommunityManagementPage.firebaseConfigErrorTitle')}</AlertTitle>
                 <AlertDescription>
-                    Firebase Firestore no está configurado o disponible. El panel de gestión de comunidad no puede funcionar.
+                    {t('adminCommunityManagementPage.firebaseConfigErrorDescription')}
                 </AlertDescription>
             </Alert>
              <div className="text-center">
                 <Link href="/admin" passHref>
-                    <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />Volver al Panel de Administración</Button>
+                    <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />{t('adminCommunityManagementPage.backToAdminPanel')}</Button>
                 </Link>
             </div>
         </div>
@@ -305,65 +307,63 @@ export default function AdminCommunityManagementPage() {
     <div className="container mx-auto py-8 space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
-          <MessageSquare className="h-8 w-8" /> Gestión de Contenido de la Comunidad (Firestore)
+          <MessageSquare className="h-8 w-8" /> {t('adminCommunityManagementPage.title')}
         </h1>
         <Link href="/admin" passHref>
-          <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />Volver al Panel de Administración</Button>
+          <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />{t('adminCommunityManagementPage.backToAdminPanel')}</Button>
         </Link>
       </div>
 
       <Card>
         <CardHeader>
-            <CardTitle className="text-lg">Siembra de Datos Iniciales</CardTitle>
+            <CardTitle className="text-lg">{t('adminCommunityManagementPage.seedDataCardTitle')}</CardTitle>
             <CardDescription>
-                Usa este botón para poblar Firestore con datos de ejemplo para el foro. 
-                Reemplaza los UIDs placeholder en el código antes de usar.
+                {t('adminCommunityManagementPage.seedDataCardDescription')}
             </CardDescription>
         </CardHeader>
         <CardContent>
             <Button onClick={handleSeedData} disabled={isSeeding}>
                 {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
-                Sembrar Datos Iniciales del Foro
+                {t('adminCommunityManagementPage.seedDataButton')}
             </Button>
             {seedStatusMessage && (
                 <Alert className={`mt-4 ${seedStatusMessage.includes('Error') ? 'variant-destructive' : 'variant-default'}`}>
                     <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>{seedStatusMessage.includes('Error') ? 'Error de Siembra' : 'Estado de Siembra'}</AlertTitle>
+                    <AlertTitle>{seedStatusMessage.includes('Error') ? t('adminCommunityManagementPage.seedDataErrorAlertTitle') : t('adminCommunityManagementPage.seedDataStatusAlertTitle')}</AlertTitle>
                     <AlertDescription>{seedStatusMessage}</AlertDescription>
                 </Alert>
             )}
             <p className="text-xs text-muted-foreground mt-2">
-                Nota: Esta acción intentará no duplicar datos si ya existen temas.
-                Asegúrate de haber reemplazado los UIDs placeholder en el código de <code>AdminCommunityManagementPage.tsx</code> y <code>firestoreSeedData.ts</code>.
+                {t('adminCommunityManagementPage.seedDataNote')}
             </p>
         </CardContent>
       </Card>
       
       <Card className="w-full shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl">Temas del Foro (desde Firestore)</CardTitle>
+          <CardTitle className="text-xl">{t('adminCommunityManagementPage.forumTopicsCardTitle')}</CardTitle>
           <CardDescription>
-            Visualiza, edita y elimina temas y mensajes de la comunidad. Los cambios son persistentes.
+            {t('adminCommunityManagementPage.forumTopicsCardDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoadingTopics ? (
              <div className="flex items-center justify-center py-10">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" /> Cargando temas del foro...
+              <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" /> {t('adminCommunityManagementPage.loadingTopics')}
             </div>
           ) : topics.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No hay temas en el foro para mostrar en Firestore.</p>
+            <p className="text-muted-foreground text-center py-4">{t('adminCommunityManagementPage.noTopicsToShow')}</p>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Título del Tema</TableHead>
-                    <TableHead>Autor (ID)</TableHead>
-                    <TableHead className="text-center">Mensajes</TableHead>
-                    <TableHead className="text-center">Vistas</TableHead>
-                    <TableHead>Última Actividad</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    <TableHead>{t('adminCommunityManagementPage.topicTitleHeader')}</TableHead>
+                    <TableHead>{t('adminCommunityManagementPage.topicAuthorHeader')}</TableHead>
+                    <TableHead className="text-center">{t('adminCommunityManagementPage.topicMessagesHeader')}</TableHead>
+                    <TableHead className="text-center">{t('adminCommunityManagementPage.topicViewsHeader')}</TableHead>
+                    <TableHead>{t('adminCommunityManagementPage.topicLastActivityHeader')}</TableHead>
+                    <TableHead className="text-right">{t('adminCommunityManagementPage.topicActionsHeader')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -373,15 +373,15 @@ export default function AdminCommunityManagementPage() {
                       <TableCell className="truncate max-w-[100px]" title={topic.authorId}>{topic.authorId}</TableCell>
                       <TableCell className="text-center">{topic.postCount}</TableCell>
                       <TableCell className="text-center">{topic.views}</TableCell>
-                      <TableCell>{formatFirestoreTimestamp(topic.lastActivity)}</TableCell>
+                      <TableCell>{formatFirestoreTimestamp(topic.lastActivity, language)}</TableCell>
                       <TableCell className="text-right space-x-1">
-                        <Button variant="outline" size="sm" onClick={() => handleViewPosts(topic)} title="Ver/Gestionar Mensajes">
+                        <Button variant="outline" size="sm" onClick={() => handleViewPosts(topic)} title={t('adminCommunityManagementPage.viewPostsButtonTooltip')}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm" disabled title="Editar Tema (Funcionalidad futura)">
+                        <Button variant="outline" size="sm" disabled title={t('adminCommunityManagementPage.editTopicButtonTooltip')}>
                           <Edit3 className="h-4 w-4" />
                         </Button>
-                        <Button variant="destructive" size="sm" onClick={() => setTopicToDelete(topic)} title="Eliminar Tema">
+                        <Button variant="destructive" size="sm" onClick={() => setTopicToDelete(topic)} title={t('adminCommunityManagementPage.deleteTopicButtonTooltip')}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </TableCell>
@@ -398,14 +398,14 @@ export default function AdminCommunityManagementPage() {
         <Dialog open={isPostsDialogOpen} onOpenChange={(open) => { if(!open) setSelectedTopic(null); setIsPostsDialogOpen(open);}}>
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
-              <DialogTitle className="text-2xl text-primary">Mensajes en: {selectedTopic.title}</DialogTitle>
+              <DialogTitle className="text-2xl text-primary">{t('adminCommunityManagementPage.postsDialogTitle', {topicTitle: selectedTopic.title})}</DialogTitle>
               <DialogDescription>
-                Visualiza, edita o elimina mensajes del tema. Los cambios son persistentes en Firestore.
+                {t('adminCommunityManagementPage.postsDialogDescription')}
               </DialogDescription>
             </DialogHeader>
             <ScrollArea className="max-h-[60vh] pr-2 my-4">
               {isLoadingPosts ? (
-                <div className="flex items-center justify-center py-6"><Loader2 className="h-6 w-6 animate-spin text-primary mr-2" /> Cargando mensajes...</div>
+                <div className="flex items-center justify-center py-6"><Loader2 className="h-6 w-6 animate-spin text-primary mr-2" /> {t('adminCommunityManagementPage.loadingPosts')}</div>
               ) : selectedTopic.posts && selectedTopic.posts.length > 0 ? (
                 <div className="space-y-4">
                   {selectedTopic.posts.map((post: ForumPost) => (
@@ -419,17 +419,17 @@ export default function AdminCommunityManagementPage() {
                         <div className="flex-1">
                           <div className="flex items-center justify-between text-xs">
                             <p className="font-semibold text-foreground truncate max-w-[150px]" title={post.userId}>{post.userId}</p>
-                            <p className="text-muted-foreground">{formatFirestoreTimestamp(post.timestamp)}</p>
+                            <p className="text-muted-foreground">{formatFirestoreTimestamp(post.timestamp, language)}</p>
                           </div>
                           <p className="text-sm text-foreground/90 mt-1 whitespace-pre-line">{post.content}</p>
                           <div className="mt-2 flex items-center space-x-2">
                              <Button variant="outline" size="xs" onClick={() => handleOpenEditPostDialog(post)} className="text-xs">
-                               <Edit3 className="h-3 w-3 mr-1" />Editar
+                               <Edit3 className="h-3 w-3 mr-1" />{t('adminCommunityManagementPage.editPostButton')}
                              </Button>
                              <Button variant="destructive" size="xs" onClick={() => setPostToDelete(post)} className="text-xs">
-                               <Trash2 className="h-3 w-3 mr-1" />Eliminar
+                               <Trash2 className="h-3 w-3 mr-1" />{t('adminCommunityManagementPage.deletePostButton')}
                              </Button>
-                             <span className="text-xs text-muted-foreground ml-auto">{post.likes} Me gusta</span>
+                             <span className="text-xs text-muted-foreground ml-auto">{post.likes} {t('adminCommunityManagementPage.postLikes', {count: post.likes})}</span>
                           </div>
                         </div>
                       </div>
@@ -437,12 +437,12 @@ export default function AdminCommunityManagementPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-center">No hay mensajes en este tema.</p>
+                <p className="text-muted-foreground text-center">{t('adminCommunityManagementPage.noPostsInTopic')}</p>
               )}
             </ScrollArea>
             <DialogFooter>
               <DialogClose asChild>
-                <Button type="button" variant="outline">Cerrar</Button>
+                <Button type="button" variant="outline">{t('common.close')}</Button>
               </DialogClose>
             </DialogFooter>
           </DialogContent>
@@ -453,8 +453,8 @@ export default function AdminCommunityManagementPage() {
         <Dialog open={isEditPostDialogOpen} onOpenChange={setIsEditPostDialogOpen}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Editar Mensaje</DialogTitle>
-                    <DialogDescription>Modifica el contenido del mensaje. Los cambios se guardarán en Firestore.</DialogDescription>
+                    <DialogTitle>{t('adminCommunityManagementPage.editPostDialogTitle')}</DialogTitle>
+                    <DialogDescription>{t('adminCommunityManagementPage.editPostDialogDescription')}</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSaveEditedPost} className="space-y-4 py-4">
                     <div>
@@ -469,10 +469,10 @@ export default function AdminCommunityManagementPage() {
                     </div>
                     <DialogFooter>
                         <DialogClose asChild>
-                            <Button type="button" variant="outline">Cancelar</Button>
+                            <Button type="button" variant="outline">{t('common.cancel')}</Button>
                         </DialogClose>
                         <Button type="submit">
-                            <Save className="mr-2 h-4 w-4" /> Guardar Cambios
+                            <Save className="mr-2 h-4 w-4" /> {t('adminCommunityManagementPage.saveEditedPostButton')}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -484,15 +484,15 @@ export default function AdminCommunityManagementPage() {
         <AlertDialog open={!!postToDelete} onOpenChange={(open) => !open && setPostToDelete(null)}>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>¿Eliminar Mensaje?</AlertDialogTitle>
+                    <AlertDialogTitle>{t('adminCommunityManagementPage.deletePostDialogTitle')}</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Estás a punto de eliminar este mensaje de Firestore. Esta acción no se puede deshacer. ¿Estás seguro?
+                        {t('adminCommunityManagementPage.deletePostDialogDescription')}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setPostToDelete(null)}>Cancelar</AlertDialogCancel>
+                    <AlertDialogCancel onClick={() => setPostToDelete(null)}>{t('common.cancel')}</AlertDialogCancel>
                     <AlertDialogAction onClick={confirmDeletePost} className="bg-destructive hover:bg-destructive/90">
-                        <Trash2 className="mr-2 h-4 w-4" /> Sí, Eliminar Mensaje
+                        <Trash2 className="mr-2 h-4 w-4" /> {t('adminCommunityManagementPage.confirmDeletePostButton')}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
@@ -503,15 +503,15 @@ export default function AdminCommunityManagementPage() {
         <AlertDialog open={!!topicToDelete} onOpenChange={(open) => !open && setTopicToDelete(null)}>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>¿Eliminar Tema del Foro?</AlertDialogTitle>
+                    <AlertDialogTitle>{t('adminCommunityManagementPage.deleteTopicDialogTitle')}</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Estás a punto de eliminar este tema y todos sus mensajes asociados de Firestore. Esta acción no se puede deshacer. ¿Estás seguro?
+                        {t('adminCommunityManagementPage.deleteTopicDialogDescription')}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setTopicToDelete(null)}>Cancelar</AlertDialogCancel>
+                    <AlertDialogCancel onClick={() => setTopicToDelete(null)}>{t('common.cancel')}</AlertDialogCancel>
                     <AlertDialogAction onClick={confirmDeleteTopic} className="bg-destructive hover:bg-destructive/90">
-                        <Trash2 className="mr-2 h-4 w-4" /> Sí, Eliminar Tema
+                        <Trash2 className="mr-2 h-4 w-4" /> {t('adminCommunityManagementPage.confirmDeleteTopicButton')}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

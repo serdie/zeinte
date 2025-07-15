@@ -92,7 +92,7 @@ export async function seedInitialForumData(db: Firestore, userUids: SeedUserUids
     userUids.free === FREE_USER_UID_PLACEHOLDER ||
     userUids.pro === PRO_USER_UID_PLACEHOLDER
   ) {
-    return 'Error: Placeholder UIDs must be replaced in firestoreSeedData.ts and in the calling component before seeding.';
+    return 'Error: Debes reemplazar los UIDs placeholder en firestoreSeedData.ts y en el componente que lo llama antes de sembrar los datos.';
   }
 
   const topicsCollectionRef = collection(db, 'forumTopics');
@@ -103,22 +103,16 @@ export async function seedInitialForumData(db: Firestore, userUids: SeedUserUids
     if (!querySnapshot.empty) {
         // Check if one of our specific seed topics exists
         const firstSeedTopicId = initialTopics[0].id;
-        const firstTopicDoc = doc(db, "forumTopics", firstSeedTopicId);
-        // This check isn't perfect but good enough for one-time seed
-        // A more robust way would be a dedicated "seed_version" document.
-        // However, to avoid reading a non-existent doc, we check if any doc exists first.
-        // For simplicity, if any topic exists, we assume it might be seeded.
-        // A better check would be to fetch doc(db, "forumTopics", initialTopics[0].id) and see if it exists.
-        // But this could error if the doc *doesn't* exist.
-        // So, a simple check if the collection is populated at all.
-      const firstTopicSnap = querySnapshot.docs[0];
-      if (initialTopics.some(t => t.id === firstTopicSnap.id)) {
-        return 'Forum data appears to have been seeded already or the collection is not empty. Skipping.';
-      }
+        const firstTopicDocRef = doc(db, "forumTopics", firstSeedTopicId);
+        const firstTopicSnap = await getDoc(firstTopicDocRef);
+
+        if (firstTopicSnap.exists()) {
+             return 'Los datos del foro parecen haber sido sembrados ya. Omitiendo.';
+        }
     }
   } catch (error) {
     console.error('Error checking if data is seeded:', error);
-    return 'Error checking existing data. Seeding aborted.';
+    return 'Error comprobando datos existentes. Siembra abortada.';
   }
 
   const batch = writeBatch(db);
@@ -133,15 +127,14 @@ export async function seedInitialForumData(db: Firestore, userUids: SeedUserUids
       authorId: authorUid, // Use actual UID
       createdAt: now,
       lastActivity: now, // Initialize lastActivity to createdAt
-      postCount: topicData.postCount, // This will be an initial count, adjust if posts are also seeded
+      postCount: topicData.postCount,
       views: topicData.views,
     });
   });
 
   initialPosts.forEach((postData, index) => {
-    // Generate a unique ID for each post, e.g., using topicId and index
-    const postId = `${postData.topicId}_post${index + 1}`;
-    const postRef = doc(db, 'forumPosts', postId);
+    // We use collection().doc() to generate a new unique ID for each post
+    const postRef = doc(collection(db, "forumPosts"));
     const userUid = userUids[postData.userIdKey as keyof SeedUserUids];
     batch.set(postRef, {
       topicId: postData.topicId,
@@ -154,9 +147,9 @@ export async function seedInitialForumData(db: Firestore, userUids: SeedUserUids
 
   try {
     await batch.commit();
-    return 'Successfully seeded initial forum topics and posts to Firestore.';
+    return 'Datos iniciales del foro sembrados exitosamente en Firestore.';
   } catch (error) {
     console.error('Error seeding data to Firestore:', error);
-    return `Error seeding data: ${(error as Error).message}`;
+    return `Error sembrando datos: ${(error as Error).message}`;
   }
 }
