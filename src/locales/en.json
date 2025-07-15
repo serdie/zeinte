@@ -519,7 +519,7 @@
   },
   "communityPage": {
     "title": "Comunidad de Estudio Zeinte",
-    "description": "Conecta con otros estudiantes, resuelve dudas, comparte estrategias y encuentra apoyo para tus exámenes en Zeinte. (Próximamente)",
+    "description": "Conecta con otros estudiantes, resuelve dudas y comparte estrategias.",
     "searchPlaceholder": "Buscar en foros de Zeinte...",
     "searchButton": "Buscar",
     "newTopicButton": "Nuevo Tema",
@@ -527,7 +527,7 @@
     "tryOtherKeywords": "Intenta con otras palabras clave o revisa la ortografía.",
     "messagesInTopicTitle": "Mensajes en este tema:",
     "replyInTopicButton": "Responder en este Tema",
-    "footerDisclaimer": "Recuerda: La creación de temas y respuestas será posible próximamente. ¡Podrás participar activamente en la comunidad Zeinte en el futuro!",
+    "footerDisclaimer": "Sé respetuoso y constructivo en tus interacciones. ¡Juntos aprendemos más!",
     "anonymousUser": "Usuario Anónimo",
     "likes": "{{count}} Me gusta",
     "reply": "Responder"
@@ -806,7 +806,7 @@
     "resendVerificationSuccess": "Correo de verificación reenviado a {{email}}. Por favor, revisa tu bandeja de entrada y la carpeta de spam.",
     "updateTierErrorNoUserOrDb": "Usuario no encontrado o base de datos no disponible para actualizar el plan.",
     "updateTierErrorAdminLock": "El plan del administrador principal no puede ser modificado de esta forma.",
-    "updateTierErrorSpecialProLock": "Este usuario Pro especial no puede cambiar su plan directamente. Contacta al administrador.",
+    "updateTierErrorSpecialProLock": "Este usuario Pro especial no puede cambiar su plan directamente. Contacta con soporte.",
     "updateTierErrorFirestore": "Error al actualizar el plan en Firestore.",
     "updateTierErrorFirestoreMessage": "No se pudo actualizar tu plan en la base de datos. Inténtalo de nuevo.",
     "updateInterestsErrorNoUserOrDb": "Usuario no encontrado o base de datos no disponible para actualizar intereses.",
