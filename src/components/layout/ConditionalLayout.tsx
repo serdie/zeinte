@@ -18,13 +18,14 @@ const ADMIN_PATH_PREFIX = '/admin';
 const CUSTOM_COURSES_PATH_PREFIX = '/custom-courses';
 const PAYMENT_PATH_PREFIX = '/payment';
 const LEGAL_PATH_PREFIX = '/legal';
+const HISTORY_PATH_PREFIX = '/history'; // Added for consistency
 const PROFILE_PATH = '/profile';
 const PROTECTED_PATHS = [
   '/dashboard',
   '/upload',
   '/configure',
   '/community',
-  '/history',
+  // '/history', // Replaced with startsWith check
   PROFILE_PATH,
   '/pricing',
   '/account/subscription',
@@ -50,6 +51,7 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     const isGeneralProtectedRoute = PROTECTED_PATHS.includes(pathname) ||
                                     pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX) ||
                                     pathname.startsWith(PAYMENT_PATH_PREFIX) ||
+                                    pathname.startsWith(HISTORY_PATH_PREFIX) ||
                                     pathname.startsWith(LEGAL_PATH_PREFIX);
 
 
@@ -116,6 +118,7 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     pathname.startsWith(ADMIN_PATH_PREFIX) ||
     pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX) ||
     pathname.startsWith(PAYMENT_PATH_PREFIX) ||
+    pathname.startsWith(HISTORY_PATH_PREFIX) ||
     pathname.startsWith(LEGAL_PATH_PREFIX)
   );
   
