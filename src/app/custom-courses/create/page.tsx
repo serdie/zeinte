@@ -176,7 +176,7 @@ export default function CreateCustomCoursePage() {
     if (direction === 'next' && currentModuleIndex < detailedCourseData.modules.length - 1) {
       setCurrentModuleIndex(prev => prev + 1);
     } else if (direction === 'prev' && currentModuleIndex > 0) {
-      setCurrentModuleIndex(prev => prev - 1);
+      setCurrentModuleIndex(prev => prev + 1);
     }
   };
 
@@ -304,16 +304,16 @@ export default function CreateCustomCoursePage() {
                 </CardContent>
               </Card>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                <Button onClick={handleAcceptAndPrepareCourse} className="w-full sm:w-auto text-md py-3 px-6 bg-primary hover:bg-primary/90" disabled={isPreparingCourse}>
+              <div className="flex flex-col gap-4 justify-center items-center pt-4 max-w-sm mx-auto">
+                <Button onClick={handleAcceptAndPrepareCourse} className="w-full text-md py-3 px-6 bg-primary hover:bg-primary/90" disabled={isPreparingCourse}>
                   {isPreparingCourse ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <PackageCheck className="mr-2 h-5 w-5" />}
                   {t('customCourses.createPage.acceptAndPrepareButton')}
                 </Button>
-                <Button variant="outline" onClick={() => handleGenerateSyllabus()} className="w-full sm:w-auto text-md py-3 px-6" disabled={isPreparingCourse || isLoading}>
+                <Button variant="outline" onClick={() => handleGenerateSyllabus()} className="w-full text-md py-3 px-6" disabled={isPreparingCourse || isLoading}>
                   <RefreshCw className="mr-2 h-5 w-5" />
                   {t('customCourses.createPage.regenerateSyllabusButton')}
                 </Button>
-                 <Button variant="link" onClick={startOver} className="mx-auto block mt-4 text-sm">
+                 <Button variant="link" onClick={startOver} className="text-sm">
                    {t('customCourses.createPage.startOverButton')}
                  </Button>
               </div>
