@@ -487,17 +487,17 @@
     "billingInfoSavedToastDescription": "Your billing details have been updated successfully."
   },
   "configurePage": {
-    "loadingConfig": "Loading Zeinte configuration...",
-    "title": "Configure Your Exam in Zeinte",
-    "description": "Adjust default options for exam generation in Zeinte.",
-    "defaultNumQuestionsLabel": "Default Number of Questions:",
-    "defaultNumQuestionsPlaceholder": "Select quantity",
-    "saveConfigButton": "Save Configuration",
-    "configSavedToastTitle": "Configuration Saved in Zeinte",
-    "configSavedToastDescription": "Your exam generation preferences have been updated.",
-    "reanalyzeWarningTitle": "About the \"Re-analyze\" button in Zeinte",
-    "reanalyzeWarningDescription": "The \"Re-analyze and Generate New Exam\" feature in the Zeinte Study Dashboard depends on the text content of previously uploaded documents. This content is saved in your browser's local storage, which has size limits (usually 5-10MB). If original documents are very large or numerous, they might not be fully saved, and the re-analysis function might not have enough data.",
-    "backToDashboard": "Back to Zeinte Study Dashboard"
+    "loadingConfig": "Cargando configuración de Zeinte...",
+    "title": "Configura tu Examen en Zeinte",
+    "description": "Ajusta opciones por defecto para la generación de exámenes en Zeinte.",
+    "defaultNumQuestionsLabel": "Número de Preguntas por Defecto:",
+    "defaultNumQuestionsPlaceholder": "Selecciona cantidad",
+    "saveConfigButton": "Guardar Configuración",
+    "configSavedToastTitle": "Configuración Guardada en Zeinte",
+    "configSavedToastDescription": "Tus preferencias para generar exámenes han sido actualizadas.",
+    "reanalyzeWarningTitle": "Sobre el botón \"Re-analizar\" en Zeinte",
+    "reanalyzeWarningDescription": "La función \"Re-analizar y Generar Nuevo Examen\" en el Panel de Estudio de Zeinte depende del contenido textual de los documentos que hayas subido previamente. Este contenido se guarda en el almacenamiento local de tu navegador, el cual tiene límites de tamaño (generalmente 5-10MB). Si los documentos originales son muy grandes o numerosos, es posible que no se guarden completamente, y la función de re-análisis podría no tener datos suficientes.",
+    "backToDashboard": "Volver al Panel de Estudio Zeinte"
   },
   "communityPage": {
     "title": "Comunidad de Estudio Zeinte",
@@ -600,7 +600,11 @@
     "discountsModuleTitle": "Campañas y Descuentos",
     "discountsModuleDescription": "Crea y gestiona códigos de descuento para el plan Pro.",
     "generateDiscountButton": "Generar Código",
-    "discountsModuleFooter": "Requiere lógica de backend para validar códigos."
+    "discountsModuleFooter": "Requiere lógica de backend para validar códigos.",
+    "filterByTierPlaceholder": "Filtrar por plan",
+    "filterTierAll": "Todos los planes",
+    "editUserButtonTooltip": "Editar usuario",
+    "deleteUserButtonTooltip": "Eliminar usuario de Firestore"
   },
   "adminCommunityManagementPage": {
     "loading": "Cargando...",

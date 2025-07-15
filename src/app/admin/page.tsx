@@ -65,6 +65,7 @@ export default function AdminPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [tierFilter, setTierFilter] = useState<UserTier | 'all'>('all');
   
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage, setUsersPerPage] = useState(20);
@@ -114,6 +115,10 @@ export default function AdminPage() {
         (user.displayName?.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
+    
+    if (tierFilter !== 'all') {
+      processedUsers = processedUsers.filter(user => user.tier === tierFilter);
+    }
 
     if (sortOrder !== 'none') {
       processedUsers.sort((a, b) => {
@@ -132,7 +137,7 @@ export default function AdminPage() {
       });
     }
     return processedUsers;
-  }, [users, searchTerm, sortOrder]);
+  }, [users, searchTerm, sortOrder, tierFilter]);
   
   const totalPages = Math.ceil(filteredAndSortedUsers.length / usersPerPage);
   
@@ -320,7 +325,18 @@ export default function AdminPage() {
                       className="pl-10 w-full text-sm"
                     />
                   </div>
-                  <div className="flex gap-2 w-full sm:w-auto">
+                   <div className="flex gap-2 w-full sm:w-auto">
+                     <Select value={tierFilter} onValueChange={(value) => setTierFilter(value as UserTier | 'all')}>
+                      <SelectTrigger className="w-full sm:w-[150px]">
+                        <SelectValue placeholder={t('adminPage.filterByTierPlaceholder')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t('adminPage.filterTierAll')}</SelectItem>
+                        <SelectItem value="free">{t('adminPage.tierFree')}</SelectItem>
+                        <SelectItem value="pro">{t('adminPage.tierPro')}</SelectItem>
+                        <SelectItem value="admin">{t('adminPage.tierAdmin')}</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Button onClick={toggleSortOrder} variant="outline" className="flex-1 sm:flex-none">
                       {getSortIcon()}
                       <span className="ml-2">
@@ -459,9 +475,9 @@ export default function AdminPage() {
                     <SelectValue placeholder={t("adminPage.selectTierPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="free">{t("adminPage.tierFree")}</SelectItem>
-                    <SelectItem value="pro">{t("adminPage.tierPro")}</SelectItem>
-                    <SelectItem value="admin">{t("adminPage.tierAdmin")}</SelectItem>
+                    <SelectItem value="free">{t('adminPage.tierFree')}</SelectItem>
+                    <SelectItem value="pro">{t('adminPage.tierPro')}</SelectItem>
+                    <SelectItem value="admin">{t('adminPage.tierAdmin')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

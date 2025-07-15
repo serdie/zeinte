@@ -600,7 +600,11 @@
     "discountsModuleTitle": "Campañas y Descuentos",
     "discountsModuleDescription": "Crea y gestiona códigos de descuento para el plan Pro.",
     "generateDiscountButton": "Generar Código",
-    "discountsModuleFooter": "Requiere lógica de backend para validar códigos."
+    "discountsModuleFooter": "Requiere lógica de backend para validar códigos.",
+    "filterByTierPlaceholder": "Filtrar por plan",
+    "filterTierAll": "Todos los planes",
+    "editUserButtonTooltip": "Editar usuario",
+    "deleteUserButtonTooltip": "Eliminar usuario de Firestore"
   },
   "adminCommunityManagementPage": {
     "loading": "Cargando...",
