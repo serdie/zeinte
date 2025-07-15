@@ -17,6 +17,7 @@ const PUBLIC_PATHS = ['/', '/login', '/signup', '/verify-email'];
 const ADMIN_PATH_PREFIX = '/admin';
 const CUSTOM_COURSES_PATH_PREFIX = '/custom-courses';
 const PAYMENT_PATH_PREFIX = '/payment';
+const LEGAL_PATH_PREFIX = '/legal';
 const PROFILE_PATH = '/profile';
 const PROTECTED_PATHS = [
   '/dashboard',
@@ -48,7 +49,8 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     const isEmailUser = currentUser?.providerData.some(p => p.providerId === 'password');
     const isGeneralProtectedRoute = PROTECTED_PATHS.includes(pathname) ||
                                     pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX) ||
-                                    pathname.startsWith(PAYMENT_PATH_PREFIX);
+                                    pathname.startsWith(PAYMENT_PATH_PREFIX) ||
+                                    pathname.startsWith(LEGAL_PATH_PREFIX);
 
 
     if (currentUser && userProfileData) { // Ensure userProfileData is loaded
@@ -64,7 +66,7 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
       }
 
       // Check for primary interest configuration
-      if (!userProfileData.primaryInterest && pathname !== PROFILE_PATH && !interestPromptShown) {
+      if (!userProfileData.primaryInterest && pathname !== PROFILE_PATH && !pathname.startsWith(LEGAL_PATH_PREFIX) && !interestPromptShown) {
         toast({
           title: t('conditionalLayout.interestSetupTitle'),
           description: t('conditionalLayout.interestSetupDescription'),
@@ -91,14 +93,17 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     } else if (!currentUser) { // No user
       // If no user and the route is protected (general or admin), redirect to login
       if (isGeneralProtectedRoute || pathname.startsWith(ADMIN_PATH_PREFIX) || pathname === PROFILE_PATH) {
-        router.push('/login');
-        return;
+        // Exception for legal pages, which should be public
+        if (!pathname.startsWith(LEGAL_PATH_PREFIX)) {
+          router.push('/login');
+          return;
+        }
       }
     }
 
   }, [pathname, currentUser, userProfileData, loading, router, isFirebaseConfigured, isAdmin, toast, t, interestPromptShown]);
 
-  if (loading || (!isFirebaseConfigured && !PUBLIC_PATHS.includes(pathname))) {
+  if (loading || (!isFirebaseConfigured && !PUBLIC_PATHS.includes(pathname) && !pathname.startsWith(LEGAL_PATH_PREFIX))) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -110,18 +115,23 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     PROTECTED_PATHS.includes(pathname) ||
     pathname.startsWith(ADMIN_PATH_PREFIX) ||
     pathname.startsWith(CUSTOM_COURSES_PATH_PREFIX) ||
-    pathname.startsWith(PAYMENT_PATH_PREFIX)
+    pathname.startsWith(PAYMENT_PATH_PREFIX) ||
+    pathname.startsWith(LEGAL_PATH_PREFIX)
   );
+  
+  const isPublicLegalPage = pathname.startsWith(LEGAL_PATH_PREFIX) && !currentUser;
+
 
   // Modified showAppLayout condition
   const showAppLayout = currentUser &&
                         userProfileData && // Profile data must exist
                         (currentUser.emailVerified || currentUser.providerData.some(p => p.providerId === 'google.com')) &&
                         isAppRoute;
-                        // The (userProfileData.primaryInterest || pathname === PROFILE_PATH) check
-                        // is primarily handled by the useEffect for redirection.
-                        // For showing AppLayout, as long as userProfileData itself exists (meaning it has loaded),
-                        // and other auth checks pass, we show the layout.
+                        
+  if (isPublicLegalPage) {
+    return <>{children}</>;
+  }
+
 
   if (showAppLayout) {
      if (!currentUser) {

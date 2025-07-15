@@ -73,7 +73,8 @@
     "adminEmailTemplatesTitle": "Gestión de Plantillas de Correo - Zeinte",
     "pricingTitle": "Planes y Precios - Zeinte",
     "paypalPaymentTitle": "Pago con PayPal - Zeinte",
-    "subscriptionManagementTitle": "Gestionar Suscripción - Zeinte"
+    "subscriptionManagementTitle": "Gestionar Suscripción - Zeinte",
+    "legalTitle": "Información Legal - Zeinte"
   },
   "homePage": {
     "mainTitle": "Zeinte: Tu Aliado Inteligente para Aprobar Exámenes",
@@ -1014,7 +1015,7 @@
     "step3Title": "2. Crea un Curso a Medida",
     "step3Content": "¿Necesitas organizar tu estudio? Ve a 'Crear Curso IA'.\n\nDile a la IA qué quieres aprender y te generará un temario completo para ti. ¡Una forma genial de estructurar tu preparación!",
     "step4Title": "3. Revisa tu Historial",
-    "step4Content": "Cada vez que analices documentos, se creará una nueva 'Sesión de Estudio' que se guardará en tu 'Historial de Exámenes'.\n\nYou can always go back to them to review.",
+    "step4Content": "Cada vez que analices documentos, se creará una nueva 'Sesión de Estudio' que se guardará en tu 'Historial de Exámenes'.\n\nSiempre podrás volver a ellos para repasar.",
     "step5Title": "4. Personaliza tu Perfil",
     "step5Content": "En 'Mi Perfil' puedes contarnos un poco sobre tus intereses de estudio.\n\nEsto nos ayudará en el futuro a darte recomendaciones y contenido mucho más personalizado. ¡Échale un vistazo!",
     "step6Title": "¡Todo Listo para Empezar!",

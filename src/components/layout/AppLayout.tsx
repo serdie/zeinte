@@ -43,7 +43,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
     if (currentPathname.startsWith('/account/subscription')) return t("appLayout.subscriptionManagementTitle");
     if (currentPathname.startsWith('/admin/app-settings')) return t("appLayout.adminAppSettingsTitle");
     if (currentPathname.startsWith('/admin/community-management')) return t("appLayout.adminCommunityManagementTitle");
+    if (currentPathname.startsWith('/admin/email-templates')) return t("appLayout.adminEmailTemplatesTitle");
     if (currentPathname.startsWith('/admin')) return t("appLayout.adminTitle");
+    if (currentPathname.startsWith('/legal')) return t("appLayout.legalTitle");
     return t("appLayout.defaultTitle");
   };
 
