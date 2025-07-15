@@ -80,14 +80,6 @@ const nextConfig: NextConfig = {
     ],
   },
   serverExternalPackages: ['sharp', 'onnxruntime-node'],
-  webpack(config) {
-    config.externals.push({
-      'sharp': 'commonjs sharp',
-      'onnxruntime-node': 'commonjs onnxruntime-node',
-    })
-    return config
-  },
 };
 
 export default nextConfig;
-
