@@ -323,16 +323,29 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    let finalNumQuestions = parseInt(numQuestions, 10);
+    let proceedWithAnalysis = true;
+
     if (isFreeUser) {
         const lastGenTimestamp = localStorage.getItem(FREE_USER_LAST_GENERATION_TIMESTAMP_KEY);
         if (lastGenTimestamp && (Date.now() - parseInt(lastGenTimestamp)) < FREE_USER_COOLDOWN_MS) {
             toast({
-                title: t('dashboardPage.dailyLimitReachedTitle'),
-                description: t('dashboardPage.dailyLimitReachedDescription'),
-                variant: 'destructive',
-                duration: 7000
+                title: t('fileUploadArea.betaFreeTierTitle'),
+                description: t('fileUploadArea.betaFreeTierCooldownDescription'),
+                variant: 'default',
+                duration: 8000
             });
-            return;
+            // Do not return, allow to proceed
+        }
+
+        if (finalNumQuestions > MAX_QUESTIONS_FREE_USER) {
+            toast({
+                title: t('fileUploadArea.betaFreeTierTitle'),
+                description: t('fileUploadArea.betaFreeTierQuestionLimitDescription', {maxQuestions: MAX_QUESTIONS_FREE_USER.toString()}),
+                variant: "default",
+                duration: 8000
+            });
+            // Do not cap the questions, let them proceed
         }
     }
 
@@ -406,15 +419,6 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
         return;
       }
       
-      let finalNumQuestions = parseInt(numQuestions, 10);
-      if (isFreeUser && finalNumQuestions > MAX_QUESTIONS_FREE_USER) {
-          toast({
-              title: t('fileUploadArea.toastFreeUserLimitTitle'),
-              description: t('fileUploadArea.toastFreeUserLimitDescription', {maxQuestions: MAX_QUESTIONS_FREE_USER.toString()}),
-              variant: "default"
-          });
-          finalNumQuestions = MAX_QUESTIONS_FREE_USER;
-      }
       await onAnalyze(allFilesContent, finalNumQuestions);
 
     } catch (error) {
@@ -625,7 +629,7 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
                     className="text-sm"
                     disabled={isFinalAnalyzing || isDeepSearching || isLoadingAppSettings || isProcessingFiles } 
                   />
-                  <Button onClick={() => handleDeepSearch()} disabled={isFinalAnalyzing || isDeepSearching || !deepSearchTopic.trim() || isLoadingAppSettings || isProcessingFiles } className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                  <Button type="button" onClick={() => handleDeepSearch()} disabled={isFinalAnalyzing || isDeepSearching || !deepSearchTopic.trim() || isLoadingAppSettings || isProcessingFiles } className="bg-accent hover:bg-accent/90 text-accent-foreground">
                     {isDeepSearching ? <Loader2 className="animate-spin" /> : <Search className="h-5 w-5" />}
                     <span className="ml-2 hidden sm:inline">{t('fileUploadArea.suggestButton')}</span>
                   </Button>
@@ -722,19 +726,7 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
                 <Label htmlFor="num-questions-select" className="text-md font-medium">{t('dashboardPage.numQuestionsLabel')}{isFreeUser && <span className="text-muted-foreground text-sm">{t('fileUploadArea.finalAnalysisConfigFreeUserMaxText', {maxQuestions: MAX_QUESTIONS_FREE_USER})}</span>}</Label>
                 <Select
                     value={numQuestions}
-                    onValueChange={(value) => {
-                      const numValue = parseInt(value, 10);
-                      if (isFreeUser && numValue > MAX_QUESTIONS_FREE_USER) {
-                          toast({
-                              title: t('fileUploadArea.toastFreeUserLimitTitle'),
-                              description: t('fileUploadArea.toastFreeUserLimitDescription', {maxQuestions: MAX_QUESTIONS_FREE_USER}),
-                              variant: "default",
-                          });
-                          setNumQuestions(MAX_QUESTIONS_FREE_USER.toString());
-                      } else {
-                          setNumQuestions(value);
-                      }
-                    }}
+                    onValueChange={setNumQuestions}
                     disabled={isFinalAnalyzing || isDeepSearching || isLoadingAppSettings || isProcessingFiles}
                 >
                 <SelectTrigger id="num-questions-select" className="w-full text-base py-3">

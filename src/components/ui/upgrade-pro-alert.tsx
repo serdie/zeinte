@@ -21,7 +21,7 @@ export function UpgradeProAlert({ featureName, className, message }: UpgradeProA
       <Rocket className="h-5 w-5" />
       <AlertTitle className="font-semibold">{t('upgradeProAlert.title')}</AlertTitle>
       <AlertDescription>
-        {message || t('upgradeProAlert.featureUnavailable', { featureName: featureName })} {/* Assuming you add this key */}
+        {message || t('upgradeProAlert.featureUnavailable', { featureName: featureName })}
         <Link href="/#pricing" passHref>
           <Button variant="link" className="p-0 h-auto text-amber-700 dark:text-amber-400 hover:underline ml-1 font-medium group">
             {t('upgradeProAlert.updateNow')}

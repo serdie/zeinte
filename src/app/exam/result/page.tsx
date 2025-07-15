@@ -90,12 +90,16 @@ export default function ExamResultPage() {
       return;
     }
 
-    const now = Date.now();
     if (userTier === 'free') {
         const lastGenTimestamp = localStorage.getItem(FREE_USER_LAST_GENERATION_TIMESTAMP_KEY);
-        if (lastGenTimestamp && (now - parseInt(lastGenTimestamp)) < FREE_USER_COOLDOWN_MS) {
-            toast({ title: t('dashboardPage.dailyLimitReachedTitle'), description: t('dashboardPage.dailyLimitReachedDescription'), variant: "destructive", duration: 7000 });
-            return;
+        if (lastGenTimestamp && (Date.now() - parseInt(lastGenTimestamp)) < FREE_USER_COOLDOWN_MS) {
+            toast({ 
+                title: t('fileUploadArea.betaFreeTierTitle'), 
+                description: t('fileUploadArea.betaFreeTierCooldownDescription'), 
+                variant: "default", 
+                duration: 8000 
+            });
+            // Do not return, allow to proceed
         }
     }
     
@@ -131,7 +135,7 @@ export default function ExamResultPage() {
     }
   };
 
-  const isFreeUserWithLimit = userTier === 'free' && predictedData && predictedData.questions.length > MAX_QUESTIONS_FREE_USER;
+  const isFreeUserWithMoreQuestions = userTier === 'free' && predictedData && predictedData.questions.length > MAX_QUESTIONS_FREE_USER;
 
   if (isLoading || authLoading) {
     return (
@@ -152,7 +156,7 @@ export default function ExamResultPage() {
     );
   }
 
-  const questionsToShow = isFreeUserWithLimit ? predictedData.questions.slice(0, MAX_QUESTIONS_FREE_USER) : predictedData.questions;
+  const questionsToShow = predictedData.questions;
 
   return (
     <div className="space-y-8">
@@ -205,10 +209,10 @@ export default function ExamResultPage() {
         </CardFooter>
       </Card>
 
-      {isFreeUserWithLimit && (
+      {isFreeUserWithMoreQuestions && (
         <UpgradeProAlert 
             featureName={t('dashboardPage.upgradeProAlertViewAll')}
-            message={t('dashboardPage.upgradeProAlertViewAllMessage', {count: MAX_QUESTIONS_FREE_USER.toString(), total: predictedData.questions.length.toString()})}
+            message={t('fileUploadArea.betaEnjoyProFeature')}
         />
       )}
 

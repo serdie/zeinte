@@ -311,7 +311,11 @@
     "toastErrorProcessingFilesTitle": "Error al procesar archivos",
     "toastErrorProcessingFilesDescription": "{{error}}",
     "toastErrorProcessingFilesFallback": "Hubo un problema al leer los archivos.",
-    "loadingUploadConfig": "Cargando configuración de subida..."
+    "loadingUploadConfig": "Cargando configuración de subida...",
+    "betaFreeTierTitle": "Aviso Fase Beta",
+    "betaFreeTierCooldownDescription": "Has alcanzado el límite de 24h del plan gratuito. Sin embargo, durante nuestra fase Beta, puedes seguir usando las funciones. ¡Disfruta de la experiencia Pro!",
+    "betaFreeTierQuestionLimitDescription": "Tu plan gratuito está limitado a {{maxQuestions}} preguntas. Sin embargo, durante nuestra fase Beta, generaremos la cantidad que has seleccionado. ¡A disfrutar!",
+    "betaEnjoyProFeature": "¡Has desbloqueado una función Pro! Disfruta de la experiencia completa durante nuestra fase Beta."
   },
   "uploadPage": {
     "processingDocumentToastTitle": "Procesando Documento en Zeinte",
@@ -497,7 +501,7 @@
   },
   "communityPage": {
     "title": "Comunidad de Estudio Zeinte",
-    "description": "Conecta con otros estudiantes, resuelve dudas, comparte estrategias y encuentra apoyo para tus exámenes en Zeinte.",
+    "description": "Conecta con otros estudiantes, resuelve dudas, comparte estrategias y encuentra apoyo para tus exámenes en Zeinte. (Próximamente)",
     "searchPlaceholder": "Buscar en foros de Zeinte...",
     "searchButton": "Buscar",
     "newTopicButton": "Nuevo Tema",
