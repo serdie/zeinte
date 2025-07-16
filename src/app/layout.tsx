@@ -121,6 +121,22 @@ export default function RootLayout({
           src="https://js.stripe.com/v3/buy-button.js"
           strategy="afterInteractive"
         />
+        {/* Mouseflow Tracking Script */}
+        <Script
+          id="mouseflow"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window._mfq = window._mfq || [];
+              (function() {
+                var mf = document.createElement("script");
+                mf.type = "text/javascript"; mf.defer = true;
+                mf.src = "//cdn.mouseflow.com/projects/82d58860-7d51-488e-a4ed-b405840563e4.js";
+                document.getElementsByTagName("head")[0].appendChild(mf);
+              })();
+            `,
+          }}
+        />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider
