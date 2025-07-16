@@ -27,14 +27,15 @@ import { useI18n } from '@/contexts/I18nContext';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 interface FileUploadAreaProps {
-  onAnalyze: (content: string, numQuestions: number) => Promise<void>;
-  isLoading: boolean; // This is for the final analysis step
+  onAnalyze: (content: string, numQuestions?: number) => Promise<void>;
+  isLoading: boolean;
+  mode: 'exam' | 'summary';
 }
 
 const DEFAULT_MAX_FILES_UPLOAD = 30;
-const DEFAULT_MAX_TOTAL_SIZE_MB = 20; // Updated to 20MB
+const DEFAULT_MAX_TOTAL_SIZE_MB = 20;
 const MAX_QUESTIONS_FREE_USER = 5;
-const FREE_USER_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
+const FREE_USER_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 interface CommonExam {
   id: string;
@@ -70,7 +71,7 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing }: FileUploadAreaProps) {
+export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing, mode }: FileUploadAreaProps) {
   const { t } = useI18n();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [numQuestions, setNumQuestions] = useState<string>("10");
@@ -90,9 +91,8 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
   const [isDeepSearching, setIsDeepSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("comunes");
 
-  const [isProcessingFiles, setIsProcessingFiles] = useState(false); // For text extraction loading
+  const [isProcessingFiles, setIsProcessingFiles] = useState(false);
 
-  // Camera state
   const [showCameraModal, setShowCameraModal] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [capturedImageDataUri, setCapturedImageDataUri] = useState<string | null>(null);
@@ -127,18 +127,20 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
   }, [isFirebaseConfigured]);
 
   useEffect(() => {
-    const storedConfig = localStorage.getItem(EXAM_CONFIG_KEY);
-    if (storedConfig) {
-      try {
-        const parsedConfig: ExamConfig = JSON.parse(storedConfig);
-        if (parsedConfig.defaultNumberOfQuestions) {
-            setNumQuestions(parsedConfig.defaultNumberOfQuestions.toString());
+    if (mode === 'exam') {
+      const storedConfig = localStorage.getItem(EXAM_CONFIG_KEY);
+      if (storedConfig) {
+        try {
+          const parsedConfig: ExamConfig = JSON.parse(storedConfig);
+          if (parsedConfig.defaultNumberOfQuestions) {
+              setNumQuestions(parsedConfig.defaultNumberOfQuestions.toString());
+          }
+        } catch (error) {
+          console.error("Error parsing exam config for FileUploadArea:", error);
         }
-      } catch (error) {
-        console.error("Error parsing exam config for FileUploadArea:", error);
       }
     }
-  }, []);
+  }, [mode]);
 
   const MAX_TOTAL_SIZE_BYTES = useMemo(() => appUploadLimits.maxSizeMB * 1024 * 1024, [appUploadLimits.maxSizeMB]);
   const totalSizeInBytes = useMemo(() => selectedFiles.reduce((acc, file) => acc + file.size, 0), [selectedFiles]);
@@ -164,7 +166,6 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
   };
 
   const handleDeepSearch = useCallback(async (searchTopic?: string) => {
-    // ... (deep search logic remains the same)
     const topicToSearch = searchTopic || deepSearchTopic;
     if (!topicToSearch.trim()) {
       toast({ title: t('common.error'), description: t('fileUploadArea.searchTopicPlaceholder'), variant: "destructive" });
@@ -225,7 +226,6 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
     );
   };
   
-  // Camera functions
   useEffect(() => {
     if (showCameraModal) {
       const getCameraPermission = async () => {
@@ -248,7 +248,7 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
       };
       getCameraPermission();
 
-      return () => { // Cleanup: stop camera stream when modal closes or component unmounts
+      return () => {
         if (videoRef.current && videoRef.current.srcObject) {
           const stream = videoRef.current.srcObject as MediaStream;
           stream.getTracks().forEach(track => track.stop());
@@ -270,7 +270,6 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
       setCapturedImageDataUri(dataUri);
       setIsCapturing(false);
 
-      // Stop camera stream after capture
        if (videoRef.current && videoRef.current.srcObject) {
           const stream = videoRef.current.srcObject as MediaStream;
           stream.getTracks().forEach(track => track.stop());
@@ -281,17 +280,15 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
   const handleUseCapturedPhoto = async () => {
     if (!capturedImageDataUri) return;
     
-    setIsProcessingFiles(true); // Show loading for OCR
+    setIsProcessingFiles(true);
     toast({ title: "Processing captured photo..." });
     try {
       const fileName = `camera_capture_${Date.now()}.jpg`;
       const result = await extractTextFromFile({ fileDataUri: capturedImageDataUri, fileName });
       
-      // Create a File object from the data URI to add to selectedFiles
       const blob = await (await fetch(capturedImageDataUri)).blob();
       const newFile = new File([blob], fileName, { type: 'image/jpeg' });
 
-      // Check file count limit before adding
       if (selectedFiles.length >= appUploadLimits.maxFiles) {
           toast({
             title: t('fileUploadArea.toastFileLimitExceededTitle'),
@@ -305,8 +302,6 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
       }
 
       setSelectedFiles(prev => [...prev, newFile]);
-      // Store the extracted text separately or integrate into the combined content later
-      // For now, we will extract text from all files (including this one) during handleSubmit
       
       toast({ title: "Photo added", description: `Text from photo will be extracted during analysis.` });
     } catch (error) {
@@ -319,14 +314,12 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
     }
   };
 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     let finalNumQuestions = parseInt(numQuestions, 10);
-    let proceedWithAnalysis = true;
-
-    if (isFreeUser) {
+    
+    if (mode === 'exam' && isFreeUser) {
         const lastGenTimestamp = localStorage.getItem(FREE_USER_LAST_GENERATION_TIMESTAMP_KEY);
         if (lastGenTimestamp && (Date.now() - parseInt(lastGenTimestamp)) < FREE_USER_COOLDOWN_MS) {
             toast({
@@ -335,9 +328,7 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
                 variant: 'default',
                 duration: 8000
             });
-            // Do not return, allow to proceed
         }
-
         if (finalNumQuestions > MAX_QUESTIONS_FREE_USER) {
             toast({
                 title: t('fileUploadArea.betaFreeTierTitle'),
@@ -345,7 +336,6 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
                 variant: "default",
                 duration: 8000
             });
-            // Do not cap the questions, let them proceed
         }
     }
 
@@ -365,7 +355,6 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
             variant: "destructive",
             duration: 10000,
         });
-        // Allow proceeding but warn.
     }
 
     setIsProcessingFiles(true);
@@ -374,7 +363,6 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
     let allFilesContent = "";
     const fileProcessingPromises: Promise<string>[] = [];
 
-    // Process uploaded files
     selectedFiles.forEach(file => {
       const promise = new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -385,14 +373,14 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
             resolve(`Contenido del archivo: ${file.name}\n\n${extractionResult.extractedText}\n\n---\n\n`);
           } catch (err) {
             console.error(`Error extracting text from ${file.name}:`, err);
-            resolve(`Error al procesar el archivo: ${file.name}. Puede que el formato no sea compatible o esté dañado.\n\n---\n\n`); // Resolve with error message
+            resolve(`Error al procesar el archivo: ${file.name}. Puede que el formato no sea compatible o esté dañado.\n\n---\n\n`);
           }
         };
         reader.onerror = (errorReader) => {
           console.error("Error reading file:", file.name, errorReader);
-          resolve(`Error al leer el archivo: ${file.name}.\n\n---\n\n`); // Resolve with error message
+          resolve(`Error al leer el archivo: ${file.name}.\n\n---\n\n`);
         };
-        reader.readAsDataURL(file); // Read as Data URL for all types for the new flow
+        reader.readAsDataURL(file);
       });
       fileProcessingPromises.push(promise);
     });
@@ -401,7 +389,6 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
       const fileContentsArray = await Promise.all(fileProcessingPromises);
       allFilesContent = fileContentsArray.join('');
 
-      // Process deep search documents
       const deepSearchDocsContent = deepSearchResults?.results
         .filter(doc => selectedDeepSearchDocIds.includes(doc.id))
         .map(doc => `Contenido del documento (sugerido por IA): ${doc.title}\n\n${doc.simulatedTextContent}\n\n---\n\n`)
@@ -419,7 +406,7 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
         return;
       }
       
-      await onAnalyze(allFilesContent, finalNumQuestions);
+      await onAnalyze(allFilesContent, mode === 'exam' ? finalNumQuestions : undefined);
 
     } catch (error) {
       setIsProcessingFiles(false);
@@ -434,7 +421,6 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
 
   const filesProgress = isLoadingAppSettings ? 0 : (selectedFiles.length / appUploadLimits.maxFiles) * 100;
   const sizeProgress = isLoadingAppSettings ? 0 : Math.min((totalSizeInBytes / MAX_TOTAL_SIZE_BYTES) * 100, 100);
-
 
   const renderCommonExams = (category: 'Universidad' | 'Oposición') => {
     const exams = commonExams.filter(exam => exam.category === category);
@@ -476,7 +462,7 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
             <CarouselNext type="button" />
         </Carousel>
     );
-};
+  };
 
   const renderComingSoon = (titleKey: string, descriptionKey: string, hint: string) => (
     <div className="text-center py-10 px-4">
@@ -502,12 +488,15 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
     );
   }
 
+  const finalButtonTextKey = mode === 'exam' 
+      ? 'fileUploadArea.analyzeAndPredictButton' 
+      : 'fileUploadArea.generateSummaryButton';
+  const FinalButtonIcon = mode === 'exam' ? FileType : FileText;
 
   return (
     <>
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* First column on lg screens */}
         <div className="space-y-8">
           <Card className="w-full shadow-lg">
             <CardHeader>
@@ -547,8 +536,6 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
                 <Camera className="mr-2 h-5 w-5" />
                 {t('fileUploadArea.useCameraButton')}
               </Button>
-
-
               {selectedFiles.length > 0 && (
                 <div className="space-y-4">
                   <div>
@@ -558,7 +545,6 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
                     </div>
                     <Progress value={filesProgress} id="files-progress" className="w-full h-2" />
                   </div>
-
                   <div>
                     <div className="flex justify-between items-center mb-1">
                       <Label htmlFor="size-progress" className="text-sm font-medium">{t('fileUploadArea.totalSizeLabel')}</Label>
@@ -575,7 +561,6 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
                         </div>
                     )}
                   </div>
-
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-foreground">{t('fileUploadArea.fileListTitle', { count: selectedFiles.length.toString() })}</h4>
                     <ul className="max-h-48 overflow-y-auto space-y-1 rounded-md border p-2 bg-muted/50">
@@ -605,7 +590,6 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
               )}
             </CardContent>
           </Card>
-
           <Card className="w-full shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl flex items-center gap-2">
@@ -673,76 +657,79 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
             </CardContent>
           </Card>
         </div>
-
-        {/* Second column on lg screens */}
-        <div className="space-y-8">
-          <Card className="w-full shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl flex items-center gap-2">
-                <LibraryBig className="h-7 w-7 text-primary" />
-                {t('fileUploadArea.exploreLibraryTitle')}
-              </CardTitle>
-              <CardDescription>
-                {t('fileUploadArea.exploreLibraryDescription')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
-                  <TabsTrigger value="comunes" className="py-2 flex items-center gap-1.5"><LibraryBig className="h-4 w-4" /> {t('fileUploadArea.tabCommonExams')}</TabsTrigger>
-                  <TabsTrigger value="comunidad" className="py-2 flex items-center gap-1.5"><Users className="h-4 w-4" /> {t('fileUploadArea.tabCommunityExams')}</TabsTrigger>
-                  <TabsTrigger value="personales" className="py-2 flex items-center gap-1.5"><User className="h-4 w-4" /> {t('fileUploadArea.tabPersonalExams')}</TabsTrigger>
-                  <TabsTrigger value="recomendados" className="py-2 flex items-center gap-1.5"><Sparkles className="h-4 w-4" /> {t('fileUploadArea.tabRecommendedExams')}</TabsTrigger>
-                </TabsList>
-                <TabsContent value="comunes" className="mt-4">
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {t('fileUploadArea.commonExamsDescriptionNoPro')}
-                  </p>
-                  <div>
-                    <h4 className="text-md font-semibold mt-4 mb-2 text-foreground">{t('fileUploadArea.universitiesSectionTitle')}</h4>
-                    {renderCommonExams('Universidad')}
-                    <h4 className="text-md font-semibold mt-6 mb-2 text-foreground">{t('fileUploadArea.oppositionsSectionTitle')}</h4>
-                    {renderCommonExams('Oposición')}
-                  </div>
-                </TabsContent>
-                <TabsContent value="comunidad">
-                  {renderComingSoon("fileUploadArea.comingSoonCommunityExamsTitle", "fileUploadArea.comingSoonCommunityExamsDescription", "community forum discussion")}
-                </TabsContent>
-                <TabsContent value="personales">
-                  {renderComingSoon("fileUploadArea.comingSoonPersonalExamsTitle", "fileUploadArea.comingSoonPersonalExamsDescription", "personal documents folder")}
-                </TabsContent>
-                <TabsContent value="recomendados">
-                  {renderComingSoon("fileUploadArea.comingSoonRecommendedExamsTitle", "fileUploadArea.comingSoonRecommendedExamsDescription", "ai recommendations list")}
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
+        
+        {mode === 'exam' && (
+          <div className="space-y-8">
+            <Card className="w-full shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <LibraryBig className="h-7 w-7 text-primary" />
+                  {t('fileUploadArea.exploreLibraryTitle')}
+                </CardTitle>
+                <CardDescription>
+                  {t('fileUploadArea.exploreLibraryDescription')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
+                    <TabsTrigger value="comunes" className="py-2 flex items-center gap-1.5"><LibraryBig className="h-4 w-4" /> {t('fileUploadArea.tabCommonExams')}</TabsTrigger>
+                    <TabsTrigger value="comunidad" className="py-2 flex items-center gap-1.5"><Users className="h-4 w-4" /> {t('fileUploadArea.tabCommunityExams')}</TabsTrigger>
+                    <TabsTrigger value="personales" className="py-2 flex items-center gap-1.5"><User className="h-4 w-4" /> {t('fileUploadArea.tabPersonalExams')}</TabsTrigger>
+                    <TabsTrigger value="recomendados" className="py-2 flex items-center gap-1.5"><Sparkles className="h-4 w-4" /> {t('fileUploadArea.tabRecommendedExams')}</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="comunes" className="mt-4">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {t('fileUploadArea.commonExamsDescriptionNoPro')}
+                    </p>
+                    <div>
+                      <h4 className="text-md font-semibold mt-4 mb-2 text-foreground">{t('fileUploadArea.universitiesSectionTitle')}</h4>
+                      {renderCommonExams('Universidad')}
+                      <h4 className="text-md font-semibold mt-6 mb-2 text-foreground">{t('fileUploadArea.oppositionsSectionTitle')}</h4>
+                      {renderCommonExams('Oposición')}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="comunidad">
+                    {renderComingSoon("fileUploadArea.comingSoonCommunityExamsTitle", "fileUploadArea.comingSoonCommunityExamsDescription", "community forum discussion")}
+                  </TabsContent>
+                  <TabsContent value="personales">
+                    {renderComingSoon("fileUploadArea.comingSoonPersonalExamsTitle", "fileUploadArea.comingSoonPersonalExamsDescription", "personal documents folder")}
+                  </TabsContent>
+                  <TabsContent value="recomendados">
+                    {renderComingSoon("fileUploadArea.comingSoonRecommendedExamsTitle", "fileUploadArea.comingSoonRecommendedExamsDescription", "ai recommendations list")}
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
 
       <div className="space-y-6 p-6 border rounded-lg shadow-xl bg-card">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-            <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="num-questions-select" className="text-md font-medium">{t('dashboardPage.numQuestionsLabel')}{isFreeUser && <span className="text-muted-foreground text-sm">{t('fileUploadArea.finalAnalysisConfigFreeUserMaxText', {maxQuestions: MAX_QUESTIONS_FREE_USER})}</span>}</Label>
-                <Select
-                    value={numQuestions}
-                    onValueChange={setNumQuestions}
-                    disabled={isFinalAnalyzing || isDeepSearching || isLoadingAppSettings || isProcessingFiles}
-                >
-                <SelectTrigger id="num-questions-select" className="w-full text-base py-3">
-                    <SelectValue placeholder={t('common.selectOption')} />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="5">5 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                    <SelectItem value="10">10 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                    <SelectItem value="15">15 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                    <SelectItem value="20">20 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                    <SelectItem value="25">25 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                    <SelectItem value="30">30 {t('fileUploadArea.questionsSuffix')}</SelectItem>
-                </SelectContent>
-                </Select>
+          {mode === 'exam' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+              <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="num-questions-select" className="text-md font-medium">{t('dashboardPage.numQuestionsLabel')}{isFreeUser && <span className="text-muted-foreground text-sm">{t('fileUploadArea.finalAnalysisConfigFreeUserMaxText', {maxQuestions: MAX_QUESTIONS_FREE_USER})}</span>}</Label>
+                  <Select
+                      value={numQuestions}
+                      onValueChange={setNumQuestions}
+                      disabled={isFinalAnalyzing || isDeepSearching || isLoadingAppSettings || isProcessingFiles}
+                  >
+                  <SelectTrigger id="num-questions-select" className="w-full text-base py-3">
+                      <SelectValue placeholder={t('common.selectOption')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="5">5 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                      <SelectItem value="10">10 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                      <SelectItem value="15">15 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                      <SelectItem value="20">20 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                      <SelectItem value="25">25 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                      <SelectItem value="30">30 {t('fileUploadArea.questionsSuffix')}</SelectItem>
+                  </SelectContent>
+                  </Select>
+              </div>
             </div>
-          </div>
+          )}
           <Button
             type="submit"
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 text-lg font-semibold rounded-lg shadow-md transition-transform duration-150 ease-in-out active:scale-95 mt-6"
@@ -755,8 +742,8 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
               </>
             ) : (
               <>
-                <FileType className="mr-2 h-6 w-6"/>
-                {t('fileUploadArea.analyzeAndPredictButton')}
+                <FinalButtonIcon className="mr-2 h-6 w-6"/>
+                {t(finalButtonTextKey)}
               </>
             )}
           </Button>
@@ -765,11 +752,11 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing 
 
     <Dialog open={showCameraModal} onOpenChange={(open) => {
         setShowCameraModal(open);
-        if (!open && videoRef.current && videoRef.current.srcObject) { // Stop stream if modal is closed
+        if (!open && videoRef.current && videoRef.current.srcObject) {
             const stream = videoRef.current.srcObject as MediaStream;
             stream.getTracks().forEach(track => track.stop());
-            videoRef.current.srcObject = null; // Clear srcObject
-            setHasCameraPermission(null); // Reset permission status
+            videoRef.current.srcObject = null;
+            setHasCameraPermission(null);
         }
     }}>
         <DialogContent className="sm:max-w-lg">

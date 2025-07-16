@@ -42,13 +42,11 @@ export default function SummarizePage() {
         originalDocumentContent: content,
       };
       
-      // Save to history in localStorage
       const historyString = localStorage.getItem(SUMMARY_HISTORY_KEY);
       const history: SummaryData[] = historyString ? JSON.parse(historyString) : [];
       history.unshift(dataToStore);
       localStorage.setItem(SUMMARY_HISTORY_KEY, JSON.stringify(history));
       
-      // Save the current summary for immediate viewing
       localStorage.setItem(CURRENT_SUMMARY_DATA_KEY, JSON.stringify(dataToStore));
 
       toast({
@@ -71,10 +69,8 @@ export default function SummarizePage() {
     }
   };
   
-  // Wrapper to adapt the onAnalyze signature from FileUploadArea
-  const handleFileUploadAnalyze = (content: string, _numQuestions: number) => {
-    // We ignore numQuestions as it's not relevant for summarization
-    return handleAnalyze(content);
+  const handleFileUploadAnalyze = (content: string, _numQuestions?: number) => {
+    handleAnalyze(content);
   };
 
 
@@ -93,7 +89,7 @@ export default function SummarizePage() {
         </Link>
       </div>
       <AdSenseUnit adSlot="YOUR_AD_SLOT_ID_FOR_SUMMARIZE" className="mb-8" />
-      <FileUploadArea onAnalyze={handleFileUploadAnalyze} isLoading={isLoading} />
+      <FileUploadArea onAnalyze={handleFileUploadAnalyze} isLoading={isLoading} mode="summary" />
     </div>
   );
 }

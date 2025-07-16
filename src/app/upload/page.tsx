@@ -14,7 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { CardTitle } from '@/components/ui/card'; // Import CardTitle
+import { CardTitle } from '@/components/ui/card';
 import AdSenseUnit from '@/components/ads/AdSenseUnit';
 
 export default function UploadPage() {
@@ -50,7 +50,7 @@ export default function UploadPage() {
       const examTitle = analysisResult.summary.substring(0, 50) + (analysisResult.summary.length > 50 ? '...' : '');
 
       const dataToStore: PredictedData = {
-        id: newTimestamp.toString(), // Ensure ID is a string
+        id: newTimestamp.toString(),
         title: examTitle,
         questions: predictionResult.questions.map(q => ({
             ...q,
@@ -64,13 +64,11 @@ export default function UploadPage() {
         potentialFocusAreas: analysisResult.potentialFocusAreas,
       };
       
-      // Save to history in localStorage
       const historyString = localStorage.getItem(EXAM_HISTORY_KEY);
       const history: PredictedData[] = historyString ? JSON.parse(historyString) : [];
-      history.unshift(dataToStore); // Add to the beginning of the list
+      history.unshift(dataToStore);
       localStorage.setItem(EXAM_HISTORY_KEY, JSON.stringify(history));
       
-      // Save the current exam for immediate viewing
       localStorage.setItem(PREDICTED_DATA_KEY, JSON.stringify(dataToStore));
 
       if (isFreeUser) {
@@ -111,7 +109,7 @@ export default function UploadPage() {
         </Link>
       </div>
       <AdSenseUnit adSlot="YOUR_AD_SLOT_ID_FOR_UPLOAD" className="mb-8" />
-      <FileUploadArea onAnalyze={handleAnalyze} isLoading={isLoading} />
+      <FileUploadArea onAnalyze={handleAnalyze} isLoading={isLoading} mode="exam" />
     </div>
   );
 }

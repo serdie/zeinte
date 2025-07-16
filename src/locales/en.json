@@ -329,6 +329,7 @@
     "questionsSuffix": "questions",
     "selectedQuestionsFreeUserWarning": "You have selected {{selectedCount}} questions, but {{maxCount}} will be generated due to your free plan in Zeinte.",
     "analyzeAndPredictButton": "Analyze and Predict Questions",
+    "generateSummaryButton": "Generate Summary",
     "loadingConfigButton": "Loading Config...",
     "processingFilesButton": "Processing Files...",
     "analyzingButton": "Analyzing Content...",
@@ -1061,5 +1062,8 @@
     "step5Content": "En 'Mi Perfil' puedes contarnos un poco sobre tus intereses de estudio.\n\nEsto nos ayudará en el futuro a darte recomendaciones y contenido mucho más personalizado. ¡Échale un vistazo!",
     "step6Title": "¡Todo Listo para Empezar!",
     "step6Content": "Ya está, ¡así de fácil! Ahora estás listo para empezar a estudiar de forma más eficiente.\n\nSi necesitas volver a ver este tutorial, busca el botón de ayuda en el panel de estudio."
+  },
+  "fileUploadArea": {
+    "generateSummaryButton": "Generate Summary"
   }
 }
