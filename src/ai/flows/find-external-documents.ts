@@ -80,7 +80,7 @@ const findExternalDocumentsFlow = ai.defineFlow(
           source: "Sugerido por IA (fuente simulada)",
           simulatedTextContent: `${suggestion.abstract}\n\n(Contenido detallado adicional simulado para demostración: Este documento profundiza en los conceptos mencionados en el resumen, ofreciendo ejemplos y análisis relevantes para el tema "${input.topic}".)`
         }));
-        message = `La IA ha sugerido ${documentResults.length} documentos relevantes para "${input.topic}". El contenido detallado es simulado. Selecciona los que quieras añadir para el análisis.`;
+        message = `La IA ha sugerido ${documentResults.length} documentos relevantes para "${input.topic}". Selecciona los que quieras añadir para el análisis.`;
       } else {
         message = `La IA no pudo generar sugerencias específicas para "${input.topic}" en este momento. Puedes intentarlo de nuevo o con un tema diferente.`;
       }
@@ -104,7 +104,7 @@ const findExternalDocumentsFlow = ai.defineFlow(
         ];
         // Add these to the results, potentially replacing or augmenting AI suggestions if topic is specific
         documentResults = [...agenteForestalDocs, ...documentResults.filter(doc => !doc.title.toLowerCase().includes("agente forestal"))].slice(0,5); // Keep a reasonable number
-         message = `La IA ha sugerido documentos para "agente forestal". El contenido detallado es simulado.`;
+         message = `La IA ha sugerido documentos para "agente forestal". Selecciona los que quieras añadir para el análisis.`;
     }
 
 
@@ -119,4 +119,5 @@ const findExternalDocumentsFlow = ai.defineFlow(
     };
   }
 );
+
 
