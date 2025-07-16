@@ -30,10 +30,10 @@ export default function SidebarNav() {
     { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: BookOpenText, protected: true },
     { href: '/upload', labelKey: 'sidebar.createExam', icon: UploadCloud, protected: true },
     { href: '/history', labelKey: 'sidebar.history', icon: History, protected: true },
+    { href: '/custom-courses/create', labelKey: 'sidebar.createCourse', icon: Lightbulb, protected: true },
     { href: '/history/courses', labelKey: 'sidebar.courseHistory', icon: GraduationCap, protected: true },
     { href: '/configure', labelKey: 'sidebar.configureExam', icon: Settings, protected: true },
     { href: '/community', labelKey: 'sidebar.community', icon: Users, protected: true },
-    { href: '/custom-courses/create', labelKey: 'sidebar.createCourse', icon: Lightbulb, protected: true },
     { href: '/profile', labelKey: 'sidebar.profile', icon: User, protected: true },
   ];
 
