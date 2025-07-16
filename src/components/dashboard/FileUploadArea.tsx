@@ -240,8 +240,8 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing,
           setHasCameraPermission(false);
           toast({
             variant: 'destructive',
-            title: 'Camera Access Denied',
-            description: 'Please enable camera permissions in your browser settings.',
+            title: t('fileUploadArea.cameraPermissionDeniedTitle'),
+            description: t('fileUploadArea.cameraPermissionDenied'),
           });
           setShowCameraModal(false);
         }
@@ -255,7 +255,7 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing,
         }
       };
     }
-  }, [showCameraModal, toast]);
+  }, [showCameraModal, toast, t]);
 
   const handleCapturePhoto = () => {
     if (videoRef.current && canvasRef.current) {
@@ -281,7 +281,7 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing,
     if (!capturedImageDataUri) return;
     
     setIsProcessingFiles(true);
-    toast({ title: "Processing captured photo..." });
+    toast({ title: t('fileUploadArea.toastProcessingPhotoTitle') });
     try {
       const fileName = `camera_capture_${Date.now()}.jpg`;
       const result = await extractTextFromFile({ fileDataUri: capturedImageDataUri, fileName });
@@ -303,10 +303,10 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing,
 
       setSelectedFiles(prev => [...prev, newFile]);
       
-      toast({ title: "Photo added", description: `Text from photo will be extracted during analysis.` });
+      toast({ title: t('fileUploadArea.toastPhotoAddedTitle'), description: t('fileUploadArea.toastPhotoAddedDescription') });
     } catch (error) {
       console.error("Error processing captured photo:", error);
-      toast({ title: "Error", description: "Could not process captured photo.", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('fileUploadArea.toastErrorProcessingPhoto'), variant: "destructive" });
     } finally {
       setIsProcessingFiles(false);
       setShowCameraModal(false);
@@ -358,7 +358,7 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing,
     }
 
     setIsProcessingFiles(true);
-    toast({ title: "Extracting text from files...", description: "This may take a moment for images or large documents." });
+    toast({ title: t('fileUploadArea.toastExtractingTextTitle'), description: t('fileUploadArea.toastExtractingTextDescription') });
 
     let allFilesContent = "";
     const fileProcessingPromises: Promise<string>[] = [];
@@ -551,7 +551,7 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing,
                       <span className="text-xs text-muted-foreground">{formatBytes(totalSizeInBytes)} / {isLoadingAppSettings ? '...' : `${appUploadLimits.maxSizeMB} MB`}</span>
                     </div>
                     <Progress value={sizeProgress} id="size-progress" className="w-full h-2"
-                              aria-label={`Progreso de tamaño: ${sizeProgress.toFixed(0)}%`} />
+                              aria-label={t('fileUploadArea.storageProgressAriaLabel', { progress: sizeProgress.toFixed(0) })} />
                     {totalSizeInBytes > MAX_TOTAL_SIZE_BYTES * 0.8 && (
                         <div className="mt-2 text-xs text-amber-600 flex items-start gap-1">
                             <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />

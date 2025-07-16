@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import AdSenseUnit from '@/components/ads/AdSenseUnit';
 
 export default function SummaryHistoryPage() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -51,11 +51,11 @@ export default function SummaryHistoryPage() {
 
   const formatDate = (timestamp: number) => {
     try {
-       if (!timestamp || isNaN(timestamp)) return t('common.invalidDate', {defaultValue: "Invalid date"});
+       if (!timestamp || isNaN(timestamp)) return t('common.invalidDate');
       return format(new Date(timestamp), 'PPpp', { locale: language === 'es' ? es : undefined });
     } catch (error) {
       console.error("Error formatting date:", error);
-      return t('common.invalidDate', {defaultValue: "Invalid date"});
+      return t('common.invalidDate');
     }
   };
 
@@ -93,7 +93,7 @@ export default function SummaryHistoryPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center p-6">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <p className="text-xl text-muted-foreground">{t('historyPage.loadingSummaryHistory', {defaultValue: "Loading summary history..."})}</p>
+        <p className="text-xl text-muted-foreground">{t('historyPage.loadingSummaryHistory')}</p>
       </div>
     );
   }
@@ -105,9 +105,9 @@ export default function SummaryHistoryPage() {
         <div>
           <CardTitle className="text-2xl md:text-3xl font-bold text-primary flex items-center gap-3">
             <FileText className="h-8 w-8" />
-            {t('historyPage.summaryHistoryTitle', {defaultValue: "Summary History"})}
+            {t('historyPage.summaryHistoryTitle')}
           </CardTitle>
-          <CardDescription className="mt-2">{t('historyPage.summaryHistoryDescription', {defaultValue: "Review your previously generated summaries."})}</CardDescription>
+          <CardDescription className="mt-2">{t('historyPage.summaryHistoryDescription')}</CardDescription>
         </div>
         <Link href="/dashboard" passHref>
           <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" /> {t('examResultPage.backToDashboard')}</Button>
@@ -119,11 +119,11 @@ export default function SummaryHistoryPage() {
       {summaryHistory.length === 0 ? (
         <Alert variant="default" className="bg-blue-500/10 border-blue-500/50">
             <AlertCircle className="h-5 w-5 text-blue-700" />
-            <AlertTitle className="text-blue-700">{t('historyPage.noSummaryHistoryTitle', {defaultValue: "No Summary History Found"})}</AlertTitle>
+            <AlertTitle className="text-blue-700">{t('historyPage.noSummaryHistoryTitle')}</AlertTitle>
             <AlertDescription className="text-blue-700/90">
-              {t('historyPage.noSummaryHistoryDescription', {defaultValue: "You haven't generated any summaries yet."})}
+              {t('historyPage.noSummaryHistoryDescription')}
               <Link href="/summarize" className="font-semibold underline hover:text-blue-800 ml-1">
-                {t('historyPage.goToSummaryCreation', {defaultValue: "Create one now"})}
+                {t('historyPage.goToSummaryCreation')}
               </Link>
             </AlertDescription>
         </Alert>
@@ -135,7 +135,7 @@ export default function SummaryHistoryPage() {
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 z-10 opacity-60 group-hover:opacity-100 transition-opacity">
                         <MoreVertical className="h-4 w-4" />
-                        <span className="sr-only">Opciones del resumen</span>
+                        <span className="sr-only">{t('historyPage.summaryOptions')}</span>
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -148,7 +148,7 @@ export default function SummaryHistoryPage() {
 
               <CardHeader>
                 <CardTitle className="text-lg text-primary truncate pr-8" title={summary.title}>{summary.title}</CardTitle>
-                <CardDescription>{t('historyPage.generatedOn', {defaultValue: "Generated on"})} {formatDate(summary.timestamp)}</CardDescription>
+                <CardDescription>{t('historyPage.generatedOn')} {formatDate(summary.timestamp)}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow space-y-2 text-sm">
                  <p><span className="font-semibold">{t('historyPage.summaryKeyPointsLabel')}:</span> {summary.summary.keyPoints.slice(0, 2).join(', ')}...</p>
@@ -157,7 +157,7 @@ export default function SummaryHistoryPage() {
               <CardFooter>
                 <Button onClick={() => handleViewSummary(summary)} className="w-full">
                     <BookOpen className="mr-2 h-4 w-4" />
-                    {t('historyPage.viewSummaryButton', {defaultValue: "View Summary"})}
+                    {t('historyPage.viewSummaryButton')}
                 </Button>
               </CardFooter>
             </Card>

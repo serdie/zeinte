@@ -248,7 +248,8 @@
     "summaryDeletedToastTitle": "Summary Deleted",
     "summaryDeletedToastDescription": "The summary has been removed from your history.",
     "summaryKeyPointsLabel": "Key Points",
-    "summarySectionsLabel": "Sections"
+    "summarySectionsLabel": "Sections",
+    "summaryOptions": "Summary options"
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Multiple-Choice Question",
@@ -276,15 +277,21 @@
     "totalSizeLabel": "Estimated total size:",
     "fileListTitle": "File List ({{count}}):",
     "storageWarning": "Browser storage is limited. If the size is very large, the \"Re-analyze\" feature might not work.",
+    "storageProgressAriaLabel": "Storage progress: {{progress}}%",
     "removeFileLabel": "Remove {{fileName}}",
     "useCameraButton": "Use Camera",
     "cameraModalTitle": "Capture Photo from Camera",
     "cameraModalDescription": "Point your camera at the document or whiteboard and capture a photo.",
     "cameraRequestingPermission": "Requesting camera permission...",
     "cameraPermissionDenied": "Camera permission denied. Please enable permissions in your browser settings.",
+    "cameraPermissionDeniedTitle": "Camera Access Denied",
     "capturePhotoButton": "Capture Photo",
     "retakePhotoButton": "Retake Photo",
     "useThisPhotoButton": "Use This Photo",
+    "toastProcessingPhotoTitle": "Processing captured photo...",
+    "toastPhotoAddedTitle": "Photo added",
+    "toastPhotoAddedDescription": "Text from photo will be extracted during analysis.",
+    "toastErrorProcessingPhoto": "Could not process captured photo.",
     "exploreLibraryTitle": "Explore Zeinte Exam Library",
     "exploreLibraryDescription": "Access common exam templates or manage yours.",
     "tabCommonExams": "Common",
@@ -346,6 +353,8 @@
     "toastEmptyContentDescription": "Could not extract text from selected files or AI documents have no simulated content.",
     "toastFreeUserLimitTitle": "Zeinte Free Plan Limit",
     "toastFreeUserLimitDescription": "A maximum of {{maxQuestions}} questions will be generated for free users in Zeinte.",
+    "toastExtractingTextTitle": "Extracting text from files...",
+    "toastExtractingTextDescription": "This may take a moment for images or large documents.",
     "toastErrorProcessingFilesTitle": "Error processing files",
     "toastErrorProcessingFilesDescription": "{{error}}",
     "toastErrorProcessingFilesFallback": "There was a problem reading the files.",
@@ -1062,8 +1071,5 @@
     "step5Content": "En 'Mi Perfil' puedes contarnos un poco sobre tus intereses de estudio.\n\nEsto nos ayudará en el futuro a darte recomendaciones y contenido mucho más personalizado. ¡Échale un vistazo!",
     "step6Title": "¡Todo Listo para Empezar!",
     "step6Content": "Ya está, ¡así de fácil! Ahora estás listo para empezar a estudiar de forma más eficiente.\n\nSi necesitas volver a ver este tutorial, busca el botón de ayuda en el panel de estudio."
-  },
-  "fileUploadArea": {
-    "generateSummaryButton": "Generate Summary"
   }
 }

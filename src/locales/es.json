@@ -248,7 +248,8 @@
     "summaryDeletedToastTitle": "Resumen Eliminado",
     "summaryDeletedToastDescription": "El resumen ha sido eliminado de tu historial.",
     "summaryKeyPointsLabel": "Puntos Clave",
-    "summarySectionsLabel": "Secciones"
+    "summarySectionsLabel": "Secciones",
+    "summaryOptions": "Opciones del resumen"
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Pregunta Tipo Test",
@@ -276,15 +277,21 @@
     "totalSizeLabel": "Tamaño total estimado:",
     "fileListTitle": "Lista de Archivos ({{count}}):",
     "storageWarning": "El almacenamiento en el navegador es limitado. Si el tamaño es muy grande, la función \"Re-analizar\" podría no funcionar.",
+    "storageProgressAriaLabel": "Progreso de tamaño: {{progress}}%",
     "removeFileLabel": "Quitar {{fileName}}",
     "useCameraButton": "Usar Cámara",
     "cameraModalTitle": "Capturar Foto desde Cámara",
     "cameraModalDescription": "Apunta con tu cámara al documento o pizarra y captura una foto.",
     "cameraRequestingPermission": "Solicitando permiso para la cámara...",
     "cameraPermissionDenied": "Permiso de cámara denegado. Por favor, habilita los permisos en la configuración de tu navegador.",
+    "cameraPermissionDeniedTitle": "Permiso de Cámara Denegado",
     "capturePhotoButton": "Capturar Foto",
     "retakePhotoButton": "Tomar Otra Foto",
     "useThisPhotoButton": "Usar Esta Foto",
+    "toastProcessingPhotoTitle": "Procesando foto capturada...",
+    "toastPhotoAddedTitle": "Foto añadida",
+    "toastPhotoAddedDescription": "El texto de la foto se extraerá durante el análisis.",
+    "toastErrorProcessingPhoto": "No se pudo procesar la foto capturada.",
     "exploreLibraryTitle": "Explorar Biblioteca de Exámenes Zeinte",
     "exploreLibraryDescription": "Accede a plantillas de exámenes comunes o gestiona los tuyos.",
     "tabCommonExams": "Comunes",
@@ -346,6 +353,8 @@
     "toastEmptyContentDescription": "No se pudo extraer texto de los archivos seleccionados o los documentos de IA no tienen contenido simulado.",
     "toastFreeUserLimitTitle": "Límite del Plan Gratuito en Zeinte",
     "toastFreeUserLimitDescription": "Se generarán {{maxQuestions}} preguntas como máximo para usuarios gratuitos en Zeinte.",
+    "toastExtractingTextTitle": "Extrayendo texto de los archivos...",
+    "toastExtractingTextDescription": "Esto puede tardar un momento para imágenes o documentos grandes.",
     "toastErrorProcessingFilesTitle": "Error al procesar archivos",
     "toastErrorProcessingFilesDescription": "{{error}}",
     "toastErrorProcessingFilesFallback": "Hubo un problema al leer los archivos.",
@@ -1062,8 +1071,5 @@
     "step5Content": "En 'Mi Perfil' puedes contarnos un poco sobre tus intereses de estudio.\n\nEsto nos ayudará en el futuro a darte recomendaciones y contenido mucho más personalizado. ¡Échale un vistazo!",
     "step6Title": "¡Todo Listo para Empezar!",
     "step6Content": "Ya está, ¡así de fácil! Ahora estás listo para empezar a estudiar de forma más eficiente.\n\nSi necesitas volver a ver este tutorial, busca el botón de ayuda en el panel de estudio."
-  },
-  "fileUploadArea": {
-    "generateSummaryButton": "Generar Resumen"
   }
 }
