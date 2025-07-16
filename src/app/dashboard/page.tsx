@@ -8,7 +8,7 @@ import type { PredictedData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, UploadCloud, BookOpenText, History, BarChart3, Settings, Users, User, Lightbulb, ArrowRight, Info, HelpCircle } from 'lucide-react';
+import { Loader2, UploadCloud, BookOpenText, History, BarChart3, Settings, Users, User, Lightbulb, ArrowRight, Info, HelpCircle, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { format } from 'date-fns';
@@ -79,21 +79,26 @@ export default function DashboardPage() {
     {
       title: t('tutorial.step3Title'),
       content: t('tutorial.step3Content'),
-      icon: Lightbulb,
+      icon: FileText,
     },
     {
       title: t('tutorial.step4Title'),
       content: t('tutorial.step4Content'),
-      icon: History,
+      icon: Lightbulb,
     },
     {
       title: t('tutorial.step5Title'),
       content: t('tutorial.step5Content'),
-      icon: User,
+      icon: History,
     },
     {
       title: t('tutorial.step6Title'),
       content: t('tutorial.step6Content'),
+      icon: User,
+    },
+    {
+      title: t('tutorial.step7Title'),
+      content: t('tutorial.step7Content'),
       icon: Info,
     }
   ];
@@ -239,4 +244,3 @@ export default function DashboardPage() {
     </>
   );
 }
-

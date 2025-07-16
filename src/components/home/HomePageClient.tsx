@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { UploadCloud, BrainCircuit, Lightbulb, Sparkles, BookOpenText, Settings, Users, CheckCircle, ArrowRight, Star, Zap, TrendingUp } from 'lucide-react';
+import { UploadCloud, BrainCircuit, Lightbulb, Sparkles, BookOpenText, Settings, Users, CheckCircle, ArrowRight, Star, Zap, TrendingUp, FileText } from 'lucide-react';
 import Image from 'next/image';
 import { useI18n } from '@/contexts/I18nContext'; 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,9 +24,9 @@ const featureKeys = [
   "uploadDocs",
   "deepAnalysis",
   "smartPrediction",
-  "clearExplanations",
+  "smartSummary",
+  "customCourse",
   "interactiveStudy",
-  "customConfig",
   "studyCommunity"
 ];
 
@@ -34,7 +34,8 @@ const iconMap: { [key: string]: React.ElementType } = {
   uploadDocs: UploadCloud,
   deepAnalysis: BrainCircuit,
   smartPrediction: Lightbulb,
-  clearExplanations: Sparkles,
+  smartSummary: FileText,
+  customCourse: Lightbulb,
   interactiveStudy: BookOpenText,
   customConfig: Settings,
   studyCommunity: Users
