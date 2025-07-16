@@ -1,4 +1,5 @@
 
+
 export type ExamType = "test"; // Simplified to only "test" for now
 
 export interface PredictedQuestion {
@@ -6,7 +7,6 @@ export interface PredictedQuestion {
   options: string[]; // No longer optional
   correctAnswerIndex: number; // No longer optional
   explanation?: string;
-  // questionType: ExamType; // Removed
 }
 
 export interface AnalysisDetails {
@@ -23,7 +23,6 @@ export interface PredictedData extends AnalysisDetails {
   timestamp: number;
   originalDocumentContent?: string;
   requestedNumberOfQuestions?: number;
-  // examType: ExamType; // Removed
 }
 
 export interface AIExplanation {
@@ -34,7 +33,6 @@ export interface AIExplanation {
 
 export interface ExamConfig {
   defaultNumberOfQuestions: number;
-  // defaultExamType: ExamType; // Removed
 }
 
 
@@ -52,11 +50,34 @@ export interface DetailedCourse {
   courseTitleSuggestion: string;
   estimatedDuration: string;
   modules: CourseModule[];
-  // Store the original input for context or re-generation
   originalInput: {
       courseTopic: string;
       courseLevel: "Principiante" | "Intermedio" | "Avanzado";
       courseGoals?: string;
       targetAudience?: string;
   }
+}
+
+// --- Summary Types ---
+
+export interface SummarySection {
+  title: string;
+  content: string;
+  icon?: string;
+}
+
+export interface GenerateSummaryOutput {
+  title: string;
+  introduction: string;
+  keyPoints: string[];
+  sections: SummarySection[];
+  conclusion: string;
+}
+
+export interface SummaryData {
+  id: string;
+  title: string;
+  summary: GenerateSummaryOutput;
+  timestamp: number;
+  originalDocumentContent?: string;
 }

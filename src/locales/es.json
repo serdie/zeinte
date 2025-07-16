@@ -35,13 +35,14 @@
   "sidebar": {
     "home": "Inicio",
     "dashboard": "Panel de Estudio",
-    "upload": "Subir Documentos",
     "createExam": "Crear Examen",
+    "createCourse": "Crear Curso IA",
+    "createSummary": "Crear Resumen",
     "history": "Historial de Exámenes",
     "courseHistory": "Historial de Cursos",
+    "summaryHistory": "Historial de Resúmenes",
     "configureExam": "Configurar Examen",
     "community": "Comunidad",
-    "createCourse": "Crear Curso IA",
     "profile": "Mi Perfil",
     "adminPanel": "Panel de Admin",
     "login": "Iniciar Sesión",
@@ -60,14 +61,16 @@
   "appLayout": {
     "defaultTitle": "Zeinte",
     "dashboardTitle": "Panel de Estudio - Zeinte",
-    "uploadTitle": "Subir Documentos - Zeinte",
     "createExamTitle": "Crear Examen - Zeinte",
+    "createCourseTitle": "Crear Curso a Medida - Zeinte",
+    "createSummaryTitle": "Crear Resumen - Zeinte",
     "examResultTitle": "Sesión de Estudio de Examen - Zeinte",
+    "summaryResultTitle": "Resumen IA - Zeinte",
     "historyTitle": "Historial de Exámenes - Zeinte",
     "courseHistoryTitle": "Historial de Cursos - Zeinte",
+    "summaryHistoryTitle": "Historial de Resúmenes - Zeinte",
     "configureTitle": "Configuración de Examen - Zeinte",
     "communityTitle": "Comunidad de Estudio - Zeinte",
-    "createCourseTitle": "Crear Curso a Medida - Zeinte",
     "profileTitle": "Mi Perfil - Zeinte",
     "adminTitle": "Panel de Administración - Zeinte",
     "adminAppSettingsTitle": "Configuración de Aplicación - Zeinte",
@@ -231,7 +234,21 @@
     "deleteCourseConfirmationTitle": "¿Eliminar este curso?",
     "deleteCourseConfirmationDescription": "Esta acción no se puede deshacer. El curso se eliminará permanentemente de tu historial.",
     "courseDeletedToastTitle": "Curso Eliminado",
-    "courseDeletedToastDescription": "El curso ha sido eliminado de tu historial."
+    "courseDeletedToastDescription": "El curso ha sido eliminado de tu historial.",
+    "loadingSummaryHistory": "Cargando historial de resúmenes...",
+    "summaryHistoryTitle": "Historial de Resúmenes",
+    "summaryHistoryDescription": "Revisa tus resúmenes generados previamente.",
+    "noSummaryHistoryTitle": "No hay Historial de Resúmenes",
+    "noSummaryHistoryDescription": "Aún no has generado ningún resumen.",
+    "goToSummaryCreation": "Crea uno ahora",
+    "viewSummaryButton": "Ver Resumen",
+    "deleteSummary": "Eliminar resumen",
+    "deleteSummaryConfirmationTitle": "¿Eliminar este resumen?",
+    "deleteSummaryConfirmationDescription": "Esta acción no se puede deshacer. El resumen se eliminará permanentemente de tu historial.",
+    "summaryDeletedToastTitle": "Resumen Eliminado",
+    "summaryDeletedToastDescription": "El resumen ha sido eliminado de tu historial.",
+    "summaryKeyPointsLabel": "Puntos Clave",
+    "summarySectionsLabel": "Secciones"
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Pregunta Tipo Test",
@@ -348,10 +365,27 @@
     "errorProcessingToastDescription": "{{error}} Inténtalo de nuevo.",
     "errorProcessingToastFallback": "Hubo un problema al analizar el documento o predecir preguntas."
   },
+  "summarizePage": {
+    "processingToastTitle": "Generando Resumen",
+    "processingToastDescription": "La IA está analizando tu contenido para crear el resumen...",
+    "successToastTitle": "¡Resumen Listo!",
+    "successToastDescription": "Tu resumen generado por IA está completo. Redirigiendo...",
+    "errorProcessingToastTitle": "Error de Resumen",
+    "errorProcessingToastFallback": "Hubo un problema al generar el resumen."
+  },
   "examResultPage": {
     "title": "Sesión de Estudio de Examen",
     "description": "Revisa las preguntas generadas, pon a prueba tus conocimientos y obtén explicaciones detalladas con IA.",
     "backToDashboard": "Volver al Panel"
+  },
+  "summaryResultPage": {
+    "title": "Resumen Generado por IA",
+    "description": "Revisa el resumen estructurado creado a partir de tus documentos.",
+    "introductionTitle": "Introducción",
+    "keyPointsTitle": "Puntos Clave",
+    "sectionsTitle": "Secciones Detalladas",
+    "conclusionTitle": "Conclusión",
+    "regenerateButton": "Regenerar Resumen"
   },
   "loginPage": {
     "title": "Iniciar Sesión en Zeinte",

@@ -15,3 +15,7 @@ export const TUTORIAL_COMPLETED_KEY = 'zeinte_tutorial_completed';
 // Custom Courses Keys
 export const COURSE_HISTORY_KEY = 'zeinte_courseHistory';
 export const CURRENT_COURSE_DATA_KEY = 'zeinte_currentCourseData';
+
+// Summaries Keys
+export const SUMMARY_HISTORY_KEY = 'zeinte_summaryHistory';
+export const CURRENT_SUMMARY_DATA_KEY = 'zeinte_currentSummaryData';

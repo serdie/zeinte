@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, UploadCloud, Settings, User, Users, Home, LogIn, LogOut, UserPlus, ShieldCheck, Lightbulb, ArrowUpCircle, Edit, LifeBuoy, History, GraduationCap } from 'lucide-react';
+import { BookOpenText, UploadCloud, Settings, User, Users, Home, LogIn, LogOut, UserPlus, ShieldCheck, Lightbulb, ArrowUpCircle, Edit, LifeBuoy, History, GraduationCap, FileText } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -29,9 +29,11 @@ export default function SidebarNav() {
     { href: '/', labelKey: 'sidebar.home', icon: Home, public: true },
     { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: BookOpenText, protected: true },
     { href: '/upload', labelKey: 'sidebar.createExam', icon: UploadCloud, protected: true },
-    { href: '/history', labelKey: 'sidebar.history', icon: History, protected: true },
     { href: '/custom-courses/create', labelKey: 'sidebar.createCourse', icon: Lightbulb, protected: true },
+    { href: '/summarize', labelKey: 'sidebar.createSummary', icon: FileText, protected: true },
+    { href: '/history', labelKey: 'sidebar.history', icon: History, protected: true },
     { href: '/history/courses', labelKey: 'sidebar.courseHistory', icon: GraduationCap, protected: true },
+    { href: '/history/summaries', labelKey: 'sidebar.summaryHistory', icon: History, protected: true },
     { href: '/configure', labelKey: 'sidebar.configureExam', icon: Settings, protected: true },
     { href: '/community', labelKey: 'sidebar.community', icon: Users, protected: true },
     { href: '/profile', labelKey: 'sidebar.profile', icon: User, protected: true },
@@ -74,11 +76,23 @@ export default function SidebarNav() {
               <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === item.href || (item.href === '/custom-courses/create' && pathname.startsWith('/custom-courses')) || (item.href === '/history' && pathname.startsWith('/history'))}
+                  isActive={pathname === item.href || 
+                            (item.href === '/custom-courses/create' && pathname.startsWith('/custom-courses')) || 
+                            (item.href === '/history' && pathname === '/history') ||
+                            (item.href === '/history/courses' && pathname === '/history/courses') ||
+                            (item.href === '/history/summaries' && pathname === '/history/summaries') ||
+                            (item.href === '/summarize' && pathname.startsWith('/summarize'))
+                          }
                   tooltip={label}
                   className={cn(
                     "justify-start w-full",
-                    (pathname === item.href || (item.href === '/custom-courses/create' && pathname.startsWith('/custom-courses')) || (item.href === '/history' && pathname.startsWith('/history')))
+                    (pathname === item.href || 
+                     (item.href === '/custom-courses/create' && pathname.startsWith('/custom-courses')) || 
+                     (item.href === '/history' && pathname === '/history') ||
+                     (item.href === '/history/courses' && pathname === '/history/courses') ||
+                     (item.href === '/history/summaries' && pathname === '/history/summaries') ||
+                     (item.href === '/summarize' && pathname.startsWith('/summarize'))
+                    )
                       ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90" 
                       : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
@@ -236,7 +250,7 @@ export default function SidebarNav() {
                 </Link>
               </SidebarMenuItem>
             </>
-          ) : null // Explicitly return null if the condition is false
+          ) : null
         )}
       </div>
     </SidebarMenu>

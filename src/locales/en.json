@@ -35,13 +35,14 @@
   "sidebar": {
     "home": "Home",
     "dashboard": "Study Dashboard",
-    "upload": "Upload Documents",
     "createExam": "Create Exam",
+    "createCourse": "Create Course AI",
+    "createSummary": "Create Summary",
     "history": "Exam History",
     "courseHistory": "Course History",
+    "summaryHistory": "Summary History",
     "configureExam": "Configure Your Exam",
     "community": "Community",
-    "createCourse": "Create Custom Course AI",
     "profile": "My Profile",
     "adminPanel": "Admin Panel",
     "login": "Login",
@@ -60,14 +61,16 @@
   "appLayout": {
     "defaultTitle": "Zeinte",
     "dashboardTitle": "Study Dashboard - Zeinte",
-    "uploadTitle": "Upload Documents - Zeinte",
     "createExamTitle": "Create Exam - Zeinte",
+    "createCourseTitle": "Create Custom Course - Zeinte",
+    "createSummaryTitle": "Create Summary - Zeinte",
     "examResultTitle": "Exam Study Session - Zeinte",
+    "summaryResultTitle": "AI Summary - Zeinte",
     "historyTitle": "Exam History - Zeinte",
     "courseHistoryTitle": "Course History - Zeinte",
+    "summaryHistoryTitle": "Summary History - Zeinte",
     "configureTitle": "Exam Configuration - Zeinte",
     "communityTitle": "Study Community - Zeinte",
-    "createCourseTitle": "Create Custom Course - Zeinte",
     "profileTitle": "My Profile - Zeinte",
     "adminTitle": "Admin Panel - Zeinte",
     "adminAppSettingsTitle": "Application Settings - Zeinte",
@@ -231,7 +234,21 @@
     "deleteCourseConfirmationTitle": "Delete this course?",
     "deleteCourseConfirmationDescription": "This action cannot be undone. The course will be permanently deleted from your history.",
     "courseDeletedToastTitle": "Course Deleted",
-    "courseDeletedToastDescription": "The course has been removed from your history."
+    "courseDeletedToastDescription": "The course has been removed from your history.",
+    "loadingSummaryHistory": "Loading summary history...",
+    "summaryHistoryTitle": "Summary History",
+    "summaryHistoryDescription": "Review your previously generated summaries.",
+    "noSummaryHistoryTitle": "No Summary History Found",
+    "noSummaryHistoryDescription": "You haven't generated any summaries yet.",
+    "goToSummaryCreation": "Create one now",
+    "viewSummaryButton": "View Summary",
+    "deleteSummary": "Delete summary",
+    "deleteSummaryConfirmationTitle": "Delete this summary?",
+    "deleteSummaryConfirmationDescription": "This action cannot be undone. The summary will be permanently deleted from your history.",
+    "summaryDeletedToastTitle": "Summary Deleted",
+    "summaryDeletedToastDescription": "The summary has been removed from your history.",
+    "summaryKeyPointsLabel": "Key Points",
+    "summarySectionsLabel": "Sections"
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Multiple-Choice Question",
@@ -348,10 +365,27 @@
     "errorProcessingToastDescription": "{{error}} Please try again.",
     "errorProcessingToastFallback": "There was a problem analyzing the document or predicting questions."
   },
+  "summarizePage": {
+    "processingToastTitle": "Generating Summary",
+    "processingToastDescription": "The AI is analyzing your content to create a summary...",
+    "successToastTitle": "Summary Ready!",
+    "successToastDescription": "Your AI-generated summary is complete. Redirecting...",
+    "errorProcessingToastTitle": "Summarization Error",
+    "errorProcessingToastFallback": "There was a problem generating the summary."
+  },
   "examResultPage": {
     "title": "Exam Study Session",
     "description": "Review the generated questions, test your knowledge, and get detailed AI explanations.",
     "backToDashboard": "Back to Dashboard"
+  },
+  "summaryResultPage": {
+    "title": "AI-Generated Summary",
+    "description": "Review the structured summary created from your documents.",
+    "introductionTitle": "Introduction",
+    "keyPointsTitle": "Key Points",
+    "sectionsTitle": "Detailed Sections",
+    "conclusionTitle": "Conclusion",
+    "regenerateButton": "Regenerate Summary"
   },
   "loginPage": {
     "title": "Login to Zeinte",
