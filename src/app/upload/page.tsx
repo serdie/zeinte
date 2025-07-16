@@ -100,8 +100,8 @@ export default function UploadPage() {
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
-        <CardTitle className="text-3xl text-primary"> {/* Use CardTitle for consistency */}
-          {t("sidebar.upload")}
+        <CardTitle className="text-3xl text-primary">
+          {t("sidebar.createExam")}
         </CardTitle>
         <Link href="/dashboard" passHref>
           <Button variant="outline">

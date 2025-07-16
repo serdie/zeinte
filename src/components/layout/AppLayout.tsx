@@ -30,7 +30,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   const getDynamicHeaderTitle = (currentPathname: string): string => {
     if (currentPathname.startsWith('/dashboard')) return t("appLayout.dashboardTitle");
-    if (currentPathname.startsWith('/upload')) return t("appLayout.uploadTitle");
+    if (currentPathname.startsWith('/upload')) return t("appLayout.createExamTitle");
     if (currentPathname.startsWith('/exam/result')) return t("appLayout.examResultTitle");
     if (currentPathname.startsWith('/history/courses')) return t("appLayout.courseHistoryTitle");
     if (currentPathname.startsWith('/history')) return t("appLayout.historyTitle");
