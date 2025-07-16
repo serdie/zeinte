@@ -47,7 +47,7 @@
     "login": "Iniciar Sesión",
     "signup": "Registrarse",
     "logout": "Cerrar Sesión",
-    "support": "Soporte",
+    "support": "Soporte y ayuda",
     "userLoading": "Cargando usuario...",
     "userConnected": "Usuario Conectado",
     "firebaseNotConfigured": "Firebase no configurado",
@@ -993,16 +993,21 @@
     "interestSetupDescription": "Hemos añadido nuevas formas de adaptar Zeinte a tus necesidades. Por favor, configura tu área de estudio principal para empezar."
   },
   "supportForm": {
-    "title": "Contactar con Soporte de Zeinte",
-    "description": "Describe tu problema o duda. Al enviar, se abrirá tu aplicación de correo electrónico predeterminada para que puedas mandar tu mensaje a info@zeinte.com.",
-    "emailLabel": "Tu Correo Electrónico:",
-    "problemLabel": "Describe tu problema o consulta:",
-    "problemPlaceholder": "Detalla aquí el inconveniente que estás experimentando o la pregunta que tienes...",
-    "sendButton": "Abrir Correo para Enviar",
-    "validationErrorTitle": "Descripción Requerida",
-    "validationErrorDescription": "Por favor, describe tu problema antes de enviar.",
-    "requestSentTitle": "Redirigiendo a tu cliente de correo",
-    "requestSentDescription": "Tu aplicación de correo debería abrirse. Por favor, envía el email desde allí para completar tu solicitud."
+    "title": "Soporte y Ayuda",
+    "description": "Si tienes alguna pregunta que no se responda a continuación o quieres decirnos algo, no dudes en escribirnos a info@zeinte.com."
+  },
+  "faq": {
+    "title": "Preguntas Frecuentes",
+    "q1": "¿Qué tipos de archivos puedo subir?",
+    "a1": "Puedes subir archivos en formato PDF, DOCX, DOC, TXT y también imágenes como PNG, JPG o WEBP. La IA puede leer el texto directamente de los documentos o usar OCR para extraerlo de las imágenes.",
+    "q2": "¿Cuál es la diferencia entre el plan Gratuito y el Pro?",
+    "a2": "El plan Gratuito te permite explorar la funcionalidad básica con algunas limitaciones (ej. número de preguntas generadas, frecuencia de uso). El plan Pro elimina estos límites, permitiéndote generar exámenes ilimitados, acceder a sugerencias de documentos con IA y otras funcionalidades avanzadas.",
+    "q3": "Mis archivos son confidenciales. ¿Están seguros?",
+    "a3": "Sí. El contenido de tus archivos se procesa de forma segura. Solo se utiliza para realizar el análisis y generar las preguntas para tu sesión actual. No almacenamos permanentemente el contenido de tus documentos. Consulta nuestra Política de Privacidad para más detalles.",
+    "q4": "¿Cómo funciona el historial de exámenes?",
+    "a4": "Cada vez que generas un examen, los resultados (preguntas, resumen, etc.) se guardan en el almacenamiento local de tu navegador. Puedes acceder a ellos desde la sección 'Historial de Exámenes' para volver a estudiar sin tener que subir los archivos de nuevo. Ten en cuenta que si borras los datos de tu navegador, este historial se perderá.",
+    "q5": "La IA no ha entendido bien mis documentos. ¿Qué puedo hacer?",
+    "a5": "La calidad de los resultados depende de la claridad y estructura de tus documentos. Asegúrate de que los archivos sean legibles y estén bien organizados. Si el documento es una imagen, comprueba que tenga buena resolución y sin reflejos. Si el problema persiste, puedes intentar simplificar el contenido o dividirlo en archivos más pequeños."
   },
   "examResultPage": {
     "title": "Sesión de Estudio de Examen",

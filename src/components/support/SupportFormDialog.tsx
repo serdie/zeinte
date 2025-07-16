@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, type MouseEvent } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,12 +12,9 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useI18n } from '@/contexts/I18nContext';
-import { Send } from 'lucide-react';
+import { LifeBuoy } from 'lucide-react';
 
 interface SupportFormDialogProps {
   open: boolean;
@@ -27,71 +24,47 @@ interface SupportFormDialogProps {
 
 export default function SupportFormDialog({ open, onOpenChange, userEmail }: SupportFormDialogProps) {
   const { t } = useI18n();
-  const { toast } = useToast();
-  const [problemDescription, setProblemDescription] = useState('');
+  const [value, setValue] = useState("item-1");
 
-  const handleSendEmail = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    if (!problemDescription.trim()) {
-      toast({
-        title: t('supportForm.validationErrorTitle'),
-        description: t('supportForm.validationErrorDescription'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const subject = encodeURIComponent(`Soporte Zeinte - Consulta de ${userEmail}`);
-    const body = encodeURIComponent(problemDescription);
-    const mailtoLink = `mailto:info@zeinte.com?subject=${subject}&body=${body}`;
-
-    // Open email client
-    window.location.href = mailtoLink;
-
-    toast({
-      title: t('supportForm.requestSentTitle'),
-      description: t('supportForm.requestSentDescription'),
-      variant: 'default',
-    });
-
-    onOpenChange(false);
-    setProblemDescription('');
-  };
+  const faqItems = [
+    { id: "item-1", questionKey: "faq.q1", answerKey: "faq.a1" },
+    { id: "item-2", questionKey: "faq.q2", answerKey: "faq.a2" },
+    { id: "item-3", questionKey: "faq.q3", answerKey: "faq.a3" },
+    { id: "item-4", questionKey: "faq.q4", answerKey: "faq.a4" },
+    { id: "item-5", questionKey: "faq.q5", answerKey: "faq.a5" },
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-2xl text-primary">{t('supportForm.title')}</DialogTitle>
+          <DialogTitle className="text-2xl text-primary flex items-center gap-2">
+            <LifeBuoy className="h-6 w-6"/>
+            {t('supportForm.title')}
+          </DialogTitle>
           <DialogDescription>{t('supportForm.description')}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-6 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="support-email">{t('supportForm.emailLabel')}</Label>
-            <Input id="support-email" type="email" value={userEmail} disabled className="bg-muted/50" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="support-problem">{t('supportForm.problemLabel')}</Label>
-            <Textarea
-              id="support-problem"
-              value={problemDescription}
-              onChange={(e) => setProblemDescription(e.target.value)}
-              placeholder={t('supportForm.problemPlaceholder')}
-              rows={6}
-              required
-            />
-          </div>
+        
+        <div className="py-4">
+          <h3 className="text-lg font-semibold mb-2">{t('faq.title')}</h3>
+          <Accordion type="single" collapsible className="w-full" value={value} onValueChange={setValue}>
+            {faqItems.map(item => (
+              <AccordionItem value={item.id} key={item.id}>
+                <AccordionTrigger>{t(item.questionKey)}</AccordionTrigger>
+                <AccordionContent>
+                  {t(item.answerKey)}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
+        
         <DialogFooter className="pt-4">
           <DialogClose asChild>
             <Button type="button" variant="outline">
-              {t('common.cancel')}
+              {t('common.close')}
             </Button>
           </DialogClose>
-          <Button onClick={handleSendEmail} className="bg-accent hover:bg-accent/90 text-accent-foreground">
-            <Send className="mr-2 h-4 w-4" />
-            {t('supportForm.sendButton')}
-          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

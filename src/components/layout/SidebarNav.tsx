@@ -74,11 +74,11 @@ export default function SidebarNav() {
               <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === item.href || (item.href === '/custom-courses/create' && pathname.startsWith('/custom-courses')) || (item.href === '/history/courses' && pathname.startsWith('/history/courses'))}
+                  isActive={pathname === item.href || (item.href === '/custom-courses/create' && pathname.startsWith('/custom-courses')) || (item.href === '/history' && pathname.startsWith('/history'))}
                   tooltip={label}
                   className={cn(
                     "justify-start w-full",
-                    (pathname === item.href || (item.href === '/custom-courses/create' && pathname.startsWith('/custom-courses')) || (item.href === '/history/courses' && pathname.startsWith('/history/courses')))
+                    (pathname === item.href || (item.href === '/custom-courses/create' && pathname.startsWith('/custom-courses')) || (item.href === '/history' && pathname.startsWith('/history')))
                       ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90" 
                       : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
