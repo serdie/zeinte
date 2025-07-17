@@ -1,9 +1,20 @@
-// next.config.ts - VERSIÓN CORREGIDA
+// next.config.ts - VERSIÓN DEFINITIVA
 
 import withPWA from '@ducanh2912/next-pwa';
 import type { NextConfig } from 'next';
 
+const pwaConfig = withPWA({
+  dest: 'public',
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  reloadOnOnline: true,
+  disable: process.env.NODE_ENV === 'development',
+});
+
 const nextConfig: NextConfig = {
+  // CORRECCIÓN 1: Opción de seguridad para el entorno de desarrollo de Firebase Studio
+  allowedDevOrigins: ["9000-firebase-studio-1747770902634.cluster-axf5tvtfjjfekvhwxwkkkzsk2y.cloudworkstations.dev", "6000-firebase-studio-1747770902634.cluster-axf5tvtfjjfekvhwxwkkkzsk2y.cloudworkstations.dev"],
+
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -12,77 +23,24 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'biblioteca.ucm.es',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'upload.wikimedia.org',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'e7.pngegg.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'cppm.es',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'httpshttps',
-        hostname: 'larioja.org',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.universidata.es',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'justicia.fsc.ccoo.es',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'encrypted-tbn0.gstatic.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'm.media-amazon.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.diemy.es',
-        port: '',
-        pathname: '/wp-content/uploads/**',
-      },
+      { protocol: 'https', hostname: 'placehold.co' },
+      { protocol: 'https', hostname: 'biblioteca.ucm.es' },
+      { protocol: 'https', hostname: 'upload.wikimedia.org' },
+      { protocol: 'https', hostname: 'e7.pngegg.com' },
+      { protocol: 'https', hostname: 'cppm.es' },
+      // CORRECCIÓN 2: Typo de 'httpshttps' corregido a 'https'
+      { protocol: 'https', hostname: 'larioja.org' },
+      { protocol: 'https', hostname: 'www.universidata.es' },
+      { protocol: 'https', hostname: 'justicia.fsc.ccoo.es' },
+      { protocol: 'https', hostname: 'encrypted-tbn0.gstatic.com' },
+      { protocol: 'https', hostname: 'm.media-amazon.com' },
+      { protocol: 'https', hostname: 'www.diemy.es', pathname: '/wp-content/uploads/**' },
     ],
   },
-  experimental: {
-    serverComponentsExternalPackages: ['sharp', 'onnxruntime-node'],
-  },
+  
+  // CORRECCIÓN 3: 'serverComponentsExternalPackages' se ha movido fuera de 'experimental' y renombrado
+  serverExternalPackages: ['sharp', 'onnxruntime-node'],
+
   webpack(config) {
     config.externals.push({
       'sharp': 'commonjs sharp',
@@ -92,10 +50,5 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPWA({
-  dest: 'public',
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
-  reloadOnOnline: true,
-  disable: process.env.NODE_ENV === 'development',
-})(nextConfig);
+// CORRECCIÓN 4: Usamos la sintaxis correcta para envolver la configuración
+export default pwaConfig(nextConfig);
