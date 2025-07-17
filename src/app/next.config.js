@@ -43,7 +43,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'httpshttps',
+        protocol: 'https',
         hostname: 'larioja.org',
         port: '',
         pathname: '/**',
@@ -79,16 +79,6 @@ const nextConfig: NextConfig = {
         pathname: '/wp-content/uploads/**',
       },
     ],
-  },
-  experimental: {
-    serverComponentsExternalPackages: ['sharp', 'onnxruntime-node'],
-  },
-  webpack(config) {
-    config.externals.push({
-      'sharp': 'commonjs sharp',
-      'onnxruntime-node': 'commonjs onnxruntime-node',
-    });
-    return config;
   },
 };
 
