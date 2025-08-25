@@ -17,7 +17,6 @@ import type { PredictedData } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
-import AdSenseUnit from '@/components/ads/AdSenseUnit';
 
 export default function HistoryPage() {
   const { t, language } = useI18n();
@@ -303,8 +302,6 @@ export default function HistoryPage() {
         </Link>
       </div>
       
-      <AdSenseUnit adSlot="YOUR_AD_SLOT_ID_FOR_HISTORY" className="mb-6" />
-
       {examHistory.length === 0 ? (
         <Alert variant="default" className="bg-blue-500/10 border-blue-500/50">
             <AlertCircle className="h-5 w-5 text-blue-700" />

@@ -9,7 +9,6 @@ import { Users, MessageSquare, CornerDownRight, ThumbsUp, Eye, Search, Newspaper
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useI18n } from '@/contexts/I18nContext';
-import AdSenseUnit from '@/components/ads/AdSenseUnit';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import NewTopicDialog from '@/components/community/NewTopicDialog';
@@ -306,8 +305,6 @@ export default function CommunityPage() {
             </Button>
           </div>
           
-          <AdSenseUnit adSlot="YOUR_AD_SLOT_ID_FOR_COMMUNITY" className="mb-6" />
-
           {isLoadingTopics ? (
             <div className="text-center py-10 text-muted-foreground flex items-center justify-center">
                 <Loader2 className="h-8 w-8 mr-2 animate-spin" />
@@ -402,4 +399,3 @@ export default function CommunityPage() {
     </>
   );
 }
-

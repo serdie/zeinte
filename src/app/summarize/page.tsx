@@ -13,7 +13,6 @@ import { useI18n } from '@/contexts/I18nContext';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { CardTitle } from '@/components/ui/card';
-import AdSenseUnit from '@/components/ads/AdSenseUnit';
 
 export default function SummarizePage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -88,7 +87,6 @@ export default function SummarizePage() {
           </Button>
         </Link>
       </div>
-      <AdSenseUnit adSlot="YOUR_AD_SLOT_ID_FOR_SUMMARIZE" className="mb-8" />
       <FileUploadArea onAnalyze={handleFileUploadAnalyze} isLoading={isLoading} mode="summary" />
     </div>
   );

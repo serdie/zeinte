@@ -13,7 +13,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, FileText, ArrowLeft, RefreshCw, Star, Info, List, CheckCircle, BrainCircuit } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
-import AdSenseUnit from '@/components/ads/AdSenseUnit';
 import { generateSummary } from '@/ai/flows/generate-summary';
 
 
@@ -122,9 +121,6 @@ export default function SummaryResultPage() {
             </Link>
           </div>
         </CardHeader>
-        <CardContent>
-            <AdSenseUnit adSlot="YOUR_AD_SLOT_ID_FOR_SUMMARY_RESULTS" className="mb-6" />
-        </CardContent>
       </Card>
 
       <Card className="shadow-lg">
