@@ -110,7 +110,7 @@ export default function ProfilePage() {
         const genericOtherOption = flatOptions.find(opt => opt.id === GENERAL_OTHER_INTEREST_ID) || flatOptions.find(opt => opt.isCustomEntry);
         primaryRadioSelection = genericOtherOption ? genericOtherOption.id : null;
         if (primaryOptionMatch && primaryOptionMatch.isCustomEntry) {
-            primaryRadioSelection = profilePrimary;
+            primaryRadioSelection = primaryOptionMatch.id; // Use the specific custom option ID
             customPVal = '';
         }
       }
@@ -147,7 +147,7 @@ export default function ProfilePage() {
     setBillingAddress(userProfileData.billingAddress || '');
     setBillingNif(userProfileData.billingNif || '');
 
-  }, [userProfileData, translatedCategorizedInterests, t]);
+  }, [userProfileData, translatedCategorizedInterests]);
   
   useEffect(() => {
     if (!isEditingPreferences && !isEditingBilling) {
@@ -209,14 +209,14 @@ export default function ProfilePage() {
   const handleSaveInterests = async () => {
     let finalPrimaryInterest: string | null = null;
 
-    if (isEditingPrimaryCustom && editingPrimaryInterest && translatedCategorizedInterests.flatMap(c=>c.options).find(o=>o.id === editingPrimaryInterest)?.isCustomEntry) {
-      if (!editingCustomPrimaryValue.trim()) {
-        toast({ title: t('profilePage.customPrimaryInterestRequiredTitle'), description: t('profilePage.customPrimaryInterestRequiredDescription'), variant: "destructive" });
-        return;
-      }
-      finalPrimaryInterest = editingCustomPrimaryValue.trim();
+    if (isEditingPrimaryCustom && editingPrimaryInterest) {
+        if (!editingCustomPrimaryValue.trim()) {
+            toast({ title: t('profilePage.customPrimaryInterestRequiredTitle'), description: t('profilePage.customPrimaryInterestRequiredDescription'), variant: "destructive" });
+            return;
+        }
+        finalPrimaryInterest = editingCustomPrimaryValue.trim();
     } else if (editingPrimaryInterest) {
-      finalPrimaryInterest = editingPrimaryInterest;
+        finalPrimaryInterest = editingPrimaryInterest;
     } else {
        toast({ title: t('profilePage.primaryInterestRequiredTitle'), description: t('profilePage.primaryInterestRequiredDescription'), variant: "destructive" });
        return;
@@ -229,7 +229,7 @@ export default function ProfilePage() {
         if (editingCustomSecondaryValues[id]?.trim()) {
           finalSecondaryInterestsSet.add(editingCustomSecondaryValues[id].trim());
         }
-      } else {
+      } else if(id !== finalPrimaryInterest) {
         finalSecondaryInterestsSet.add(id);
       }
     });
@@ -336,9 +336,7 @@ export default function ProfilePage() {
   const renderInterestsEditMode = () => {
     const saveDisabled = isSavingInterests ||
         (!isEditingPrimaryCustom && !editingPrimaryInterest) ||
-        (isEditingPrimaryCustom && editingPrimaryInterest === GENERAL_OTHER_INTEREST_ID && !editingCustomPrimaryValue.trim()) ||
-        (isEditingPrimaryCustom && editingPrimaryInterest !== GENERAL_OTHER_INTEREST_ID && !editingCustomPrimaryValue.trim() && translatedCategorizedInterests.flatMap(c => c.options).find(o => o.id === editingPrimaryInterest)?.isCustomEntry)
-
+        (isEditingPrimaryCustom && !editingCustomPrimaryValue.trim());
 
     return (
     <div className="space-y-6">
@@ -368,7 +366,7 @@ export default function ProfilePage() {
                             <RadioGroupItem value={option.id} id={`primary-${option.id}`} />
                             <Label htmlFor={`primary-${option.id}`} className="font-normal cursor-pointer flex-1">{option.name}</Label>
                           </div>
-                          {option.isCustomEntry && editingPrimaryInterest === option.id && isEditingPrimaryCustom && (
+                          {option.isCustomEntry && editingPrimaryInterest === option.id && (
                             <Input
                               type="text"
                               placeholder={t('profilePage.customInterestPlaceholder')}
@@ -385,7 +383,7 @@ export default function ProfilePage() {
               </AccordionItem>
             ))}
           </Accordion>
-           {isEditingPrimaryCustom && editingPrimaryInterest && translatedCategorizedInterests.flatMap(c=>c.options).find(o=>o.id===editingPrimaryInterest)?.isCustomEntry && !editingCustomPrimaryValue.trim() && (
+           {isEditingPrimaryCustom && !editingCustomPrimaryValue.trim() && (
             <p className="text-xs text-destructive mt-2 ml-1">{t('profilePage.customInterestRequiredError')}</p>
           )}
         </CardContent>
@@ -622,3 +620,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
