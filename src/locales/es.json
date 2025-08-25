@@ -551,7 +551,9 @@
     "billingNameRequiredDescription": "Por favor, introduce un nombre para los datos de facturación.",
     "errorSavingBillingToastTitle": "Error al Guardar Datos de Facturación",
     "billingInfoSavedToastTitle": "Datos de Facturación Guardados",
-    "billingInfoSavedToastDescription": "Tus detalles de facturación han sido actualizados correctamente."
+    "billingInfoSavedToastDescription": "Tus detalles de facturación han sido actualizados correctamente.",
+    "planLabel": "Plan de Cuenta",
+    "manageSubscriptionButton": "Gestionar Suscripción"
   },
   "configurePage": {
     "loadingConfig": "Cargando configuración de Zeinte...",

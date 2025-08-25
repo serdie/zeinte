@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Mail, ShieldCheck, Save, AlertTriangle, Info, Loader2, ChevronDown, ChevronUp, CheckSquare, Square, PenLine, Edit, X, FileText } from 'lucide-react';
+import { User, Mail, ShieldCheck, Save, AlertTriangle, Info, Loader2, ChevronDown, ChevronUp, CheckSquare, Square, PenLine, Edit, X, FileText, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth, type AppUserFirestoreData } from '@/contexts/AuthContext';
@@ -25,7 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 const GENERAL_OTHER_INTEREST_ID = 'estudio_otro_custom_main'; // ID for the main "Other" category's custom input
 
 export default function ProfilePage() {
-  const { currentUser, userProfileData, loading, updateUserInterests, updateUserBillingInfo, isFirebaseConfigured } = useAuth();
+  const { currentUser, userProfileData, loading, updateUserInterests, updateUserBillingInfo, isFirebaseConfigured, userTier } = useAuth();
   const { toast } = useToast();
   const { t } = useI18n();
 
@@ -278,6 +278,13 @@ export default function ProfilePage() {
     if (!email) return "U";
     return email.substring(0, 2).toUpperCase();
   };
+
+  const getTierLabel = (tier: typeof userTier) => {
+    if (tier === 'admin') return t('sidebar.tierAdmin');
+    if (tier === 'pro') return t('sidebar.tierPro');
+    return t('sidebar.tierFree');
+  };
+
 
   const renderInterestsViewMode = () => (
     <div className="space-y-6">
@@ -541,37 +548,63 @@ export default function ProfilePage() {
           <CardHeader>
               <CardTitle className="text-xl text-foreground">{t('profilePage.accountInfoTitle')}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-              <div className="flex items-center gap-3 p-2 border-b">
-                  <Mail className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                      <p className="text-xs text-muted-foreground">{t('profilePage.emailLabel')}</p>
-                      <p className="font-medium text-foreground">{currentUser.email}</p>
+          <CardContent className="space-y-3 divide-y">
+              <div className="flex items-center justify-between gap-3 p-2">
+                  <div className="flex items-center gap-3">
+                    <Mail className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                        <p className="text-xs text-muted-foreground">{t('profilePage.emailLabel')}</p>
+                        <p className="font-medium text-foreground">{currentUser.email}</p>
+                    </div>
                   </div>
               </div>
-              <div className="flex items-center gap-3 p-2 border-b">
-                  <User className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                      <p className="text-xs text-muted-foreground">{t('profilePage.usernameLabel')}</p>
-                      <p className="font-medium text-foreground">{userProfileData?.displayName || currentUser.displayName || currentUser.email?.split('@')[0] || t('profilePage.usernameNotSet')}</p>
+               <div className="flex items-center justify-between gap-3 p-2">
+                  <div className="flex items-center gap-3">
+                    <User className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                        <p className="text-xs text-muted-foreground">{t('profilePage.usernameLabel')}</p>
+                        <p className="font-medium text-foreground">{userProfileData?.displayName || currentUser.displayName || currentUser.email?.split('@')[0] || t('profilePage.usernameNotSet')}</p>
+                    </div>
                   </div>
               </div>
-              <div className="flex items-center gap-3 p-2 border-b">
-                  <ShieldCheck className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                      <p className="text-xs text-muted-foreground">{t('profilePage.accountStatusLabel')}</p>
-                      <Badge variant={currentUser.emailVerified ? "default" : "secondary"} className={cn("text-xs", currentUser.emailVerified ? "bg-green-500/20 text-green-700 border-green-500/30" : "bg-yellow-500/20 text-yellow-700 border-yellow-500/30")}>
-                      {currentUser.emailVerified ? t('profilePage.verifiedStatus') : t('profilePage.notVerifiedStatus')}
-                      </Badge>
+              <div className="flex items-center justify-between gap-3 p-2">
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                        <p className="text-xs text-muted-foreground">{t('profilePage.accountStatusLabel')}</p>
+                        <Badge variant={currentUser.emailVerified ? "default" : "secondary"} className={cn("text-xs", currentUser.emailVerified ? "bg-green-500/20 text-green-700 border-green-500/30" : "bg-yellow-500/20 text-yellow-700 border-yellow-500/30")}>
+                        {currentUser.emailVerified ? t('profilePage.verifiedStatus') : t('profilePage.notVerifiedStatus')}
+                        </Badge>
+                    </div>
                   </div>
+              </div>
+                <div className="flex items-center justify-between gap-3 p-2">
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                        <p className="text-xs text-muted-foreground">{t('profilePage.planLabel')}</p>
+                        <Badge variant={userTier === 'admin' ? 'destructive' : userTier === 'pro' ? 'default' : 'secondary'} className={cn("text-xs", userTier === 'pro' && 'bg-green-500 text-white', userTier === 'admin' && 'bg-red-600 text-white')}>
+                          {getTierLabel(userTier)}
+                        </Badge>
+                    </div>
+                  </div>
+                  {userTier === 'pro' && (
+                    <Link href="/account/subscription" passHref>
+                        <Button variant="outline" size="sm" className="flex items-center gap-1">
+                          <Settings className="h-4 w-4"/> {t('profilePage.manageSubscriptionButton')}
+                        </Button>
+                    </Link>
+                  )}
               </div>
               {currentUser.providerData.map(profile => (
-                  <div key={profile.providerId} className="flex items-center gap-3 p-2">
+                  <div key={profile.providerId} className="flex items-center justify-between gap-3 p-2">
+                    <div className="flex items-center gap-3">
                       {profile.providerId === 'google.com' && <svg className="h-5 w-5 text-muted-foreground" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Google</title><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.02 1.08-2.58 2.03-4.66 2.03-3.86 0-6.99-3.11-6.99-7.11s3.13-7.11 6.99-7.11c1.73 0 3.25.59 4.52 1.78l2.48-2.48C17.46.89 15.21 0 12.48 0 5.88 0 0 5.56 0 12.48s5.88 12.48 12.48 12.48c7.02 0 12.24-4.82 12.24-12.72 0-.79-.08-1.54-.2-2.32H12.48z" fill="currentColor"/></svg>}
                       {profile.providerId === 'password' && <Mail className="h-5 w-5 text-muted-foreground" />}
                       <div>
                           <p className="text-xs text-muted-foreground">{t('profilePage.loginMethodLabel')}</p>
                           <p className="font-medium text-foreground">{profile.providerId === 'google.com' ? t('profilePage.loginMethodGoogle') : t('profilePage.loginMethodEmail')}</p>
+                      </div>
                       </div>
                   </div>
               ))}
