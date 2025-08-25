@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, UserPlus, Mail, AlertTriangle, Info } from 'lucide-react';
+import { Loader2, UserPlus, Mail, AlertTriangle, Sparkles } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
 
 export default function SignupPage() {
@@ -91,7 +91,7 @@ export default function SignupPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <Alert variant="default" className="bg-primary/10 border-primary/50 text-primary">
-            <Info className="h-5 w-5" />
+            <Sparkles className="h-5 w-5" />
             <AlertTitle>{t("signupPage.betaNoticeTitle")}</AlertTitle>
             <AlertDescription>
               {t("signupPage.betaWelcomeMessage")}

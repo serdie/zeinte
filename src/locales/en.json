@@ -446,8 +446,8 @@
     "googleSuccessToastDescription": "Welcome with Google to Zeinte!",
     "loading": "Loading...",
     "redirecting": "Redirecting...",
-    "betaWelcomeMessage": "The Pro plan has expanded features and the payment gateway is now fully activated.",
-    "betaNoticeTitle": "Information about the Pro Plan"
+    "betaWelcomeMessage": "By signing up, you'll get a free 7-day trial of the Pro Plan, no payment details required. Enjoy all the features with no commitment!",
+    "betaNoticeTitle": "Free 7-Day Pro Trial"
   },
   "profilePage": {
     "loadingProfile": "Loading Zeinte profile...",
@@ -1066,7 +1066,7 @@
   "tutorial": {
     "step1Title": "¡Bienvenido/a a Zeinte, {{name}}!",
     "step1Content": "¡Hola! Soy tu asistente de estudio IA.\n\nEstoy aquí para ayudarte a analizar tus apuntes y a prepararte para tus exámenes de una forma mucho más inteligente.\n\nVamos a ver rápidamente cómo funciona.",
-    "step2Title": "1. Sube tus Documentos",
+    "step2Title": "1. Crea tu Examen",
     "step2Content": "Todo empieza en 'Crear Examen'.\n\nAllí podrás añadir tus apuntes, temarios, exámenes de otros años... ¡o incluso pedir a la IA que busque apuntes en internet por ti! ✨",
     "step3Title": "2. Crea un Resumen al Instante",
     "step3Content": "¿Mucho texto por leer? Ve a 'Crear Resumen'.\n\nLa IA leerá tus documentos y te entregará un resumen claro y estructurado con los puntos más importantes.",

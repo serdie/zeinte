@@ -446,8 +446,8 @@
     "googleSuccessToastDescription": "¡Bienvenido con Google a Zeinte!",
     "loading": "Cargando...",
     "redirecting": "Redirigiendo...",
-    "betaWelcomeMessage": "El plan pro tiene funciones ampliadas y la pasarela de pagos ya está totalmente activada.",
-    "betaNoticeTitle": "Información sobre el Plan Pro"
+    "betaWelcomeMessage": "Al registrarte, obtendrás una prueba gratuita de 7 días del Plan Pro, sin necesidad de introducir datos de pago. ¡Disfruta de todas las funcionalidades sin compromiso!",
+    "betaNoticeTitle": "¡Prueba Pro Gratis por 7 Días!"
   },
   "profilePage": {
     "loadingProfile": "Cargando perfil de Zeinte...",
