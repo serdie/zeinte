@@ -3,6 +3,7 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { Loader2 } from 'lucide-react';
 
 // Define tus idiomas soportados
 export type Language = 'es' | 'en';
@@ -48,20 +49,30 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
     setIsLoading(true);
     import(`@/locales/${language}.json`)
       .then((module) => {
-        setTranslations(module.default);
-        setIsLoading(false);
+        if (isMounted) {
+          setTranslations(module.default);
+          setIsLoading(false);
+        }
       })
       .catch((error) => {
         console.error(`Failed to load translations for ${language}:`, error);
-        // Fallback to default language if loading fails
-        if (language !== DEFAULT_LANGUAGE) {
-            import(`@/locales/${DEFAULT_LANGUAGE}.json`).then(module => setTranslations(module.default));
+        if (isMounted) {
+          if (language !== DEFAULT_LANGUAGE) {
+            import(`@/locales/${DEFAULT_LANGUAGE}.json`).then(module => {
+              if (isMounted) setTranslations(module.default);
+            });
+          }
+          setIsLoading(false);
         }
-        setIsLoading(false);
       });
+    
+    return () => {
+      isMounted = false;
+    };
   }, [language]);
 
   const setLanguage = useCallback((lang: Language) => {
@@ -74,15 +85,13 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const t = useCallback((key: string, params?: Record<string, string | number>): string => {
-    if (isLoading || Object.keys(translations).length === 0) {
-      // Return a placeholder or the key itself while loading or if translations are missing
-      return key; 
-    }
     let translation = getNestedTranslation(translations, key);
 
     if (translation === undefined) {
-      console.warn(`Missing translation for key: "${key}" in language: "${language}"`);
-      return key; // Fallback to key if not found
+      if (!isLoading) {
+        console.warn(`Missing translation for key: "${key}" in language: "${language}"`);
+      }
+      return key; // Fallback to key if not found or while loading
     }
 
     if (params) {
@@ -94,8 +103,11 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [translations, language, isLoading]);
 
   if (isLoading) {
-    // You might want to show a global loading indicator or return null
-    // For now, let's render children but 't' will return keys
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
