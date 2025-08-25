@@ -82,11 +82,13 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
         
         {/* Google AdSense Meta Tag and Script */}
+        {/* Google AdSense Meta Tag and Script */}
         <meta name="google-adsense-account" content={ADSENSE_CLIENT_ID}></meta>
         <Script
+          id="google-adsense-script" // Es buena idea añadir un ID único
           async
           src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
-          strategy="afterInteractive"
+          strategy="lazyOnload"  // 
           crossOrigin="anonymous"
         />
 

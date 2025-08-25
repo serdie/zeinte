@@ -94,12 +94,12 @@ export default function ExamResultPage() {
         const lastGenTimestamp = localStorage.getItem(FREE_USER_LAST_GENERATION_TIMESTAMP_KEY);
         if (lastGenTimestamp && (Date.now() - parseInt(lastGenTimestamp)) < FREE_USER_COOLDOWN_MS) {
             toast({ 
-                title: t('fileUploadArea.betaFreeTierTitle'), 
-                description: t('fileUploadArea.betaFreeTierCooldownDescription'), 
-                variant: "default", 
+                title: t('fileUploadArea.dailyLimitReachedPopupTitle'), 
+                description: t('fileUploadArea.dailyLimitReachedPopupDescription'), 
+                variant: "destructive", 
                 duration: 8000 
             });
-            // Do not return, allow to proceed
+            return;
         }
     }
     
@@ -156,7 +156,9 @@ export default function ExamResultPage() {
     );
   }
 
-  const questionsToShow = predictedData.questions;
+  const questionsToShow = isFreeUserWithMoreQuestions
+    ? predictedData.questions.slice(0, MAX_QUESTIONS_FREE_USER)
+    : predictedData.questions;
 
   return (
     <div className="space-y-8">
@@ -212,7 +214,7 @@ export default function ExamResultPage() {
       {isFreeUserWithMoreQuestions && (
         <UpgradeProAlert 
             featureName={t('dashboardPage.upgradeProAlertViewAll')}
-            message={t('fileUploadArea.betaEnjoyProFeature')}
+            message={t('dashboardPage.upgradeProAlertViewAllMessage', { count: MAX_QUESTIONS_FREE_USER.toString(), total: predictedData.questions.length.toString() })}
         />
       )}
 

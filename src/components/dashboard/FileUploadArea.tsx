@@ -323,19 +323,21 @@ export default function FileUploadArea({ onAnalyze, isLoading: isFinalAnalyzing,
         const lastGenTimestamp = localStorage.getItem(FREE_USER_LAST_GENERATION_TIMESTAMP_KEY);
         if (lastGenTimestamp && (Date.now() - parseInt(lastGenTimestamp)) < FREE_USER_COOLDOWN_MS) {
             toast({
-                title: t('fileUploadArea.betaFreeTierTitle'),
-                description: t('fileUploadArea.betaFreeTierCooldownDescription'),
-                variant: 'default',
+                title: t('fileUploadArea.dailyLimitReachedPopupTitle'),
+                description: t('fileUploadArea.dailyLimitReachedPopupDescription'),
+                variant: 'destructive',
                 duration: 8000
             });
+            return;
         }
         if (finalNumQuestions > MAX_QUESTIONS_FREE_USER) {
             toast({
-                title: t('fileUploadArea.betaFreeTierTitle'),
-                description: t('fileUploadArea.betaFreeTierQuestionLimitDescription', {maxQuestions: MAX_QUESTIONS_FREE_USER.toString()}),
+                title: t('fileUploadArea.toastFreeUserLimitTitle'),
+                description: t('fileUploadArea.toastFreeUserLimitDescription', {maxQuestions: MAX_QUESTIONS_FREE_USER.toString()}),
                 variant: "default",
                 duration: 8000
             });
+            finalNumQuestions = MAX_QUESTIONS_FREE_USER;
         }
     }
 

@@ -241,7 +241,7 @@ export default function HistoryPage() {
   const handleDownloadPdf = async (exam: PredictedData) => {
     if (userTier === 'free') {
         toast({
-            title: t('historyPage.proFeatureTitle', {defaultValue: "Pro Feature"}),
+            title: t('historyPage.proFeatureTitle'),
             description: t('historyPage.downloadProFeature'),
             variant: "destructive"
         });
@@ -250,8 +250,8 @@ export default function HistoryPage() {
 
     setIsProcessingAction(true);
     toast({
-        title: t('historyPage.generatingPdfTitle', {defaultValue: "Generating PDF..."}),
-        description: t('historyPage.generatingPdfDescription', {defaultValue: "This may take a moment."}),
+        title: t('historyPage.generatingPdfTitle'),
+        description: t('historyPage.generatingPdfDescription'),
     });
 
     try {
@@ -269,7 +269,7 @@ export default function HistoryPage() {
         console.error("Error generating PDF:", error);
         toast({
             title: t('common.error'),
-            description: (error instanceof Error) ? error.message : t('historyPage.pdfGenerationError', {defaultValue: "Could not generate PDF."}),
+            description: (error instanceof Error) ? error.message : t('historyPage.pdfGenerationError'),
             variant: "destructive"
         });
     } finally {
@@ -282,7 +282,7 @@ export default function HistoryPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center p-6">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <p className="text-xl text-muted-foreground">{t('historyPage.loadingHistory', {defaultValue: "Loading exam history..."})}</p>
+        <p className="text-xl text-muted-foreground">{t('historyPage.loadingHistory')}</p>
       </div>
     );
   }
@@ -294,9 +294,9 @@ export default function HistoryPage() {
         <div>
           <CardTitle className="text-2xl md:text-3xl font-bold text-primary flex items-center gap-3">
             <History className="h-8 w-8" />
-            {t('historyPage.title', {defaultValue: "Exam History"})}
+            {t('historyPage.title')}
           </CardTitle>
-          <CardDescription className="mt-2">{t('historyPage.description', {defaultValue: "Review your past analysis and study sessions."})}</CardDescription>
+          <CardDescription className="mt-2">{t('historyPage.description')}</CardDescription>
         </div>
         <Link href="/dashboard" passHref>
           <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" /> {t('examResultPage.backToDashboard')}</Button>
@@ -308,11 +308,11 @@ export default function HistoryPage() {
       {examHistory.length === 0 ? (
         <Alert variant="default" className="bg-blue-500/10 border-blue-500/50">
             <AlertCircle className="h-5 w-5 text-blue-700" />
-            <AlertTitle className="text-blue-700">{t('historyPage.noHistoryTitle', {defaultValue: "No History Found"})}</AlertTitle>
+            <AlertTitle className="text-blue-700">{t('historyPage.noHistoryTitle')}</AlertTitle>
             <AlertDescription className="text-blue-700/90">
-              {t('historyPage.noHistoryDescription', {defaultValue: "You haven't generated any exams yet. Go to the upload section to start!"})}
+              {t('historyPage.noHistoryDescription')}
               <Link href="/upload" className="font-semibold underline hover:text-blue-800 ml-1">
-                {t('historyPage.goToUpload', {defaultValue: "Go to Upload"})}
+                {t('historyPage.goToUpload')}
               </Link>
             </AlertDescription>
         </Alert>
@@ -346,7 +346,7 @@ export default function HistoryPage() {
 
               <CardHeader>
                 <CardTitle className="text-lg text-primary truncate pr-8" title={exam.title}>{exam.title}</CardTitle>
-                <CardDescription>{t('historyPage.generatedOn', {defaultValue: "Generated on"})} {formatDate(exam.timestamp)}</CardDescription>
+                <CardDescription>{t('historyPage.generatedOn')} {formatDate(exam.timestamp)}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow space-y-2 text-sm">
                 <p><span className="font-semibold">{t('dashboardPage.questionsGeneratedLabel')}</span> {exam.questions?.length || 0}</p>
@@ -357,7 +357,7 @@ export default function HistoryPage() {
               <CardFooter>
                 <Button onClick={() => handleStudyExam(exam)} className="w-full" disabled={isProcessingAction}>
                     {isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <BookOpen className="mr-2 h-4 w-4" />}
-                    {t('historyPage.studyButton', {defaultValue: "Study Exam"})}
+                    {t('historyPage.studyButton')}
                 </Button>
               </CardFooter>
             </Card>
