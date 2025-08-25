@@ -11,6 +11,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BrainCircuit } from 'lucide-react';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface AIExplanationDialogProps {
   open: boolean;
@@ -27,24 +28,25 @@ export default function AIExplanationDialog({
   explanation,
   isLoading,
 }: AIExplanationDialogProps) {
+  const { t } = useI18n();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl"> {/* MODIFIED: Removed max-h-[80vh] flex flex-col */}
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-2xl text-primary flex items-center gap-2">
             <BrainCircuit className="h-6 w-6" />
-            Explicación IA
+            {t('aiExplanationDialog.title')}
           </DialogTitle>
           {question && (
             <DialogDescription className="text-base text-muted-foreground pt-2">
-              Pregunta: <span className="font-semibold text-foreground">{question}</span>
+              {t('aiExplanationDialog.questionLabel')} <span className="font-semibold text-foreground">{question}</span>
             </DialogDescription>
           )}
         </DialogHeader>
-        {/* MODIFIED: Changed ScrollArea to use max-h and restored pr-6 -mr-6. Removed h-0 and flex-grow. */}
-        <ScrollArea className="max-h-[60vh] pr-6 -mr-6"> 
+        <ScrollArea className="max-h-[60vh] pr-4"> 
           {isLoading ? (
-            <div className="space-y-3 py-4"> {/* MODIFIED: Removed px-1 */}
+            <div className="space-y-3 py-4">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />
@@ -53,14 +55,16 @@ export default function AIExplanationDialog({
             </div>
           ) : explanation ? (
             <div
-              className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none py-4 text-foreground" /* MODIFIED: Removed px-1 */
+              className="prose prose-sm sm:prose max-w-none py-4 text-foreground"
               dangerouslySetInnerHTML={{ __html: explanation.replace(/\n/g, '<br />') }}
             />
           ) : (
-            <p className="py-4 text-muted-foreground">No hay explicación disponible o la pregunta no fue seleccionada.</p> /* MODIFIED: Removed px-1 */
+            <p className="py-4 text-muted-foreground">{t('aiExplanationDialog.noExplanation')}</p>
           )}
         </ScrollArea>
       </DialogContent>
     </Dialog>
   );
 }
+
+    

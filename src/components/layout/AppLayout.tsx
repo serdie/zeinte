@@ -18,6 +18,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import { ThemeToggle } from './ThemeToggle';
+import { BookOpenText } from 'lucide-react';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -57,13 +58,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <Sidebar variant="sidebar" collapsible="none" side="left"> 
         <SidebarHeader className="p-4">
           <Link href="/" className="flex items-center gap-2 text-sidebar-primary hover:text-sidebar-primary/90 transition-colors">
-            {/* <Image
-              src="/logo.png"
-              alt="Zeinte Logo"
-              width={32}
-              height={32}
-              className="rounded-full"
-            /> */}
+             <BookOpenText className="h-8 w-8" />
             <h1 className="text-2xl font-semibold">
               Zeinte
             </h1>
@@ -86,25 +81,27 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
           <div className="flex items-center gap-2">
             {/* This trigger is for mobile off-canvas */}
             <div className="md:hidden"> 
               <SidebarTrigger />
             </div>
-            <h2 className="text-lg font-semibold text-foreground">
+            <h2 className="text-md sm:text-lg font-semibold text-foreground truncate">
               {headerTitle}
             </h2>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <LanguageSwitcher />
             <ThemeToggle />
           </div>
         </header>
-        <main className="flex-1 p-4 md:p-6 lg:p-8">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
           {children}
         </main>
       </SidebarInset>
     </SidebarProvider>
   );
 }
+
+    

@@ -68,7 +68,7 @@ export default function AdminPage() {
   const [tierFilter, setTierFilter] = useState<UserTier | 'all'>('all');
   
   const [currentPage, setCurrentPage] = useState(1);
-  const [usersPerPage, setUsersPerPage] = useState(20);
+  const [usersPerPage, setUsersPerPage] = useState(10); // Default to 10 for better mobile view
 
   const fetchUsers = async () => {
     if (!isAdmin || !isFirebaseConfigured || !db) {
@@ -255,16 +255,16 @@ export default function AdminPage() {
 
   return (
     <div className="container mx-auto py-8 space-y-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
           <ShieldAlert className="h-8 w-8" /> {t("adminPage.adminPanelTitle")}
         </h1>
         <Link href="/dashboard" passHref>
-          <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />{t("adminPage.backToDashboard")}</Button>
+          <Button variant="outline" className="w-full sm:w-auto"><ArrowLeft className="mr-2 h-4 w-4" />{t("adminPage.backToDashboard")}</Button>
         </Link>
       </div>
 
-       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard 
               title={t('adminPage.keyMetricsTotalUsers')} 
               value={metrics.totalUsers.toString()} 
@@ -295,27 +295,27 @@ export default function AdminPage() {
           />
       </div>
 
-      <Accordion type="single" collapsible className="w-full">
+      <Accordion type="single" collapsible className="w-full" defaultValue="user-management">
         <AccordionItem value="user-management">
           <Card className="w-full shadow-xl bg-card border-none">
              <AccordionTrigger className="w-full hover:no-underline">
                 <CardHeader className="flex-1 p-4">
-                    <CardTitle className="text-2xl flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center w-full">
                         <div className="flex items-center">
                             <Users className="h-6 w-6 mr-2" />
-                            {t("adminPage.userManagementTitle")}
+                            <CardTitle className="text-xl sm:text-2xl">{t("adminPage.userManagementTitle")}</CardTitle>
                         </div>
-                        <span className="text-sm font-normal text-muted-foreground mr-4">{t("adminPage.totalUsers", { count: users.length.toString() })}</span>
-                    </CardTitle>
-                    <CardDescription className="text-left">
+                        <span className="text-sm font-normal text-muted-foreground mt-1 sm:mt-0 sm:mr-4">{t("adminPage.totalUsers", { count: users.length.toString() })}</span>
+                    </div>
+                    <CardDescription className="text-left mt-2">
                         {t("adminPage.welcomeMessage", { email: currentUser.email || 'Admin' })}
                     </CardDescription>
                 </CardHeader>
             </AccordionTrigger>
             <AccordionContent>
               <CardContent className="pt-0 p-4">
-                <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center">
-                  <div className="relative flex-grow w-full sm:w-auto">
+                <div className="mb-6 flex flex-col md:flex-row gap-4 items-center">
+                  <div className="relative flex-grow w-full md:w-auto">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="search"
@@ -325,7 +325,7 @@ export default function AdminPage() {
                       className="pl-10 w-full text-sm"
                     />
                   </div>
-                   <div className="flex gap-2 w-full sm:w-auto">
+                   <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
                      <Select value={tierFilter} onValueChange={(value) => setTierFilter(value as UserTier | 'all')}>
                       <SelectTrigger className="w-full sm:w-[150px]">
                         <SelectValue placeholder={t('adminPage.filterByTierPlaceholder')} />
@@ -343,20 +343,6 @@ export default function AdminPage() {
                         {t("adminPage.sortDateLabel", { order: sortOrder === 'desc' ? t("adminPage.sortDateNewest") : sortOrder === 'asc' ? t("adminPage.sortDateOldest") : t("adminPage.sortDateNone") })}
                       </span>
                     </Button>
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="users-per-page" className="text-sm shrink-0">{t('adminPage.usersPerPageLabel')}</Label>
-                      <Select value={usersPerPage.toString()} onValueChange={(value) => {setUsersPerPage(Number(value)); setCurrentPage(1);}}>
-                        <SelectTrigger id="users-per-page" className="w-[80px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="10">10</SelectItem>
-                          <SelectItem value="20">20</SelectItem>
-                          <SelectItem value="50">50</SelectItem>
-                          <SelectItem value="100">100</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
                   </div>
                 </div>
 
@@ -386,7 +372,6 @@ export default function AdminPage() {
                           <TableHead>{t("adminPage.userTableTierHeader")}</TableHead>
                           <TableHead>{t("adminPage.userTableCreationDateHeader")}</TableHead>
                           <TableHead>{t("adminPage.userTablePrimaryInterestHeader")}</TableHead>
-                          <TableHead>{t("adminPage.userTableSecondaryInterestsHeader")}</TableHead>
                           <TableHead className="text-right">{t("adminPage.userTableActionsHeader")}</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -408,11 +393,6 @@ export default function AdminPage() {
                             </TableCell>
                             <TableCell>{formatFirebaseTimestamp(user.createdAt)}</TableCell>
                             <TableCell>{user.primaryInterest || t("adminPage.notSet")}</TableCell>
-                            <TableCell>
-                              {user.secondaryInterests && user.secondaryInterests.length > 0
-                                ? user.secondaryInterests.join(', ')
-                                : t("adminPage.noneSet")}
-                            </TableCell>
                             <TableCell className="text-right space-x-1">
                               <Button variant="outline" size="sm" onClick={() => handleOpenEditDialog(user)} title={t("adminPage.editUserButtonTooltip")}>
                                   <Edit3 className="h-4 w-4" />
@@ -428,17 +408,28 @@ export default function AdminPage() {
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="flex items-center justify-between pt-4 p-4">
-                   <Alert variant="destructive" className="flex-1 text-xs mr-4">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        {t("adminPage.deleteUserDisclaimerDescription")}
-                      </AlertDescription>
-                    </Alert>
+              <CardFooter className="flex flex-col sm:flex-row items-center justify-between pt-4 p-4 gap-4">
+                  <div className="flex items-center gap-2">
+                      <Label htmlFor="users-per-page" className="text-sm shrink-0">{t('adminPage.usersPerPageLabel')}</Label>
+                      <Select value={usersPerPage.toString()} onValueChange={(value) => {setUsersPerPage(Number(value)); setCurrentPage(1);}}>
+                        <SelectTrigger id="users-per-page" className="w-[80px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="20">20</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                          <SelectItem value="100">100</SelectItem>
+                        </SelectContent>
+                      </Select>
+                  </div>
                   <div className="flex gap-2">
                       <Button variant="outline" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
                           {t('adminPage.prevButton')}
                       </Button>
+                      <span className="text-sm text-muted-foreground p-2">
+                        {t('adminPage.pageIndicator', {currentPage: currentPage, totalPages: totalPages})}
+                      </span>
                       <Button variant="outline" onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages || totalPages === 0}>
                           {t('adminPage.nextButton')}
                       </Button>
@@ -606,3 +597,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
