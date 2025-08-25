@@ -252,7 +252,17 @@
     "summaryDeletedToastDescription": "El resumen ha sido eliminado de tu historial.",
     "summaryKeyPointsLabel": "Puntos Clave",
     "summarySectionsLabel": "Secciones",
-    "summaryOptions": "Opciones del resumen"
+    "summaryOptions": "Opciones del resumen",
+    "invoiceHistoryTitle": "Historial de Facturación",
+    "invoiceHistoryDescription": "Aquí puedes ver y descargar tus facturas.",
+    "invoiceHistoryDateHeader": "Fecha",
+    "invoiceHistoryAmountHeader": "Importe",
+    "invoiceHistoryStatusHeader": "Estado",
+    "invoiceHistoryActionHeader": "Acción",
+    "invoiceStatusPagado": "Pagado",
+    "invoiceStatusPendiente": "Pendiente",
+    "invoiceStatusFallido": "Fallido",
+    "downloadInvoiceAction": "Descargar"
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Pregunta Tipo Test",
@@ -819,7 +829,30 @@
     "errorSavingTemplate": "No se pudo guardar la plantilla de correo.",
     "templateDeletedSuccess": "La plantilla ha sido eliminada.",
     "errorDeletingTemplate": "No se pudo eliminar la plantilla."
+  },
+  "subscriptionPage": {
+    "accessDeniedTitle": "Acceso Denegado",
+    "accessDeniedDescription": "Esta página es solo para usuarios con una suscripción Pro activa.",
+    "notProError": "No tienes una suscripción Pro activa para cancelar.",
+    "cancelSuccessToastTitle": "Suscripción Cancelada",
+    "cancelSuccessToastDescription": "Tu plan Pro ha sido cancelado. Seguirás teniendo acceso a las funciones Pro hasta el final de tu ciclo de facturación actual. ¡Esperamos verte de vuelta!",
+    "title": "Gestionar Suscripción",
+    "description": "Aquí puedes ver los detalles de tu plan Pro, gestionar tu suscripción y ver el historial de facturas.",
+    "currentPlanProTitle": "¡Estás en el Plan Pro!",
+    "currentPlanProDescription": "Tu suscripción está activa. Tu próxima fecha de facturación es el {{date}}.",
+    "cancelProInfo": "Puedes cancelar tu suscripción en cualquier momento. Seguirás teniendo acceso a las funciones Pro hasta el final del periodo de facturación actual.",
+    "cancelButton": "Cancelar Suscripción Pro",
+    "specialProUserTitle": "Usuario Especial Pro",
+    "specialProUserDescription": "Tu cuenta tiene acceso Pro por ser un usuario especial. No se puede cancelar desde esta interfaz.",
+    "currentPlanAdminTitle": "Plan de Administrador",
+    "currentPlanAdminDescription": "Tienes acceso a todas las funcionalidades como administrador.",
+    "notProOrAdminTitle": "No tienes un Plan Pro",
+    "notProOrAdminDescription": "Parece que no tienes una suscripción Pro activa.",
+    "upgradeHereLink": "Actualiza aquí",
+    "paymentGatewayComingSoon": "Las pasarelas de pago (Stripe, PayPal) se integrarán próximamente para gestionar cancelaciones y reembolsos automáticamente. Por ahora, la cancelación cambia tu plan a 'free' en nuestra base de datos.",
+    "backToDashboardButton": "Volver al Panel de Estudio",
+    "cancelConfirmTitle": "¿Estás seguro de que quieres cancelar tu suscripción?",
+    "cancelConfirmDescription": "Perderás el acceso a todas las funcionalidades Pro al final de tu ciclo de facturación actual. Esta acción no se puede deshacer.",
+    "cancelConfirmButton": "Sí, Cancelar Suscripción"
   }
 }
-
-    

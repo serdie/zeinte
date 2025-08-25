@@ -252,7 +252,17 @@
     "summaryDeletedToastDescription": "The summary has been removed from your history.",
     "summaryKeyPointsLabel": "Key Points",
     "summarySectionsLabel": "Sections",
-    "summaryOptions": "Summary options"
+    "summaryOptions": "Summary options",
+    "invoiceHistoryTitle": "Billing History",
+    "invoiceHistoryDescription": "Here you can view and download your invoices.",
+    "invoiceHistoryDateHeader": "Date",
+    "invoiceHistoryAmountHeader": "Amount",
+    "invoiceHistoryStatusHeader": "Status",
+    "invoiceHistoryActionHeader": "Action",
+    "invoiceStatusPagado": "Paid",
+    "invoiceStatusPendiente": "Pending",
+    "invoiceStatusFallido": "Failed",
+    "downloadInvoiceAction": "Download"
   },
   "predictedQuestionCard": {
     "multipleChoiceQuestion": "Multiple-Choice Question",
@@ -819,7 +829,30 @@
     "errorSavingTemplate": "Could not save the email template.",
     "templateDeletedSuccess": "The template has been deleted.",
     "errorDeletingTemplate": "Could not delete the template."
+  },
+  "subscriptionPage": {
+    "accessDeniedTitle": "Access Denied",
+    "accessDeniedDescription": "This page is for users with an active Pro subscription only.",
+    "notProError": "You do not have an active Pro subscription to cancel.",
+    "cancelSuccessToastTitle": "Subscription Canceled",
+    "cancelSuccessToastDescription": "Your Pro plan has been canceled. You will continue to have access to Pro features until the end of your current billing cycle. We hope to see you back!",
+    "title": "Manage Subscription",
+    "description": "Here you can view your Pro plan details, manage your subscription, and view billing history.",
+    "currentPlanProTitle": "You're on the Pro Plan!",
+    "currentPlanProDescription": "Your subscription is active. Your next billing date is on {{date}}.",
+    "cancelProInfo": "You can cancel your subscription at any time. You will retain access to Pro features until the end of the current billing period.",
+    "cancelButton": "Cancel Pro Subscription",
+    "specialProUserTitle": "Special Pro User",
+    "specialProUserDescription": "Your account has Pro access as a special user. It cannot be canceled from this interface.",
+    "currentPlanAdminTitle": "Administrator Plan",
+    "currentPlanAdminDescription": "You have access to all features as an administrator.",
+    "notProOrAdminTitle": "You do not have a Pro Plan",
+    "notProOrAdminDescription": "It seems you do not have an active Pro subscription.",
+    "upgradeHereLink": "Upgrade here",
+    "paymentGatewayComingSoon": "Payment gateways (Stripe, PayPal) will be integrated soon to automatically manage cancellations and refunds. For now, cancellation changes your plan to 'free' in our database.",
+    "backToDashboardButton": "Back to Study Dashboard",
+    "cancelConfirmTitle": "Are you sure you want to cancel your subscription?",
+    "cancelConfirmDescription": "You will lose access to all Pro features at the end of your current billing cycle. This action cannot be undone.",
+    "cancelConfirmButton": "Yes, Cancel Subscription"
   }
 }
-
-    
