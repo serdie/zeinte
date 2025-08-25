@@ -975,7 +975,7 @@
     "subscriptionSuccessToastDescription": "Has actualizado al Plan Pro. ¡Disfruta de todas las ventajas!",
     "subscribeProButtonAction": "Pasar a Pro Ahora",
     "payWithPayPalButton": "Pagar con PayPal (Simulado)",
-    "paymentGatewayInfo": "La pasarela de pago de PayPal está integrada. El cambio a Pro se simula con el botón alternativo.",
+    "paymentGatewayInfo": "La pasarela de pago de PayPal está integrada al igual que la de Stripe. Con el botón de empezar prueba tienes 7 días de pruebas gracias a la plataforma Stripe.",
     "alreadySubscribedButton": "Ya estás Suscrito al Plan Pro",
     "loadingPayPalButton": "Cargando botón de PayPal...",
     "paypalButtonError": "No se pudo mostrar el botón de pago de PayPal. Intenta recargar la página o contacta con soporte si el problema persiste."
