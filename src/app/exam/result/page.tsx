@@ -20,7 +20,7 @@ import { UpgradeProAlert } from '@/components/ui/upgrade-pro-alert';
 import { predictExamQuestions } from '@/ai/flows/predict-exam-questions';
 import AdSenseUnit from '@/components/ads/AdSenseUnit';
 
-const MAX_QUESTIONS_FREE_USER = 5;
+const MAX_QUESTIONS_FREE_USER = 10;
 const FREE_USER_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export default function ExamResultPage() {

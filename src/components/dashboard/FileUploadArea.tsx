@@ -34,7 +34,7 @@ interface FileUploadAreaProps {
 
 const DEFAULT_MAX_FILES_UPLOAD = 30;
 const DEFAULT_MAX_TOTAL_SIZE_MB = 20;
-const MAX_QUESTIONS_FREE_USER = 5;
+const MAX_QUESTIONS_FREE_USER = 10;
 const FREE_USER_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 interface CommonExam {
