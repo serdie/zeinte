@@ -10,13 +10,30 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Globe } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function LanguageSwitcher() {
   const { language, setLanguage, t } = useI18n();
+  const isMobile = useIsMobile();
 
   const handleLanguageChange = (value: string) => {
     setLanguage(value as Language);
   };
+
+  if (isMobile) {
+    return (
+       <Select value={language} onValueChange={handleLanguageChange}>
+        <SelectTrigger className="w-auto h-9 text-xs p-2 gap-1 border-none bg-transparent shadow-none focus:ring-0" aria-label={t('languageSwitcher.selectLanguage')}>
+            <Globe className="h-4 w-4 text-muted-foreground" />
+            <SelectValue>{language.toUpperCase()}</SelectValue>
+        </SelectTrigger>
+        <SelectContent align="end">
+          <SelectItem value="es">Español (ES)</SelectItem>
+          <SelectItem value="en">English (EN)</SelectItem>
+        </SelectContent>
+      </Select>
+    );
+  }
 
   return (
     <div className="flex items-center gap-2">

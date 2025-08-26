@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, UploadCloud, Users, User, Lightbulb } from 'lucide-react';
+import { BookOpenText, UploadCloud, Users, User, Lightbulb, FileText } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +12,7 @@ const mobileNavItems = [
   { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: BookOpenText },
   { href: '/upload', labelKey: 'sidebar.createExam', icon: UploadCloud },
   { href: '/custom-courses/create', labelKey: 'sidebar.createCourse', icon: Lightbulb },
-  { href: '/community', labelKey: 'sidebar.community', icon: Users },
+  { href: '/summarize', labelKey: 'sidebar.createSummary', icon: FileText },
   { href: '/profile', labelKey: 'sidebar.profile', icon: User },
 ];
 

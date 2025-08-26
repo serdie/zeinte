@@ -40,12 +40,12 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm">
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 px-2 sm:px-4 backdrop-blur-sm">
         <Link href="/" className="flex items-center gap-2 text-primary">
           <BookOpenText className="h-7 w-7" />
           <span className="text-xl font-semibold">Zeinte</span>
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <LanguageSwitcher />
           <ThemeToggle />
         </div>
