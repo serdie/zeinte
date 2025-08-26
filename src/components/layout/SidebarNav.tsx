@@ -18,6 +18,19 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import SupportFormDialog from '@/components/support/SupportFormDialog';
 
+export const navItems = [
+    { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: BookOpenText, protected: true },
+    { href: '/upload', labelKey: 'sidebar.createExam', icon: UploadCloud, protected: true },
+    { href: '/custom-courses/create', labelKey: 'sidebar.createCourse', icon: Lightbulb, protected: true },
+    { href: '/summarize', labelKey: 'sidebar.createSummary', icon: FileText, protected: true },
+    { href: '/community', labelKey: 'sidebar.community', icon: Users, protected: true },
+    { href: '/profile', labelKey: 'sidebar.profile', icon: User, protected: true },
+    { href: '/history', labelKey: 'sidebar.history', icon: History, protected: true, isSubItem: true },
+    { href: '/history/courses', labelKey: 'sidebar.courseHistory', icon: GraduationCap, protected: true, isSubItem: true },
+    { href: '/history/summaries', labelKey: 'sidebar.summaryHistory', icon: History, protected: true, isSubItem: true },
+    { href: '/configure', labelKey: 'sidebar.configureExam', icon: Settings, protected: true, isSubItem: true },
+];
+
 export default function SidebarNav() {
   const pathname = usePathname();
   const { currentUser, logout, loading, isFirebaseConfigured, isAdmin, userTier } = useAuth();
@@ -25,27 +38,13 @@ export default function SidebarNav() {
   const { t } = useI18n(); 
   const [isSupportDialogOpen, setIsSupportDialogOpen] = useState(false);
 
-  const navItems = [
-    { href: '/', labelKey: 'sidebar.home', icon: Home, public: true },
-    { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: BookOpenText, protected: true },
-    { href: '/upload', labelKey: 'sidebar.createExam', icon: UploadCloud, protected: true },
-    { href: '/custom-courses/create', labelKey: 'sidebar.createCourse', icon: Lightbulb, protected: true },
-    { href: '/summarize', labelKey: 'sidebar.createSummary', icon: FileText, protected: true },
-    { href: '/history', labelKey: 'sidebar.history', icon: History, protected: true },
-    { href: '/history/courses', labelKey: 'sidebar.courseHistory', icon: GraduationCap, protected: true },
-    { href: '/history/summaries', labelKey: 'sidebar.summaryHistory', icon: History, protected: true },
-    { href: '/configure', labelKey: 'sidebar.configureExam', icon: Settings, protected: true },
-    { href: '/community', labelKey: 'sidebar.community', icon: Users, protected: true },
-    { href: '/profile', labelKey: 'sidebar.profile', icon: User, protected: true },
-  ];
-
-  const adminNavItem = { href: '/admin', labelKey: 'sidebar.adminPanel', icon: ShieldCheck };
+  const mainNavItems = navItems.filter(item => !item.isSubItem);
+  const secondaryNavItems = navItems.filter(item => item.isSubItem);
 
   const authNavItems = {
     login: { href: '/login', labelKey: 'sidebar.login', icon: LogIn },
     signup: { href: '/signup', labelKey: 'sidebar.signup', icon: UserPlus },
   };
-
 
   const handleLogout = async () => {
     const result = await logout();
@@ -63,11 +62,16 @@ export default function SidebarNav() {
     return '';
   };
 
+  const isNavItemActive = (itemHref: string) => {
+    if (itemHref === '/dashboard') return pathname === '/dashboard';
+    return pathname.startsWith(itemHref);
+  }
+
   return (
     <>
     <SidebarMenu className="flex flex-col justify-between h-full p-2 space-y-2">
       <div className="space-y-1">
-        {navItems.map((item) => {
+        {mainNavItems.map((item) => {
           if (item.protected && isFirebaseConfigured && !currentUser) return null;
           
           const label = t(item.labelKey);
@@ -76,23 +80,11 @@ export default function SidebarNav() {
               <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === item.href || 
-                            (item.href === '/custom-courses/create' && pathname.startsWith('/custom-courses')) || 
-                            (item.href === '/history' && pathname === '/history') ||
-                            (item.href === '/history/courses' && pathname === '/history/courses') ||
-                            (item.href === '/history/summaries' && pathname === '/history/summaries') ||
-                            (item.href === '/summarize' && pathname.startsWith('/summarize'))
-                          }
+                  isActive={isNavItemActive(item.href)}
                   tooltip={label}
                   className={cn(
                     "justify-start w-full",
-                    (pathname === item.href || 
-                     (item.href === '/custom-courses/create' && pathname.startsWith('/custom-courses')) || 
-                     (item.href === '/history' && pathname === '/history') ||
-                     (item.href === '/history/courses' && pathname === '/history/courses') ||
-                     (item.href === '/history/summaries' && pathname === '/history/summaries') ||
-                     (item.href === '/summarize' && pathname.startsWith('/summarize'))
-                    )
+                    isNavItemActive(item.href)
                       ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90" 
                       : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
@@ -108,24 +100,58 @@ export default function SidebarNav() {
             </SidebarMenuItem>
           )
         })}
+
+        <hr className="my-2 border-border/50 group-data-[collapsible=icon]:hidden" />
+        
+        {secondaryNavItems.map((item) => {
+          if (item.protected && isFirebaseConfigured && !currentUser) return null;
+          
+          const label = t(item.labelKey);
+          return (
+            <SidebarMenuItem key={item.href}>
+              <Link href={item.href} passHref legacyBehavior>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isNavItemActive(item.href)}
+                  tooltip={label}
+                  className={cn(
+                    "justify-start w-full text-muted-foreground",
+                    isNavItemActive(item.href)
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90" 
+                      : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  )}
+                >
+                  <a>
+                    <item.icon className="h-5 w-5" />
+                    <span className="group-data-[collapsible=icon]:hidden">
+                      {label}
+                    </span>
+                  </a>
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+          )
+        })}
+
+
         {isAdmin && currentUser && isFirebaseConfigured && (
-          <SidebarMenuItem key={adminNavItem.href}>
-            <Link href={adminNavItem.href} passHref legacyBehavior>
+          <SidebarMenuItem key="/admin">
+            <Link href="/admin" passHref legacyBehavior>
               <SidebarMenuButton
                 asChild
-                isActive={pathname.startsWith(adminNavItem.href)}
-                tooltip={t(adminNavItem.labelKey)}
+                isActive={pathname.startsWith("/admin")}
+                tooltip={t('sidebar.adminPanel')}
                 className={cn(
                   "justify-start w-full",
-                  pathname.startsWith(adminNavItem.href) 
+                  pathname.startsWith("/admin")
                     ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90" 
                     : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 )}
               >
                 <a>
-                  <adminNavItem.icon className="h-5 w-5" />
+                  <ShieldCheck className="h-5 w-5" />
                   <span className="group-data-[collapsible=icon]:hidden">
-                    {t(adminNavItem.labelKey)}
+                    {t('sidebar.adminPanel')}
                   </span>
                 </a>
               </SidebarMenuButton>
