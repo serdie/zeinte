@@ -18,7 +18,6 @@ interface I18nContextType {
   language: Language;
   setLanguage: (language: Language) => void;
   t: (key: string, params?: Record<string, string | number>) => string;
-  translations: Translations;
 }
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
@@ -42,34 +41,51 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [translations, setTranslations] = useState<Translations>({});
   const [isLoading, setIsLoading] = useState(true);
 
+  // Carga inicial del idioma desde localStorage
   useEffect(() => {
     const storedLang = localStorage.getItem('appLanguage') as Language | null;
     const initialLang = storedLang && SUPPORTED_LANGUAGES.includes(storedLang) ? storedLang : DEFAULT_LANGUAGE;
     setLanguageState(initialLang);
   }, []);
 
+  // Efecto para cargar el archivo de traducciones cuando el idioma cambia
   useEffect(() => {
     let isMounted = true;
-    setIsLoading(true);
-    import(`@/locales/${language}.json`)
-      .then((module) => {
-        if (isMounted) {
-          setTranslations(module.default);
-          setIsLoading(false);
-        }
-      })
-      .catch((error) => {
-        console.error(`Failed to load translations for ${language}:`, error);
-        if (isMounted) {
-          if (language !== DEFAULT_LANGUAGE) {
-            import(`@/locales/${DEFAULT_LANGUAGE}.json`).then(module => {
-              if (isMounted) setTranslations(module.default);
-            });
-          }
-          setIsLoading(false);
-        }
-      });
     
+    const loadTranslations = async () => {
+        setIsLoading(true);
+        try {
+            const module = await import(`@/locales/${language}.json`);
+            if (isMounted) {
+                setTranslations(module.default);
+            }
+        } catch (error) {
+            console.error(`Failed to load translations for ${language}:`, error);
+            // Si falla la carga del idioma seleccionado, intenta cargar el idioma por defecto
+            if (language !== DEFAULT_LANGUAGE) {
+                try {
+                    const fallbackModule = await import(`@/locales/${DEFAULT_LANGUAGE}.json`);
+                    if (isMounted) {
+                        setTranslations(fallbackModule.default);
+                    }
+                } catch (fallbackError) {
+                    console.error(`Failed to load default translations:`, fallbackError);
+                    if (isMounted) {
+                        setTranslations({}); // Dejar vacío si ni el por defecto carga
+                    }
+                }
+            } else if (isMounted) {
+                 setTranslations({});
+            }
+        } finally {
+            if (isMounted) {
+                setIsLoading(false);
+            }
+        }
+    };
+    
+    loadTranslations();
+
     return () => {
       isMounted = false;
     };
@@ -85,13 +101,16 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const t = useCallback((key: string, params?: Record<string, string | number>): string => {
+    // No intentes traducir si las traducciones no están cargadas
+    if (isLoading || !Object.keys(translations).length) {
+      return ''; // Devuelve una cadena vacía o un placeholder de carga
+    }
+    
     let translation = getNestedTranslation(translations, key);
 
     if (translation === undefined) {
-      if (!isLoading) {
-        console.warn(`Missing translation for key: "${key}" in language: "${language}"`);
-      }
-      return key; // Fallback to key if not found or while loading
+      console.warn(`Missing translation for key: "${key}" in language: "${language}"`);
+      return key; // Fallback a la clave si no se encuentra
     }
 
     if (params) {
@@ -111,7 +130,7 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   return (
-    <I18nContext.Provider value={{ language, setLanguage, t, translations }}>
+    <I18nContext.Provider value={{ language, setLanguage, t }}>
       {children}
     </I18nContext.Provider>
   );

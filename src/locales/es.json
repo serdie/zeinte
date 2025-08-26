@@ -902,5 +902,25 @@
     "cancelConfirmTitle": "¿Estás seguro de que quieres cancelar tu suscripción?",
     "cancelConfirmDescription": "Perderás el acceso a todas las funcionalidades Pro al final de tu ciclo de facturación actual. Esta acción no se puede deshacer.",
     "cancelConfirmButton": "Sí, Cancelar Suscripción"
+  },
+  "pricingPage": {
+    "mainTitle": "Planes y Precios - Zeinte",
+    "mainSubtitle": "Elige el plan que mejor se adapte a tus necesidades de estudio y empieza a prepararte para el éxito con Zeinte.",
+    "freePlanTitle": "Plan Gratuito",
+    "freePlanDescription": "Perfecto para probar las funcionalidades básicas.",
+    "freePlanPrice": "Gratis",
+    "currentPlanButton": "Plan Actual",
+    "adminPlanButton": "Plan de Admin",
+    "proPlanRecommended": "RECOMENDADO",
+    "proPlanTitle": "Plan Pro",
+    "proPlanDescription": "Acceso ilimitado a todas las funcionalidades de Zeinte.",
+    "proPlanPrice": "9,95€",
+    "proPlanPriceSuffix": "/mes",
+    "alreadySubscribedButton": "Ya Suscrito",
+    "subscribeProButtonAction": "Actualizar a Pro",
+    "paymentGatewayInfo": "La pasarela de pago de PayPal está integrada al igual que la de Stripe. Con el botón de empezar prueba tienes 7 días de pruebas gracias a la plataforma Stripe.",
+    "backToDashboardButton": "Seguir Estudiando",
+    "alreadyProToastTitle": "¡Ya eres Pro!",
+    "alreadyProToastDescription": "Gracias por formar parte de Zeinte Pro."
   }
 }
