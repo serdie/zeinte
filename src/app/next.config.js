@@ -34,17 +34,7 @@ const nextConfig: NextConfig = {
     ],
   },
   
-  // CORRECCIÓN: 'serverComponentsExternalPackages' movido fuera de 'experimental' a 'serverExternalPackages'
   serverExternalPackages: ['sharp', 'onnxruntime-node'],
-
-  // CORRECCIÓN: Eliminada la configuración de webpack para evitar conflictos con Turbopack
-  webpack(config) {
-    config.externals.push({
-      'sharp': 'commonjs sharp',
-      'onnxruntime-node': 'commonjs onnxruntime-node',
-    });
-    return config;
-  },
 };
 
 export default pwaConfig(nextConfig);
