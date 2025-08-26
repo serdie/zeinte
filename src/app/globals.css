@@ -111,3 +111,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Hide Crisp chat widget on mobile devices */
+@media (max-width: 767px) {
+  .crisp-client {
+    display: none !important;
+  }
+}
