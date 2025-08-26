@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { PREDICTED_DATA_KEY, TUTORIAL_COMPLETED_KEY } from '@/lib/localStorageKeys';
 import type { PredictedData } from '@/types';
@@ -64,7 +64,7 @@ export default function DashboardPage() {
   
   const displayName = userProfileData?.displayName || currentUser?.displayName || currentUser?.email?.split('@')[0] || t('dashboardPage.guestUser');
 
-  const tutorialSteps: TutorialStep[] = [
+  const tutorialSteps: TutorialStep[] = useMemo(() => [
     {
       title: t('tutorial.step1Title', { name: displayName }),
       content: t('tutorial.step1Content'),
@@ -100,7 +100,7 @@ export default function DashboardPage() {
       content: t('tutorial.step7Content'),
       icon: Info,
     }
-  ];
+  ], [t, displayName]);
 
   if (isLoadingInitialData || authLoading) {
     return (

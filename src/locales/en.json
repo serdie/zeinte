@@ -922,5 +922,21 @@
     "backToDashboardButton": "Continue Studying",
     "alreadyProToastTitle": "You are already Pro!",
     "alreadyProToastDescription": "Thank you for being part of Zeinte Pro."
+  },
+  "tutorial": {
+    "step1Title": "Welcome to Zeinte, {{name}}!",
+    "step1Content": "This quick tutorial will guide you through the key features to make the most of the app.\nLet's get started!",
+    "step2Title": "Step 1: Upload Your Documents",
+    "step2Content": "Everything starts in 'Create Exam'. Upload your notes, syllabi, or old exams in PDF, DOCX, or even screenshots. The more information, the better the analysis!",
+    "step3Title": "Step 2: Analysis and Prediction",
+    "step3Content": "Once uploaded, Zeinte's AI will analyze the content to identify key topics and generate multiple-choice exam questions. It's like having a private tutor who knows what's important.",
+    "step4Title": "Step 3: Study Intelligently",
+    "step4Content": "In the results, you can answer the questions, see if you got them right, and get detailed explanations to reinforce concepts. Perfect for reviewing!",
+    "step5Title": "Your Study History",
+    "step5Content": "Every exam you generate is saved in your 'History'. This way, you can go back to study and review your previous analyses whenever you want.",
+    "step6Title": "Customize Your Profile",
+    "step6Content": "In 'My Profile', you can set up your areas of interest. This will help us personalize your experience in the future.",
+    "step7Title": "Ready to Start!",
+    "step7Content": "You've got the basics down. Explore, experiment, and transform the way you study. If you have any questions, look for the help icon.\nGood luck with your exams!"
   }
 }

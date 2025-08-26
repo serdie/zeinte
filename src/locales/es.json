@@ -922,5 +922,21 @@
     "backToDashboardButton": "Seguir Estudiando",
     "alreadyProToastTitle": "¡Ya eres Pro!",
     "alreadyProToastDescription": "Gracias por formar parte de Zeinte Pro."
+  },
+  "tutorial": {
+    "step1Title": "¡Bienvenido/a a Zeinte, {{name}}!",
+    "step1Content": "Este rápido tutorial te guiará por las funciones clave para que saques el máximo partido a la aplicación.\n¡Vamos allá!",
+    "step2Title": "Paso 1: Sube tus Documentos",
+    "step2Content": "Todo empieza en \"Crear Examen\". Sube tus apuntes, temarios o exámenes antiguos en PDF, DOCX o incluso capturas de pantalla. ¡Cuanta más información, mejor será el análisis!",
+    "step3Title": "Paso 2: Análisis y Predicción",
+    "step3Content": "Una vez subidos, la IA de Zeinte analizará el contenido para identificar temas clave y generar preguntas de examen tipo test. Es como tener un profesor particular que sabe qué es lo importante.",
+    "step4Title": "Paso 3: Estudia de Forma Inteligente",
+    "step4Content": "En el resultado, podrás responder a las preguntas, ver si has acertado y obtener explicaciones detalladas para afianzar conceptos. ¡Ideal para repasar!",
+    "step5Title": "Tu Historial de Estudio",
+    "step5Content": "Cada examen que generas se guarda en tu \"Historial\". Así puedes volver a estudiar y revisar tus análisis anteriores siempre que quieras.",
+    "step6Title": "Personaliza tu Perfil",
+    "step6Content": "En \"Mi Perfil\", puedes configurar tus áreas de interés. Esto nos ayudará a personalizar tu experiencia en el futuro.",
+    "step7Title": "¡Listo para Empezar!",
+    "step7Content": "Ya conoces lo básico. Explora, experimenta y transforma tu manera de estudiar. Si tienes dudas, busca el icono de ayuda.\n¡Mucho éxito en tus exámenes!"
   }
 }
