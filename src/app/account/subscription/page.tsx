@@ -41,7 +41,6 @@ export default function ManageSubscriptionPage() {
 
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
 
 
   useEffect(() => {
@@ -103,107 +102,11 @@ export default function ManageSubscriptionPage() {
   };
 
     const handleDownloadPdf = async (invoice: MockInvoice) => {
-    if (!currentUser || !userProfileData) return;
-    setIsDownloading(true);
-    toast({
-        title: t('historyPage.generatingPdfTitle', {defaultValue: "Generando PDF..."}),
-        description: t('historyPage.generatingPdfDescription', {defaultValue: "Esto puede tardar un momento."}),
+      toast({
+        title: "Función no disponible temporalmente",
+        description: "La descarga de facturas en PDF se ha desactivado para solucionar un problema. Estará disponible de nuevo pronto.",
+        variant: "default",
     });
-
-    try {
-        const { default: jsPDF } = await import('jspdf');
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const margin = 15;
-        const maxLineWidth = pageWidth - margin * 2;
-
-        // --- Header ---
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(22);
-        doc.text("FACTURA", pageWidth / 2, 20, { align: 'center' });
-        
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Factura #: ${invoice.id}`, pageWidth - margin, 20, { align: 'right' });
-        doc.text(`Fecha: ${formatDate(invoice.date)}`, pageWidth - margin, 26, { align: 'right' });
-
-        // --- Company & Client Info ---
-        doc.line(margin, 35, pageWidth - margin, 35);
-        
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text("Vendedor:", margin, 45);
-        doc.setFont('helvetica', 'normal');
-        doc.text("SEARCH AND MAKE S.L.", margin, 51);
-        doc.text("NIF: B45786787", margin, 57);
-        doc.text("Calle Conquistadores 8, 45500", margin, 63);
-        doc.text("Torrijos, Toledo, España", margin, 69);
-        doc.text("info@zeinte.com", margin, 75);
-
-        doc.setFont('helvetica', 'bold');
-        doc.text("Cliente:", pageWidth / 2, 45);
-        doc.setFont('helvetica', 'normal');
-        doc.text(userProfileData.billingName || currentUser.displayName || currentUser.email || "Usuario de Zeinte", pageWidth / 2, 51);
-        if (userProfileData.billingNif) {
-            doc.text(`NIF/CIF: ${userProfileData.billingNif}`, pageWidth / 2, 57);
-        }
-        if (userProfileData.billingAddress) {
-            const addressLines = doc.splitTextToSize(userProfileData.billingAddress, (pageWidth / 2) - margin);
-            doc.text(addressLines, pageWidth / 2, 63);
-        }
-
-        // --- Invoice Table ---
-        const tableYStart = 90;
-        doc.setFont('helvetica', 'bold');
-        doc.text("Descripción", margin, tableYStart);
-        doc.text("Precio", pageWidth - margin - 50, tableYStart, { align: 'right' });
-        doc.text("Total", pageWidth - margin, tableYStart, { align: 'right' });
-        doc.line(margin, tableYStart + 3, pageWidth - margin, tableYStart + 3);
-
-        doc.setFont('helvetica', 'normal');
-        let currentY = tableYStart + 10;
-        doc.text(invoice.description, margin, currentY);
-        doc.text(invoice.price, pageWidth - margin - 50, currentY, { align: 'right' });
-        doc.text(invoice.total, pageWidth - margin, currentY, { align: 'right' });
-        
-        // --- Totals ---
-        currentY += 20;
-        doc.line(pageWidth / 2, currentY, pageWidth - margin, currentY);
-        currentY += 7;
-        
-        doc.setFont('helvetica', 'bold');
-        doc.text("Subtotal:", pageWidth / 2, currentY);
-        doc.text(invoice.price, pageWidth - margin, currentY, { align: 'right' });
-        currentY += 7;
-
-        doc.text("IVA (21%):", pageWidth / 2, currentY);
-        const subtotal = parseFloat(invoice.price.replace(',', '.').replace(' €',''));
-        const iva = (subtotal * 0.21).toFixed(2);
-        doc.text(`${iva.replace('.',',')} €`, pageWidth - margin, currentY, { align: 'right' });
-        currentY += 7;
-
-        doc.setFontSize(14);
-        doc.text("TOTAL:", pageWidth / 2, currentY);
-        doc.text(invoice.total, pageWidth - margin, currentY, { align: 'right' });
-        
-        // --- Footer ---
-        doc.setFontSize(10);
-        doc.setTextColor(150);
-        doc.text("Gracias por su confianza en Zeinte.", pageWidth / 2, doc.internal.pageSize.getHeight() - 20, { align: 'center' });
-
-
-        doc.save(`factura_${invoice.id}.pdf`);
-
-    } catch (error) {
-        console.error("Error generating PDF:", error);
-        toast({
-            title: t('common.error'),
-            description: (error instanceof Error) ? error.message : t('historyPage.pdfGenerationError', {defaultValue: "Could not generate PDF."}),
-            variant: "destructive"
-        });
-    } finally {
-        setIsDownloading(false);
-    }
   };
 
 
@@ -306,18 +209,18 @@ export default function ManageSubscriptionPage() {
             <CardHeader>
                 <CardTitle className="text-xl flex items-center gap-2">
                     <FileText className="h-6 w-6" />
-                    {t('subscriptionPage.invoiceHistoryTitle')}
+                    {t('historyPage.invoiceHistoryTitle')}
                 </CardTitle>
-                <CardDescription>{t('subscriptionPage.invoiceHistoryDescription')}</CardDescription>
+                <CardDescription>{t('historyPage.invoiceHistoryDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>{t('subscriptionPage.invoiceHistoryDateHeader')}</TableHead>
-                            <TableHead>{t('subscriptionPage.invoiceHistoryAmountHeader')}</TableHead>
-                            <TableHead>{t('subscriptionPage.invoiceHistoryStatusHeader')}</TableHead>
-                            <TableHead className="text-right">{t('subscriptionPage.invoiceHistoryActionHeader')}</TableHead>
+                            <TableHead>{t('historyPage.invoiceHistoryDateHeader')}</TableHead>
+                            <TableHead>{t('historyPage.invoiceHistoryAmountHeader')}</TableHead>
+                            <TableHead>{t('historyPage.invoiceHistoryStatusHeader')}</TableHead>
+                            <TableHead className="text-right">{t('historyPage.invoiceHistoryActionHeader')}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -331,8 +234,8 @@ export default function ManageSubscriptionPage() {
                                     </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => handleDownloadPdf(invoice)} disabled={isDownloading}>
-                                        {isDownloading ? <Loader2 className="h-4 w-4 animate-spin"/> : <Download className="h-4 w-4 mr-1"/>}
+                                    <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => handleDownloadPdf(invoice)} disabled>
+                                        <Download className="h-4 w-4 mr-1"/>
                                         {t('subscriptionPage.downloadInvoiceAction')}
                                     </Button>
                                 </TableCell>
