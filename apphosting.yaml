@@ -1,0 +1,33 @@
+# Configuración de Firebase App Hosting
+# Las variables NEXT_PUBLIC_* son seguras para el cliente (van en env directo)
+# Las claves sensibles se referencian desde Cloud Secret Manager
+
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyBTO5zwxUXKJCYXZ2Lj2Oc8GhnZtOFv1CI"
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "adivinaexamen.firebaseapp.com"
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "adivinaexamen"
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "adivinaexamen.firebasestorage.app"
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "761748449636"
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:761748449636:web:d2242584855a54a9763271"
+  - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+    value: "G-ZMY9YWT229"
+  - variable: NEXT_PUBLIC_GEMINI_API_KEY
+    value: "AIzaSyBTO5zwxUXKJCYXZ2Lj2Oc8GhnZtOFv1CI"
+  - variable: NEXT_PUBLIC_ADSENSE_PUBLISHER_ID
+    value: "ca-pub-6929403056848474"
+
+# Claves sensibles - referenciadas desde Cloud Secret Manager
+# Necesitas crear estos secrets una vez con:
+# gcloud secrets create GEMINI_API_KEY --data-file=- --replication-policy=automatic
+# gcloud secrets create GOOGLE_GENAI_API_KEY --data-file=- --replication-policy=automatic
+secretAsEnv:
+  - variable: GEMINI_API_KEY
+    secret: gemini-api-key
+  - variable: GOOGLE_GENAI_API_KEY
+    secret: google-genai-api-key
