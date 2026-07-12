@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, Lightbulb, CheckCircle, RefreshCw, Edit3, BookCopy, Clock, UsersIcon, BarChart3, FileText, ChevronLeft, ChevronRight, ListChecks, PackageCheck, Wand2, ArrowLeft } from 'lucide-react';
+import { Loader2, Lightbulb, CheckCircle, RefreshCw, Edit3, BookCopy, Clock, UsersIcon, BarChart3, FileText, ChevronLeft, ChevronRight, ListChecks, PackageCheck, Wand2, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/contexts/I18nContext';
 import { generateCustomCourseSyllabus, type GenerateCustomCourseSyllabusInput, type GenerateCustomCourseSyllabusOutput } from '@/ai/flows/generate-custom-course-syllabus';
@@ -437,8 +437,9 @@ export default function CreateCustomCoursePage() {
                     <ScrollArea className="h-[400px] p-4 border rounded-md bg-muted/30">
                       <div 
                         className="prose prose-sm sm:prose-base max-w-none whitespace-pre-line"
-                        dangerouslySetInnerHTML={{ __html: detailedCourseData.modules[currentModuleIndex].content?.replace(/\n/g, '<br />') || '' }}
-                      />
+                      >
+                        {detailedCourseData.modules[currentModuleIndex].content || ''}
+                      </div>
                     </ScrollArea>
                   )}
                 </CardContent>

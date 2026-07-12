@@ -61,7 +61,7 @@ const extractTextFromFileFlow = ai.defineFlow(
   },
   async (input) => {
     // Consider adding safety settings if dealing with diverse user uploads
-    const {output} = await extractTextPrompt(input, { model: 'googleai/gemini-2.0-flash' });
+    const {output} = await extractTextPrompt(input, { model: 'googleai/gemini-3.5-flash' });
     if (!output) {
       // Fallback or error handling if the AI provides no output
       return { extractedText: "" };

@@ -12,12 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, FileType, Camera, Video, Image as ImageIcon, CheckCircle } from 'lucide-react';
+import { Loader2, FileText, UploadCloud, XCircle, AlertTriangle, Search, Brain, LibraryBig, Users, User, Sparkles, FileType, Camera, Image as ImageIcon, CheckCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { EXAM_CONFIG_KEY, FREE_USER_LAST_GENERATION_TIMESTAMP_KEY } from '@/lib/localStorageKeys';
 import type { ExamConfig } from '@/types';
 import { findExternalDocuments, type FindExternalDocumentsOutput } from '@/ai/flows/find-external-documents';
-import { extractTextFromFile, type ExtractTextFromFileInput } from '@/ai/flows/extract-text-from-file-flow';
+import { extractTextFromFile } from '@/ai/flows/extract-text-from-file-flow';
 import { Checkbox } from '../ui/checkbox';
 import { Alert } from '../ui/alert';
 import { useAuth } from '@/contexts/AuthContext';

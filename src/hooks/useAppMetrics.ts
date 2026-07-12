@@ -33,9 +33,11 @@ export function useAppMetrics() {
     const fetchMetrics = async () => {
       setLoading(true);
       setError(null);
+      const firestoreDb = db;
+      if (!firestoreDb) { setLoading(false); return; }
       try {
         // Fetch total users
-        const usersCol = collection(db, "users");
+        const usersCol = collection(firestoreDb, "users");
         const snapshot = await getCountFromServer(usersCol);
         const totalUsersCount = snapshot.data().count;
         

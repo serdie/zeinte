@@ -52,6 +52,10 @@ export default function NewTopicDialog({ open, onOpenChange, onTopicCreated }: N
     }
 
     setIsSubmitting(true);
+    if (!db) {
+      setIsSubmitting(false);
+      return;
+    }
     try {
         const batch = writeBatch(db);
         

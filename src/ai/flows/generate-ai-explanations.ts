@@ -60,6 +60,9 @@ const generateAIExplanationFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('La IA no pudo generar una explicación.');
+    }
+    return output;
   }
 );

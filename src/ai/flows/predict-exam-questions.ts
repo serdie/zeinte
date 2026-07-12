@@ -120,7 +120,7 @@ const predictExamQuestionsFlow = ai.defineFlow(
     outputSchema: PredictExamQuestionsOutputSchema,
   },
   async (input: PredictExamQuestionsInput) => {
-    let effectiveModel = 'googleai/gemini-2.0-flash';
+    let effectiveModel = 'googleai/gemini-3.5-flash';
     let effectiveTemperature: number | undefined = 0.7;
 
     if (db) {

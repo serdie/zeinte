@@ -46,11 +46,11 @@ export default function ExamResultPage() {
       } catch (error) {
         console.error("Failed to parse predicted data from localStorage", error);
         localStorage.removeItem(PREDICTED_DATA_KEY);
-        toast({ title: t('common.error'), description: "Could not load exam data. Redirecting.", variant: 'destructive' });
+        toast({ title: t('common.error'), description: t('examResultPage.couldNotLoadExamData'), variant: 'destructive' });
         router.push('/dashboard');
       }
     } else {
-        toast({ title: "No Exam Data", description: "No exam data found. Please generate an exam first.", variant: 'default' });
+        toast({ title: t('examResultPage.noExamDataTitle'), description: t('examResultPage.noExamDataDescription'), variant: 'default' });
         router.push('/upload');
     }
     setIsLoading(false);
@@ -86,7 +86,7 @@ export default function ExamResultPage() {
 
   const handleReAnalyze = async () => {
     if (!predictedData?.originalDocumentContent || !predictedData?.requestedNumberOfQuestions) {
-      toast({ title: t('common.error'), description: "No original content available to re-analyze.", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('examResultPage.noOriginalContent'), variant: "destructive" });
       return;
     }
 
@@ -125,7 +125,7 @@ export default function ExamResultPage() {
             localStorage.setItem(FREE_USER_LAST_GENERATION_TIMESTAMP_KEY, Date.now().toString());
         }
         setPredictedData(dataToStore);
-        toast({ title: t('uploadPage.successToastTitle'), description: "New questions have been generated.", variant: "default" });
+        toast({ title: t('uploadPage.successToastTitle'), description: t('examResultPage.newQuestionsGenerated'), variant: "default" });
 
     } catch (error) {
         console.error("Error during re-analysis:", error);
@@ -149,9 +149,9 @@ export default function ExamResultPage() {
   if (!predictedData) {
     return (
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center p-6">
-            <h2 className="text-2xl font-bold mb-4">No Exam Data</h2>
-            <p className="text-muted-foreground mb-6">Could not find generated exam data. Please go back and generate one.</p>
-            <Link href="/upload" passHref><Button><ArrowLeft className="mr-2 h-4 w-4" /> Go to Upload</Button></Link>
+            <h2 className="text-2xl font-bold mb-4">{t('examResultPage.noExamDataTitle')}</h2>
+            <p className="text-muted-foreground mb-6">{t('examResultPage.couldNotFindExamData')}</p>
+            <Link href="/upload" passHref><Button><ArrowLeft className="mr-2 h-4 w-4" /> {t('examResultPage.goToUpload')}</Button></Link>
         </div>
     );
   }

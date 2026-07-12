@@ -1,4 +1,3 @@
-
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
@@ -23,7 +22,6 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'www.diemy.es', pathname: '/wp-content/uploads/**' },
     ],
   },
-  
   serverExternalPackages: ['sharp', 'onnxruntime-node'],
 };
 

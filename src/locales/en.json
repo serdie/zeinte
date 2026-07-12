@@ -399,7 +399,14 @@
   "examResultPage": {
     "title": "Exam Study Session",
     "description": "Review the generated questions, test your knowledge, and get detailed AI explanations.",
-    "backToDashboard": "Back to Dashboard"
+    "backToDashboard": "Back to Dashboard",
+    "couldNotLoadExamData": "Could not load exam data. Redirecting.",
+    "noExamDataTitle": "No Exam Data",
+    "noExamDataDescription": "No exam data found. Please generate an exam first.",
+    "noOriginalContent": "No original content available to re-analyze.",
+    "newQuestionsGenerated": "New questions have been generated.",
+    "couldNotFindExamData": "Could not find generated exam data. Please go back and generate one.",
+    "goToUpload": "Go to Upload"
   },
   "summaryResultPage": {
     "title": "AI-Generated Summary",

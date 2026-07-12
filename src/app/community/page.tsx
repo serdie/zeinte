@@ -211,6 +211,7 @@ export default function CommunityPage() {
       toast({ title: "Error", description: "La respuesta no puede estar vacía.", variant: "destructive" });
       return;
     }
+    if (!db) return;
     
     setIsSubmittingReply(true);
     try {

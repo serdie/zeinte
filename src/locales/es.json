@@ -399,7 +399,14 @@
   "examResultPage": {
     "title": "Sesión de Estudio de Examen",
     "description": "Revisa las preguntas generadas, pon a prueba tus conocimientos y obtén explicaciones detalladas con IA.",
-    "backToDashboard": "Volver al Panel"
+    "backToDashboard": "Volver al Panel",
+    "couldNotLoadExamData": "No se pudieron cargar los datos del examen. Redirigiendo.",
+    "noExamDataTitle": "Sin Datos de Examen",
+    "noExamDataDescription": "No se encontraron datos de examen. Por favor, genera un examen primero.",
+    "noOriginalContent": "No hay contenido original disponible para reanalizar.",
+    "newQuestionsGenerated": "Se han generado nuevas preguntas.",
+    "couldNotFindExamData": "No se pudieron encontrar datos de examen generados. Por favor, vuelve atrás y genera uno.",
+    "goToUpload": "Ir a Subir"
   },
   "summaryResultPage": {
     "title": "Resumen Generado por IA",

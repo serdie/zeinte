@@ -1,7 +1,7 @@
 
 // src/lib/firestoreSeedData.ts
 import type { Firestore } from 'firebase/firestore';
-import { collection, doc, writeBatch, Timestamp, getDocs, query, limit } from 'firebase/firestore';
+import { collection, doc, writeBatch, Timestamp, getDocs, getDoc, query, limit } from 'firebase/firestore';
 
 // --- IMPORTANT: REPLACE THESE PLACEHOLDERS WITH ACTUAL UIDs ---
 // You can get these UIDs after your test users have logged in at least once,

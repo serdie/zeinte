@@ -31,7 +31,7 @@ interface AppSettings {
 const DEFAULTS = {
   maxFilesUpload: 30,
   maxTotalSizeMB: 20,
-  defaultAiModel: 'googleai/gemini-2.0-flash',
+  defaultAiModel: 'googleai/gemini-3.5-flash',
   defaultTemperature: 0.7,
   maintenanceMode: false,
   allowNewSignups: true,
@@ -279,7 +279,7 @@ export default function AdminAppSettingsPage() {
                     id="defaultAiModel"
                     name="defaultAiModel"
                     type="text"
-                    value={settings.defaultAiModel || 'googleai/gemini-2.0-flash'}
+                    value={settings.defaultAiModel || 'googleai/gemini-3.5-flash'}
                     onChange={handleInputChange}
                     className="max-w-xs"
                   />

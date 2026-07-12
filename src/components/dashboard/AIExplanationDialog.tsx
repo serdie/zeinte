@@ -55,9 +55,10 @@ export default function AIExplanationDialog({
             </div>
           ) : explanation ? (
             <div
-              className="prose prose-sm sm:prose max-w-none py-4 text-foreground"
-              dangerouslySetInnerHTML={{ __html: explanation.replace(/\n/g, '<br />') }}
-            />
+              className="prose prose-sm sm:prose max-w-none py-4 text-foreground whitespace-pre-wrap"
+            >
+              {explanation}
+            </div>
           ) : (
             <p className="py-4 text-muted-foreground">{t('aiExplanationDialog.noExplanation')}</p>
           )}

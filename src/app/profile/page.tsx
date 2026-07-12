@@ -62,7 +62,7 @@ export default function ProfilePage() {
     }));
   }, [t]);
 
-  const getInterestDisplayName = useCallback((interestValue: string | null, interestsList: InterestCategory[]): string => {
+  const getInterestDisplayName = useCallback((interestValue: string | null, interestsList: Array<Omit<InterestCategory, 'options'> & { options: Array<InterestOption & { name: string }> }>): string => {
     if (!interestValue) return t('profilePage.notSet');
     for (const category of interestsList) {
       for (const option of category.options) {
