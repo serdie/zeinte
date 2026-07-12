@@ -1057,5 +1057,8 @@
     "submitForAnalysisButton": "Submit for AI Analysis",
     "analysisSoonTitle": "Coming Soon!",
     "analysisSoonDescription": "AI analysis of written answers will be available in a future version. For now, you can use this space to practice!"
+  },
+  "languageSwitcher": {
+    "selectLanguage": "Select language"
   }
 }

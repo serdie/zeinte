@@ -1057,5 +1057,8 @@
     "submitForAnalysisButton": "Enviar para Análisis IA",
     "analysisSoonTitle": "¡Próximamente!",
     "analysisSoonDescription": "El análisis de respuestas escritas con IA estará disponible en una futura versión. ¡Por ahora, puedes usar este espacio para practicar!"
+  },
+  "languageSwitcher": {
+    "selectLanguage": "Seleccionar idioma"
   }
 }

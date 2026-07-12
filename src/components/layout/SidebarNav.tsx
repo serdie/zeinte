@@ -77,7 +77,6 @@ export default function SidebarNav() {
           const label = t(item.labelKey);
           return (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
                   asChild
                   isActive={isNavItemActive(item.href)}
@@ -89,14 +88,13 @@ export default function SidebarNav() {
                       : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                 >
-                  <a>
+                  <Link href={item.href}>
                     <item.icon className="h-5 w-5" />
                     <span className="group-data-[collapsible=icon]:hidden">
                       {label}
                     </span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
-              </Link>
             </SidebarMenuItem>
           )
         })}
@@ -109,7 +107,6 @@ export default function SidebarNav() {
           const label = t(item.labelKey);
           return (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
                   asChild
                   isActive={isNavItemActive(item.href)}
@@ -121,14 +118,13 @@ export default function SidebarNav() {
                       : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                 >
-                  <a>
+                  <Link href={item.href}>
                     <item.icon className="h-5 w-5" />
                     <span className="group-data-[collapsible=icon]:hidden">
                       {label}
                     </span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
-              </Link>
             </SidebarMenuItem>
           )
         })}
@@ -136,7 +132,6 @@ export default function SidebarNav() {
 
         {isAdmin && currentUser && isFirebaseConfigured && (
           <SidebarMenuItem key="/admin">
-            <Link href="/admin" passHref legacyBehavior>
               <SidebarMenuButton
                 asChild
                 isActive={pathname.startsWith("/admin")}
@@ -148,14 +143,13 @@ export default function SidebarNav() {
                     : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 )}
               >
-                <a>
+                <Link href="/admin">
                   <ShieldCheck className="h-5 w-5" />
                   <span className="group-data-[collapsible=icon]:hidden">
                     {t('sidebar.adminPanel')}
                   </span>
-                </a>
+                </Link>
               </SidebarMenuButton>
-            </Link>
           </SidebarMenuItem>
         )}
       </div>
@@ -181,14 +175,14 @@ export default function SidebarNav() {
                     {getTierLabel(userTier)}
                   </Badge>
                   {userTier === 'free' && (
-                    <Link href="/pricing" passHref legacyBehavior>
+                    <Link href="/pricing">
                       <Button variant="link" size="sm" className="text-xs p-0 h-auto text-sidebar-accent hover:text-sidebar-accent/80">
                         <ArrowUpCircle className="h-3.5 w-3.5 mr-1"/>{t('sidebar.upgradeToPro')}
                       </Button>
                     </Link>
                   )}
                   {userTier === 'pro' && (
-                     <Link href="/account/subscription" passHref legacyBehavior>
+                     <Link href="/account/subscription">
                        <Button variant="link" size="sm" className="text-xs p-0 h-auto text-sidebar-accent hover:text-sidebar-accent/80">
                          <Edit className="h-3.5 w-3.5 mr-1"/>{t('sidebar.manageSubscription')}
                        </Button>
@@ -232,7 +226,6 @@ export default function SidebarNav() {
           !loading && isFirebaseConfigured ? (
             <>
               <SidebarMenuItem>
-                <Link href={authNavItems.login.href} passHref legacyBehavior>
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === authNavItems.login.href}
@@ -244,17 +237,15 @@ export default function SidebarNav() {
                         : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     )}
                   >
-                    <a>
+                    <Link href={authNavItems.login.href}>
                       <authNavItems.login.icon className="h-5 w-5" />
                       <span className="group-data-[collapsible=icon]:hidden">
                         {t(authNavItems.login.labelKey)}
                       </span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
-                </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <Link href={authNavItems.signup.href} passHref legacyBehavior>
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === authNavItems.signup.href}
@@ -266,14 +257,13 @@ export default function SidebarNav() {
                         : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     )}
                   >
-                    <a>
+                    <Link href={authNavItems.signup.href}>
                       <authNavItems.signup.icon className="h-5 w-5" />
                       <span className="group-data-[collapsible=icon]:hidden">
                         {t(authNavItems.signup.labelKey)}
                       </span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
-                </Link>
               </SidebarMenuItem>
             </>
           ) : null
